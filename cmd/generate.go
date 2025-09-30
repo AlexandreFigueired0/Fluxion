@@ -26,5 +26,6 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	// Here you would add the logic to generate the configuration
 	// For demonstration, we just print the output path
 	cmd.Printf("Generating CI/CD pipeline/workflow configuration at %s\n", outputPath)
+	cmd.Printf("In development...\n")
 
 }
