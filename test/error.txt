@@ -1,0 +1,28 @@
+Run ssh -i ~/.ssh/key.pem ***@*** << 'EOF'
+  ssh -i ~/.ssh/key.pem ***@*** << 'EOF'
+    cd /Aurelius
+    git pull
+    docker stop aurelius
+    docker rm aurelius
+    ./scripts/build_bot_container.sh
+    ./scripts/run_bot_container.sh
+  EOF
+  shell: /usr/bin/bash -e {0}
+Pseudo-terminal will not be allocated because stdin is not a terminal.
+   ,     #_
+   ~\_  ####_        Amazon Linux 2023
+  ~~  \_#####\
+  ~~     \###|
+  ~~       \#/ ___   https://aws.amazon.com/linux/amazon-linux-2023
+   ~~       V~' '->
+    ~~~         /
+      ~~._.   _/
+         _/ _/
+       _/m/'
+-bash: line 1: cd: /Aurelius: No such file or directory
+fatal: not a git repository (or any of the parent directories): .git
+aurelius
+aurelius
+-bash: line 5: ./scripts/build_bot_container.sh: No such file or directory
+-bash: line 6: ./scripts/run_bot_container.sh: No such file or directory
+Error: Process completed with exit code 127.
