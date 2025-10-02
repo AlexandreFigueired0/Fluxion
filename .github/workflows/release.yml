@@ -5,13 +5,16 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -22,25 +25,19 @@ jobs:
       run: |
         go build -o fluxion
 
+    - name: Get tag name
+      id: tag
+      run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
     - name: Archive binary
       run: |
-        tar -czvf fluxion-v${GITHUB_REF##*/}.tar.gz fluxion
+        tar -czvf fluxion-${{ steps.tag.outputs.tag }}.tar.gz fluxion
 
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        files: fluxion-${{ steps.tag.outputs.tag }}.tar.gz
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./fluxion-v${GITHUB_REF##*/}.tar.gz
-        asset_name: fluxion-v${GITHUB_REF##*/}.tar.gz
-        asset_content_type: application/gzip
