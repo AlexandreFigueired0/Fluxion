@@ -46,11 +46,24 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	cmd.Println(prompt)
-
 	outputPath, _ := filepath.Abs(outputPath)
-	cmd.Printf("Generating CI/CD pipeline/workflow configuration at %s\n", outputPath)
-	cmd.Printf("In development...\n")
+
+	generatedConfig, err := generatePipelineConfig(prompt)
+	if err != nil {
+		cmd.PrintErrln("Error generating pipeline configuration:", err)
+		return
+	}
+
+	// Write the generated configuration to the specified output file
+
+	err = writeFile(outputPath, generatedConfig)
+	if err != nil {
+		cmd.PrintErrln("Error writing generated configuration to file:", err)
+		return
+	}
+}
+
+func generatePipelineConfig(prompt string) (string, error) {
 
 }
 
@@ -64,7 +77,6 @@ func runInteractiveMode() (string, error) {
 		huh.NewGroup(
 			huh.NewText().
 				Title("Describe your CI/CD pipeline").
-				Description("e.g., 'GitHub Actions for a Go API with tests and Docker deployment'").
 				Placeholder("Enter your pipeline description...").
 				CharLimit(500).
 				Value(&prompt),

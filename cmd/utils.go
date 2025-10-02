@@ -17,3 +17,12 @@ func loadFile(file string) (string, error) {
 	}
 	return string(data), nil
 }
+
+func writeFile(filePath string, content string) error {
+	// Write content to file
+	err := os.WriteFile(filePath, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+	return nil
+}
