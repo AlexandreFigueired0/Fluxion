@@ -1,28 +1,46 @@
-Run ssh -i ~/.ssh/key.pem ***@*** << 'EOF'
-  ssh -i ~/.ssh/key.pem ***@*** << 'EOF'
-    cd /Aurelius
-    git pull
-    docker stop aurelius
-    docker rm aurelius
-    ./scripts/build_bot_container.sh
-    ./scripts/run_bot_container.sh
-  EOF
-  shell: /usr/bin/bash -e {0}
-Pseudo-terminal will not be allocated because stdin is not a terminal.
-   ,     #_
-   ~\_  ####_        Amazon Linux 2023
-  ~~  \_#####\
-  ~~     \###|
-  ~~       \#/ ___   https://aws.amazon.com/linux/amazon-linux-2023
-   ~~       V~' '->
-    ~~~         /
-      ~~._.   _/
-         _/ _/
-       _/m/'
--bash: line 1: cd: /Aurelius: No such file or directory
-fatal: not a git repository (or any of the parent directories): .git
-aurelius
-aurelius
--bash: line 5: ./scripts/build_bot_container.sh: No such file or directory
--bash: line 6: ./scripts/run_bot_container.sh: No such file or directory
-Error: Process completed with exit code 127.
+1s
+Run docker/build-push-action@v6
+GitHub Actions runtime token ACs
+Docker info
+Proxy configuration
+Buildx version
+Builder info
+/usr/bin/docker buildx build --file ./Dockerfile --iidfile /home/runner/work/_temp/docker-actions-toolkit-nvMyge/build-iidfile-1ab964c00d.txt --attest type=provenance,mode=max,builder-id=https://github.com/AlexandreFigueired0/Aurelius/actions/runs/17699355954/attempts/1 --tag ***/aurelius:latest --metadata-file /home/runner/work/_temp/docker-actions-toolkit-nvMyge/build-metadata-ea0696203b.json --push .
+#0 building with "builder-47f59403-5ff7-4a18-b04d-576d1ec8c07b" instance using docker-container driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 255B done
+#1 DONE 0.0s
+
+#2 [auth] library/python:pull token for registry-1.docker.io
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.13-alpine3.21
+#3 DONE 0.4s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 21.75kB done
+#5 DONE 0.0s
+
+#6 [1/3] FROM docker.io/library/python:3.13-alpine3.21@sha256:0c3d4f28025c9adc2c03326aa160dde8f53faaa8684134a0e146e4edca28a946
+#6 resolve docker.io/library/python:3.13-alpine3.21@sha256:0c3d4f28025c9adc2c03326aa160dde8f53faaa8684134a0e146e4edca28a946 done
+#6 DONE 0.0s
+
+#7 [2/3] COPY requirements.txt companies.csv main.py database_service.py init_db.py scripts/aurelius_entrypoint.sh .
+#7 CANCELED
+Dockerfile:4
+--------------------
+   2 |     
+   3 |     
+   4 | >>> COPY requirements.txt companies.csv main.py database_service.py init_db.py scripts/aurelius_entrypoint.sh .
+   5 |     
+   6 |     RUN pip install -r requirements.txt
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref bowbmf08e5gaw9aes894xjrel::eb3djsx9a2x1bxevmofcx1c68: "/companies.csv": not found
+Reference
+Check build summary support
+Error: buildx failed with: ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref bowbmf08e5gaw9aes894xjrel::eb3djsx9a2x1bxevmofcx1c68: "/companies.csv": not found

@@ -22,9 +22,7 @@ func init() {
 	rootCmd.AddCommand(debugCommand)
 	debugCommand.Flags().StringP("file", "f", "", "Path to your pipeline configuration file")
 	debugCommand.Flags().StringP("logs", "l", "", "Path to your pipeline execution logs, with errors to assess in debugging")
-	debugCommand.Flags().String("api-key", "k", "Your Fluxion key")
-	// debugCommand.Flags().BoolP("verbose", "v", false, "Enable verbose output")
-	// debugCommand.Flags().String("model", "gpt-4", "OpenAI model to use for debugging")
+	debugCommand.Flags().StringP("api-key", "k", "", "Your Fluxion key")
 
 	debugCommand.MarkFlagRequired("file")
 	debugCommand.MarkFlagRequired("logs")
@@ -43,7 +41,7 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	}
 
 	if apiKey == "" {
-		cmd.PrintErrln("Error: OpenAI API key is required. Set it via --api-key flag or OPENAI_API_KEY environment variable.")
+		cmd.PrintErrln("Error: Fluxion key is required. Set it via --api-key flag or FLUXION_KEY environment variable.")
 		return
 	}
 
@@ -77,19 +75,6 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	cmd.Printf("🔧 Fix:\n%s\n\n", analysis.Fix)
 	cmd.Printf("💡 Explanation:\n%s\n", analysis.Explanation)
 	cmd.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-}
-
-func loadFile(file string) (string, error) {
-	if file == "" {
-		return "", fmt.Errorf("file path cannot be empty")
-	}
-
-	// Read file
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
-	}
-	return string(data), nil
 }
 
 type DebugResult struct {
