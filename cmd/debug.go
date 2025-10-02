@@ -83,11 +83,6 @@ type DebugResult struct {
 	Explanation string `json:"explanation"`
 }
 
-const systemPrompt string = `You are a GitHub Actions debugging assistant.
-
-Analyze the configuration and error logs to identify the root cause of the failure.
-Be concise and actionable. Focus only on fixing the actual error shown in the logs.`
-
 func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string) (DebugResult, error) {
 	if pipelineConfig == "" {
 		return DebugResult{}, fmt.Errorf("pipeline configuration is empty")
@@ -107,30 +102,9 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 		option.WithAPIKey(openAiApiKey),
 	)
 
-	// Define the JSON schema
-	schema := map[string]interface{}{
-		"type": "object",
-		"properties": map[string]interface{}{
-			"root_cause": map[string]interface{}{
-				"type":        "string",
-				"description": "Brief explanation of what caused the failure",
-			},
-			"fix": map[string]interface{}{
-				"type":        "string",
-				"description": "Exact code change or command needed to fix it",
-			},
-			"explanation": map[string]interface{}{
-				"type":        "string",
-				"description": "Why this fix works (1-2 sentences max)",
-			},
-		},
-		"required":             []string{"root_cause", "fix", "explanation"},
-		"additionalProperties": false,
-	}
-
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:   "debug_result",
-		Schema: schema,
+		Schema: debugSchema,
 		Strict: openai.Bool(true),
 	}
 
@@ -139,7 +113,7 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 		openai.ChatCompletionNewParams{
 			Model: openai.ChatModelGPT4o,
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(systemPrompt),
+				openai.SystemMessage(debugSystemPrompt),
 				openai.UserMessage(userPrompt),
 			},
 			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{

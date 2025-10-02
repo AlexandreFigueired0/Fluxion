@@ -47,6 +47,6 @@ var generateSchema = map[string]interface{}{
 			"description": "Recommended next steps after generating the pipeline",
 		},
 	},
-	"required":             []string{"root_cause", "fix", "explanation"},
+	"required":             []string{"pipeline_config", "pipeline_description", "assumptions", "requirements", "next_steps"},
 	"additionalProperties": false,
 }

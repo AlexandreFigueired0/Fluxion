@@ -1,9 +1,15 @@
 package cmd
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/charmbracelet/huh"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 	"github.com/spf13/cobra"
 )
 
@@ -54,16 +60,70 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// Write the generated configuration to the specified output file
+	// Display summary to user
+	cmd.Println("Pipeline Description:", generatedConfig.PipelineDescription)
+	cmd.Println("Assumptions:", generatedConfig.Assumptions)
+	cmd.Println("Requirements:", generatedConfig.Requirements)
+	cmd.Println("Next Steps:", generatedConfig.NextSteps)
+	cmd.Println("Generated configuration written to:", outputPath)
 
-	err = writeFile(outputPath, generatedConfig)
+	// Write the generated configuration to the specified output file
+	err = writeFile(outputPath, generatedConfig.PipelineConfig)
 	if err != nil {
 		cmd.PrintErrln("Error writing generated configuration to file:", err)
 		return
 	}
 }
 
-func generatePipelineConfig(prompt string) (string, error) {
+type GenerateResult struct {
+	PipelineConfig      string   `json:"pipeline_config"`
+	PipelineDescription string   `json:"pipeline_description"`
+	Assumptions         []string `json:"assumptions"`
+	Requirements        []string `json:"requirements"`
+	NextSteps           []string `json:"next_steps"`
+}
+
+func generatePipelineConfig(prompt string) (GenerateResult, error) {
+	openAiApiKey := os.Getenv("OPENAI_API_KEY")
+	client := openai.NewClient(
+		option.WithAPIKey(openAiApiKey),
+	)
+
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:   "generate_result",
+		Schema: generateSchema,
+		Strict: openai.Bool(true),
+	}
+
+	userPrompt := "Create a GitHub Actions workflow based on the following prompt:\n" + prompt
+
+	resp, err := client.Chat.Completions.New(
+		context.Background(),
+		openai.ChatCompletionNewParams{
+			Model: openai.ChatModelGPT4o,
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(generateSystemPrompt),
+				openai.UserMessage(userPrompt),
+			},
+			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
+					JSONSchema: schemaParam,
+				},
+			},
+		},
+	)
+
+	if err != nil {
+		return GenerateResult{}, fmt.Errorf("OpenAI API error: %w", err)
+	}
+
+	// Parse the response
+	var result GenerateResult
+	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
+		return GenerateResult{}, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return result, nil
 
 }
 
