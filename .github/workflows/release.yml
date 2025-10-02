@@ -25,18 +25,14 @@ jobs:
       run: |
         go build -o fluxion
 
-    - name: Get tag name
-      id: tag
-      run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
     - name: Archive binary
       run: |
-        tar -czvf fluxion-${{ steps.tag.outputs.tag }}.tar.gz fluxion
+        tar -czvf fluxion.tar.gz fluxion
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: fluxion-${{ steps.tag.outputs.tag }}.tar.gz
+        files: fluxion.tar.gz
         draft: false
         prerelease: false
       env:
