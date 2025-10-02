@@ -39,7 +39,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 		prompt, err = runInteractiveMode()
 
 		if err != nil {
-			cmd.PrintErrln("Error during interactive prompt:", err)
+			cmd.PrintErrln("❌ Error during interactive prompt:", err)
 			return
 		}
 	}
@@ -47,7 +47,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	if prompt == "" {
 		prompt, err = loadFile(promptPath)
 		if err != nil {
-			cmd.PrintErrln("Error loading prompt file:", err)
+			cmd.PrintErrln("❌ Error loading prompt file:", err)
 			return
 		}
 	}
@@ -56,21 +56,53 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 
 	generatedConfig, err := generatePipelineConfig(prompt)
 	if err != nil {
-		cmd.PrintErrln("Error generating pipeline configuration:", err)
+		cmd.PrintErrln("❌ Error generating pipeline configuration:", err)
 		return
 	}
 
-	// Display summary to user
-	cmd.Println("Pipeline Description:", generatedConfig.PipelineDescription)
-	cmd.Println("Assumptions:", generatedConfig.Assumptions)
-	cmd.Println("Requirements:", generatedConfig.Requirements)
-	cmd.Println("Next Steps:", generatedConfig.NextSteps)
-	cmd.Println("Generated configuration written to:", outputPath)
+	// Display summary to user with embellished formatting
+	cmd.Println("\n" + "═══════════════════════════════════════════════════════════════")
+	cmd.Println("✨ Pipeline Generation Complete!")
+	cmd.Println("═══════════════════════════════════════════════════════════════")
+	cmd.Println()
+
+	cmd.Println("📋 Pipeline Description:")
+	cmd.Println("   " + generatedConfig.PipelineDescription)
+	cmd.Println()
+
+	if len(generatedConfig.Assumptions) > 0 {
+		cmd.Println("💭 Assumptions:")
+		for i, assumption := range generatedConfig.Assumptions {
+			cmd.Printf("   %d. %s\n", i+1, assumption)
+		}
+		cmd.Println()
+	}
+
+	if len(generatedConfig.Requirements) > 0 {
+		cmd.Println("📦 Requirements:")
+		for i, requirement := range generatedConfig.Requirements {
+			cmd.Printf("   %d. %s\n", i+1, requirement)
+		}
+		cmd.Println()
+	}
+
+	if len(generatedConfig.NextSteps) > 0 {
+		cmd.Println("🚀 Next Steps:")
+		for i, step := range generatedConfig.NextSteps {
+			cmd.Printf("   %d. %s\n", i+1, step)
+		}
+		cmd.Println()
+	}
+
+	cmd.Println("───────────────────────────────────────────────────────────────")
+	cmd.Printf("✅ Configuration saved to: %s\n", outputPath)
+	cmd.Println("───────────────────────────────────────────────────────────────")
+	cmd.Println()
 
 	// Write the generated configuration to the specified output file
 	err = writeFile(outputPath, generatedConfig.PipelineConfig)
 	if err != nil {
-		cmd.PrintErrln("Error writing generated configuration to file:", err)
+		cmd.PrintErrln("❌ Error writing generated configuration to file:", err)
 		return
 	}
 }
@@ -136,8 +168,9 @@ func runInteractiveMode() (string, error) {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewText().
-				Title("Describe your CI/CD pipeline").
-				Placeholder("Enter your pipeline description...").
+				Title("🔧 Describe your CI/CD pipeline").
+				Description("Tell us what you want to automate and we'll generate the workflow for you").
+				Placeholder("e.g., Build and test a Go application on every push...").
 				CharLimit(500).
 				Value(&prompt),
 		),
