@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/huh"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/spf13/cobra"
@@ -35,13 +34,20 @@ func init() {
 func generateConfiguration(cmd *cobra.Command, args []string) {
 	var prompt string
 	var err error
-	if shouldUseInteractiveMode() {
-		prompt, err = runInteractiveMode()
+	if promptPath == "" {
+		values, err := runTextInteractiveMode([]TextInteractive{
+			{
+				Title:       "Pipeline Description",
+				Description: "Describe the CI/CD pipeline you want to create.",
+				Placeholder: "e.g., Build and test a Go application on every push...",
+			},
+		})
 
 		if err != nil {
 			cmd.PrintErrln("❌ Error during interactive prompt:", err)
 			return
 		}
+		prompt = values[0]
 	}
 
 	if prompt == "" {
@@ -157,29 +163,4 @@ func generatePipelineConfig(prompt string) (GenerateResult, error) {
 
 	return result, nil
 
-}
-
-func shouldUseInteractiveMode() bool {
-	return promptPath == ""
-}
-
-func runInteractiveMode() (string, error) {
-	var prompt string
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewText().
-				Title("🔧 Describe your CI/CD pipeline").
-				Description("Tell us what you want to automate and we'll generate the workflow for you").
-				Placeholder("e.g., Build and test a Go application on every push...").
-				CharLimit(500).
-				Value(&prompt),
-		),
-	)
-
-	err := form.Run()
-
-	if err != nil {
-		return "", err
-	}
-	return prompt, nil
 }

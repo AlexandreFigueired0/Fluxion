@@ -24,16 +24,12 @@ func init() {
 	debugCommand.Flags().StringP("logs", "l", "", "Path to your pipeline execution logs, with errors to assess in debugging")
 	debugCommand.Flags().StringP("api-key", "k", "", "Your Fluxion key")
 
-	debugCommand.MarkFlagRequired("file")
-	debugCommand.MarkFlagRequired("logs")
 }
 
 func debugPipeline(cmd *cobra.Command, args []string) {
 	file, _ := cmd.Flags().GetString("file")
 	logs, _ := cmd.Flags().GetString("logs")
 	apiKey, _ := cmd.Flags().GetString("api-key")
-	// verbose, _ := cmd.Flags().GetBool("verbose")
-	// model, _ := cmd.Flags().GetString("model")
 
 	// If no API key provided via flag, check environment variable
 	if apiKey == "" {
@@ -45,6 +41,33 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	if file == "" || logs == "" {
+		values, err := runTextInteractiveMode([]TextInteractive{
+			{
+				Title:       "Pipeline Configuration File",
+				Description: "Enter the path to your pipeline configuration file.",
+				Placeholder: "./.github/workflows/ci.yml",
+			},
+			{
+				Title:       "Pipeline Execution Logs",
+				Description: "Enter the path to your pipeline execution logs containing errors.",
+				Placeholder: "./logs.txt",
+			},
+		})
+
+		if err != nil {
+			cmd.PrintErrln("❌ Error during interactive prompt:", err)
+			return
+		}
+
+		if file == "" {
+			file = values[0]
+		}
+		if logs == "" {
+			logs = values[1]
+		}
+	}
+
 	pipelineConfig, err := loadFile(file)
 	if err != nil {
 		cmd.PrintErrln("Error loading pipeline configuration:", err)
@@ -52,13 +75,10 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	}
 
 	// Load the pipeline execution logs
-	var errorLogs string
-	if logs != "" {
-		errorLogs, err = loadFile(logs)
-		if err != nil {
-			cmd.PrintErrln("Error loading pipeline execution logs:", err)
-			return
-		}
+	errorLogs, err := loadFile(logs)
+	if err != nil {
+		cmd.PrintErrln("Error loading pipeline execution logs:", err)
+		return
 	}
 
 	// Debug the pipeline configuration using AI

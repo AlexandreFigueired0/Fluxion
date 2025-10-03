@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+
+	"github.com/charmbracelet/huh"
 )
 
 func loadFile(file string) (string, error) {
@@ -25,4 +27,33 @@ func writeFile(filePath string, content string) error {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil
+}
+
+type TextInteractive struct {
+	Title       string
+	Description string
+	Placeholder string
+}
+
+func runTextInteractiveMode(fields []TextInteractive) ([]string, error) {
+	var values []string
+	for _, field := range fields {
+		var value string
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewText().
+					Title(field.Title).
+					Description(field.Description).
+					Placeholder(field.Placeholder).
+					Value(&value),
+			),
+		)
+
+		err := form.Run()
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+	}
+	return values, nil
 }

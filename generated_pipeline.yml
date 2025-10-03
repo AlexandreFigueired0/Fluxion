@@ -1,103 +1,61 @@
-name: Build and release Go CLI
+name: Build and Release Go CLI
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch: {}
-
-permissions:
-  contents: write
+      - '*'  # Triggers on any new tag
 
 jobs:
-  create_release:
-    name: Create GitHub Release (tag)
+  build:
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          body: "Release ${{ github.ref_name }}"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build_and_upload:
-    name: Build binaries and upload to release
-    needs: create_release
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        runner: [ubuntu-latest, macos-latest, windows-latest]
-        arch: [amd64, arm64]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go
+      - name: Setup Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: 1.x
 
-      - name: Build and package
-        id: build_package
-        run: |
-          # Map runner to GOOS
-          case "${{ matrix.runner }}" in
-            ubuntu-latest) GOOS=linux ;;
-            macos-latest) GOOS=darwin ;;
-            windows-latest) GOOS=windows ;;
-          esac
+      - name: Build
+        run: go build -o my-cli
 
-          GOARCH=${{ matrix.arch }}
+      - name: Archive binary
+        run: zip my-cli.zip my-cli
 
-          # Binary name: change this if your binary name differs
-          BINARY_NAME=mycli
-
-          OUT_DIR=dist
-          mkdir -p "$OUT_DIR"
-
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then
-            EXT=.exe
-          fi
-
-          OUT_FILE="${BINARY_NAME}_${GOOS}_${GOARCH}${EXT}"
-
-          echo "Building for GOOS=$GOOS GOARCH=$GOARCH -> $OUT_DIR/$OUT_FILE"
-          env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags='-s -w' -o "$OUT_DIR/$OUT_FILE" ./...
-
-          # Package: zip for Windows, tar.gz for others
-          if [ "$GOOS" = "windows" ]; then
-            ZIP_PATH="$OUT_DIR/${OUT_FILE}.zip"
-            zip -j "$ZIP_PATH" "$OUT_DIR/$OUT_FILE"
-            echo "ASSET_PATH=$ZIP_PATH" >> $GITHUB_ENV
-            echo "ASSET_NAME=${OUT_FILE}.zip" >> $GITHUB_ENV
-            echo "CONTENT_TYPE=application/zip" >> $GITHUB_ENV
-          else
-            TAR_PATH="$OUT_DIR/${OUT_FILE}.tar.gz"
-            tar -C "$OUT_DIR" -czf "$TAR_PATH" "$OUT_FILE"
-            echo "ASSET_PATH=$TAR_PATH" >> $GITHUB_ENV
-            echo "ASSET_NAME=${OUT_FILE}.tar.gz" >> $GITHUB_ENV
-            echo "CONTENT_TYPE=application/gzip" >> $GITHUB_ENV
-          fi
-        shell: bash
-
-      - name: Upload asset to Release
-        uses: actions/upload-release-asset@v1
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ${{ env.ASSET_PATH }}
-          asset_name: ${{ env.ASSET_NAME }}
-          asset_content_type: ${{ env.CONTENT_TYPE }}
+          name: my-cli-binary
+          path: my-cli.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: my-cli-binary
+
+      - name: Create Release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: "Automatically generated release from GitHub Actions"
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./my-cli.zip
+          asset_name: my-cli.zip
+          asset_content_type: application/zip
