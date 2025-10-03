@@ -45,6 +45,12 @@ func runTextInteractiveMode(fields []TextInteractive) ([]string, error) {
 					Title(field.Title).
 					Description(field.Description).
 					Placeholder(field.Placeholder).
+					Validate(func(input string) error {
+						if input == "" {
+							return fmt.Errorf("input cannot be empty")
+						}
+						return nil
+					}).
 					Value(&value),
 			),
 		)
