@@ -48,9 +48,8 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 			return
 		}
 		prompt = values[0]
-	}
-
-	if prompt == "" {
+	} else {
+		// Load prompt from file
 		prompt, err = loadFile(promptPath)
 		if err != nil {
 			cmd.PrintErrln("❌ Error loading prompt file:", err)
@@ -63,6 +62,13 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	generatedConfig, err := generatePipelineConfig(prompt)
 	if err != nil {
 		cmd.PrintErrln("❌ Error generating pipeline configuration:", err)
+		return
+	}
+
+	// Write the generated configuration to the specified output file
+	err = writeFile(outputPath, generatedConfig.PipelineConfig)
+	if err != nil {
+		cmd.PrintErrln("❌ Error writing generated configuration to file:", err)
 		return
 	}
 
@@ -105,12 +111,6 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	cmd.Println("───────────────────────────────────────────────────────────────")
 	cmd.Println()
 
-	// Write the generated configuration to the specified output file
-	err = writeFile(outputPath, generatedConfig.PipelineConfig)
-	if err != nil {
-		cmd.PrintErrln("❌ Error writing generated configuration to file:", err)
-		return
-	}
 }
 
 type GenerateResult struct {
