@@ -158,7 +158,8 @@ func generatePipelineConfig(prompt string) (GenerateResult, error) {
 	// Parse the response
 	var result GenerateResult
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return GenerateResult{}, fmt.Errorf("failed to parse response: %w", err)
+		return GenerateResult{}, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
+			err, resp.Choices[0].Message.Content)
 	}
 
 	return result, nil

@@ -29,17 +29,17 @@ func init() {
 func debugPipeline(cmd *cobra.Command, args []string) {
 	file, _ := cmd.Flags().GetString("file")
 	logs, _ := cmd.Flags().GetString("logs")
-	apiKey, _ := cmd.Flags().GetString("api-key")
+	// apiKey, _ := cmd.Flags().GetString("api-key")
 
 	// If no API key provided via flag, check environment variable
-	if apiKey == "" {
-		apiKey = os.Getenv("FLUXION_KEY")
-	}
+	// if apiKey == "" {
+	// 	apiKey = os.Getenv("FLUXION_KEY")
+	// }
 
-	if apiKey == "" {
-		cmd.PrintErrln("Error: Fluxion key is required. Set it via --api-key flag or FLUXION_KEY environment variable.")
-		return
-	}
+	// if apiKey == "" {
+	// 	cmd.PrintErrln("Error: Fluxion key is required. Set it via --api-key flag or FLUXION_KEY environment variable.")
+	// 	return
+	// }
 
 	if file == "" || logs == "" {
 		values, err := runTextInteractiveMode([]TextInteractive{
