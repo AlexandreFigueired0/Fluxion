@@ -59,7 +59,24 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 
 	outputPath, _ := filepath.Abs(outputPath)
 
-	generatedConfig, err := generatePipelineConfig(prompt)
+	// Detect project context
+	workingDir := GetWorkingDirectory()
+	projectContext, err := DetectProjectContext(workingDir)
+	if err != nil {
+		// Non-fatal: continue without context
+		cmd.PrintErrln("⚠️  Warning: Could not detect project context:", err)
+	}
+
+	// Show detected context to user
+	if projectContext.PrimaryLang != "" {
+		cmd.Println("\n🔍 Detected Project Context:")
+		cmd.Println("───────────────────────────────────────────────────────────────")
+		cmd.Println(projectContext.FormatContext())
+		cmd.Println("───────────────────────────────────────────────────────────────")
+		cmd.Println()
+	}
+
+	generatedConfig, err := generatePipelineConfig(prompt, projectContext)
 	if err != nil {
 		cmd.PrintErrln("❌ Error generating pipeline configuration:", err)
 		return
@@ -121,7 +138,7 @@ type GenerateResult struct {
 	NextSteps           []string `json:"next_steps"`
 }
 
-func generatePipelineConfig(prompt string) (GenerateResult, error) {
+func generatePipelineConfig(prompt string, projectContext ProjectContext) (GenerateResult, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),
@@ -133,7 +150,23 @@ func generatePipelineConfig(prompt string) (GenerateResult, error) {
 		Strict: openai.Bool(true),
 	}
 
-	userPrompt := "Create a GitHub Actions workflow based on the following prompt:\n" + prompt
+	// Build enhanced user prompt with project context
+	var userPrompt string
+	if projectContext.PrimaryLang != "" {
+		userPrompt = fmt.Sprintf(`Create a GitHub Actions workflow for this project.
+
+USER REQUEST:
+%s
+
+PROJECT CONTEXT:
+%s
+
+Generate a workflow that is specifically tailored to this project type, uses the correct build/test commands, and follows best practices.`,
+			prompt, projectContext.FormatContext())
+	} else {
+		// Fallback to simple prompt if no context detected
+		userPrompt = "Create a GitHub Actions workflow based on the following prompt:\n" + prompt
+	}
 
 	resp, err := client.Chat.Completions.New(
 		context.Background(),

@@ -77,12 +77,20 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	// Load the pipeline execution logs
 	errorLogs, err := loadFile(logs)
 	if err != nil {
-		cmd.PrintErrln("Error loading pipeline execution logs:", err)
+		cmd.PrintErrln("❌ Error loading pipeline execution logs:", err)
 		return
 	}
 
+	// Detect project context (helpful for better debugging)
+	workingDir := GetWorkingDirectory()
+	projectContext, err := DetectProjectContext(workingDir)
+	if err != nil {
+		// Non-fatal: continue without context
+		projectContext = ProjectContext{} // Empty context
+	}
+
 	// Debug the pipeline configuration using AI
-	analysis, err := analyzePipelineWithOpenAI(pipelineConfig, errorLogs)
+	analysis, err := analyzePipelineWithOpenAI(pipelineConfig, errorLogs, projectContext)
 	if err != nil {
 		cmd.PrintErrln("Error analyzing pipeline configuration:", err)
 		return
@@ -103,12 +111,29 @@ type DebugResult struct {
 	Explanation string `json:"explanation"`
 }
 
-func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string) (DebugResult, error) {
+func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext ProjectContext) (DebugResult, error) {
 	if pipelineConfig == "" {
 		return DebugResult{}, fmt.Errorf("pipeline configuration is empty")
 	}
 
-	var userPrompt string = fmt.Sprintf(`Debug this failed GitHub Actions workflow.
+	// Build user prompt with optional project context
+	var userPrompt string
+	if projectContext.PrimaryLang != "" {
+		userPrompt = fmt.Sprintf(`Debug this failed GitHub Actions workflow.
+
+Workflow YAML:
+%s
+
+Error Logs:
+%s
+
+PROJECT CONTEXT:
+%s
+
+Provide the root cause, exact fix, and brief explanation. Consider the project type and tech stack in your analysis.`,
+			pipelineConfig, errorLogs, projectContext.FormatContext())
+	} else {
+		userPrompt = fmt.Sprintf(`Debug this failed GitHub Actions workflow.
 Workflow YAML:
 %s
 
@@ -116,6 +141,7 @@ Error Logs:
 %s
 
 Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, errorLogs)
+	}
 
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
