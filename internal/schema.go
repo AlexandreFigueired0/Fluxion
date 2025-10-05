@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 var debugSchema = map[string]interface{}{
 	"type": "object",

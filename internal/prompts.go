@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 const debugSystemPrompt string = `You are a GitHub Actions debugging assistant specializing in CI/CD workflow troubleshooting.
 

@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 import (
 	"bufio"
@@ -228,9 +228,6 @@ func (d *NodeDetector) Detect(workingDir string) (*LanguageContext, error) {
 	// Extract ALL dependencies from package.json
 	ctx.Dependencies = extractNodeDependencies(content)
 
-	// Don't try to infer framework - send all dependencies to AI
-	// The AI knows about frameworks better than we do
-
 	// Detect scripts
 	if strings.Contains(content, "\"build\"") {
 		ctx.BuildCommand = fmt.Sprintf("%s run build", ctx.PackageManager)
@@ -261,11 +258,9 @@ func extractNodeDependencies(content string) []string {
 		}
 
 		// Exit dependencies section
-		if inDeps && (strings.HasPrefix(trimmed, "}") || strings.Contains(trimmed, "\":")) {
-			if strings.HasPrefix(trimmed, "}") && !strings.Contains(trimmed, ":") {
-				inDeps = false
-				continue
-			}
+		if inDeps && strings.HasPrefix(trimmed, "}") {
+			inDeps = false
+			continue
 		}
 
 		// Extract dependency name
