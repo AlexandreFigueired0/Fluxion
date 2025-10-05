@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"fluxion/internal"
+
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/spf13/cobra"
@@ -35,7 +37,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	var prompt string
 	var err error
 	if promptPath == "" {
-		values, err := runTextInteractiveMode([]TextInteractive{
+		values, err := internal.RunTextInteractiveMode([]internal.TextInteractive{
 			{
 				Title:       "Pipeline Description",
 				Description: "Describe the CI/CD pipeline you want to create.",
@@ -50,7 +52,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 		prompt = values[0]
 	} else {
 		// Load prompt from file
-		prompt, err = loadFile(promptPath)
+		prompt, err = internal.LoadFile(promptPath)
 		if err != nil {
 			cmd.PrintErrln("❌ Error loading prompt file:", err)
 			return
@@ -60,8 +62,11 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	outputPath, _ := filepath.Abs(outputPath)
 
 	// Detect project context
-	workingDir := GetWorkingDirectory()
-	projectContext, err := DetectProjectContext(workingDir)
+	workingDir, err := os.Getwd()
+	if err != nil {
+		workingDir = "."
+	}
+	projectContext, err := internal.DetectProjectContext(workingDir)
 	if err != nil {
 		// Non-fatal: continue without context
 		cmd.PrintErrln("⚠️  Warning: Could not detect project context:", err)
@@ -83,7 +88,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 	}
 
 	// Write the generated configuration to the specified output file
-	err = writeFile(outputPath, generatedConfig.PipelineConfig)
+	err = internal.WriteFile(outputPath, generatedConfig.PipelineConfig)
 	if err != nil {
 		cmd.PrintErrln("❌ Error writing generated configuration to file:", err)
 		return
@@ -138,7 +143,7 @@ type GenerateResult struct {
 	NextSteps           []string `json:"next_steps"`
 }
 
-func generatePipelineConfig(prompt string, projectContext ProjectContext) (GenerateResult, error) {
+func generatePipelineConfig(prompt string, projectContext internal.ProjectContext) (GenerateResult, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),
@@ -146,7 +151,7 @@ func generatePipelineConfig(prompt string, projectContext ProjectContext) (Gener
 
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:   "generate_result",
-		Schema: generateSchema,
+		Schema: internal.GenerateSchema,
 		Strict: openai.Bool(true),
 	}
 
@@ -173,7 +178,7 @@ Generate a workflow that is specifically tailored to this project type, uses the
 		openai.ChatCompletionNewParams{
 			Model: openai.ChatModelGPT4o,
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(generateSystemPrompt),
+				openai.SystemMessage(internal.GenerateSystemPrompt),
 				openai.UserMessage(userPrompt),
 			},
 			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{

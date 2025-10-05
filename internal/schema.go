@@ -1,6 +1,6 @@
 package internal
 
-var debugSchema = map[string]interface{}{
+var DebugSchema = map[string]interface{}{
 	"type": "object",
 	"properties": map[string]interface{}{
 		"root_cause": map[string]interface{}{
@@ -20,7 +20,7 @@ var debugSchema = map[string]interface{}{
 	"additionalProperties": false,
 }
 
-var generateSchema = map[string]interface{}{
+var GenerateSchema = map[string]interface{}{
 	"type": "object",
 	"properties": map[string]interface{}{
 		"pipeline_config": map[string]interface{}{

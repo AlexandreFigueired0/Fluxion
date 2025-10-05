@@ -1,6 +1,6 @@
 package internal
 
-const debugSystemPrompt string = `You are a GitHub Actions debugging assistant specializing in CI/CD workflow troubleshooting.
+const DebugSystemPrompt string = `You are a GitHub Actions debugging assistant specializing in CI/CD workflow troubleshooting.
 
 Your job is to:
 1. Identify the root cause by analyzing the error logs and workflow configuration
@@ -33,7 +33,7 @@ When project context is provided, use it to give technology-specific advice.
 Focus only on fixing the actual error - don't suggest unrelated improvements.
 Be concise but thorough - developers need quick, actionable fixes.`
 
-const generateSystemPrompt string = `You are a GitHub Actions workflow generator creating configurations for 2025.
+const GenerateSystemPrompt string = `You are a GitHub Actions workflow generator creating configurations for 2025.
 Your job is to create a simple, working GitHub Actions YAML configuration that does exactly what the user asks for.
 
 CORE GUIDELINES:

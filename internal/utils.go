@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
-func loadFile(file string) (string, error) {
+func LoadFile(file string) (string, error) {
 	if file == "" {
 		return "", fmt.Errorf("file path cannot be empty")
 	}
@@ -20,7 +20,7 @@ func loadFile(file string) (string, error) {
 	return string(data), nil
 }
 
-func writeFile(filePath string, content string) error {
+func WriteFile(filePath string, content string) error {
 	// Write content to file
 	err := os.WriteFile(filePath, []byte(content), 0644)
 	if err != nil {
@@ -35,7 +35,7 @@ type TextInteractive struct {
 	Placeholder string
 }
 
-func runTextInteractiveMode(fields []TextInteractive) ([]string, error) {
+func RunTextInteractiveMode(fields []TextInteractive) ([]string, error) {
 	var values []string
 	for _, field := range fields {
 		var value string

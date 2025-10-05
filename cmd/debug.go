@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"fluxion/internal"
+
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/spf13/cobra"
@@ -42,7 +44,7 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	// }
 
 	if file == "" || logs == "" {
-		values, err := runTextInteractiveMode([]TextInteractive{
+		values, err := internal.RunTextInteractiveMode([]internal.TextInteractive{
 			{
 				Title:       "Pipeline Configuration File",
 				Description: "Enter the path to your pipeline configuration file.",
@@ -68,25 +70,28 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	pipelineConfig, err := loadFile(file)
+	pipelineConfig, err := internal.LoadFile(file)
 	if err != nil {
 		cmd.PrintErrln("Error loading pipeline configuration:", err)
 		return
 	}
 
 	// Load the pipeline execution logs
-	errorLogs, err := loadFile(logs)
+	errorLogs, err := internal.LoadFile(logs)
 	if err != nil {
 		cmd.PrintErrln("❌ Error loading pipeline execution logs:", err)
 		return
 	}
 
 	// Detect project context (helpful for better debugging)
-	workingDir := GetWorkingDirectory()
-	projectContext, err := DetectProjectContext(workingDir)
+	workingDir, err := os.Getwd()
+	if err != nil {
+		workingDir = "."
+	}
+	projectContext, err := internal.DetectProjectContext(workingDir)
 	if err != nil {
 		// Non-fatal: continue without context
-		projectContext = ProjectContext{} // Empty context
+		projectContext = internal.ProjectContext{} // Empty context
 	}
 
 	// Debug the pipeline configuration using AI
@@ -111,7 +116,7 @@ type DebugResult struct {
 	Explanation string `json:"explanation"`
 }
 
-func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext ProjectContext) (DebugResult, error) {
+func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext internal.ProjectContext) (DebugResult, error) {
 	if pipelineConfig == "" {
 		return DebugResult{}, fmt.Errorf("pipeline configuration is empty")
 	}
@@ -150,7 +155,7 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:   "debug_result",
-		Schema: debugSchema,
+		Schema: internal.DebugSchema,
 		Strict: openai.Bool(true),
 	}
 
@@ -159,7 +164,7 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 		openai.ChatCompletionNewParams{
 			Model: openai.ChatModelGPT4o,
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(debugSystemPrompt),
+				openai.SystemMessage(internal.DebugSystemPrompt),
 				openai.UserMessage(userPrompt),
 			},
 			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
