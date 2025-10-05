@@ -25,14 +25,6 @@ type ProjectContext struct {
 	ExistingCI     []string // Existing workflow files
 }
 
-// LanguageDetector interface for language-specific detection
-//
-// This is the "contract" that all language detectors must follow.
-// Any struct that implements these two methods can be used as a detector.
-//
-// Think of it like a template:
-// - Name() returns the language name (e.g., "Go", "Python")
-// - Detect() checks if this is that language's project and returns info
 type LanguageDetector interface {
 	Name() string
 	Detect(workingDir string) (*LanguageContext, error)
@@ -49,16 +41,6 @@ type LanguageContext struct {
 	HasTests       bool
 }
 
-// Registry of language detectors
-//
-// This is where ALL language detectors are registered.
-// When DetectProjectContext runs, it loops through this list
-// and asks each detector: "Is this your language?"
-//
-// To add a new language:
-// 1. Create a new detector (e.g., RustDetector)
-// 2. Add it here: &RustDetector{},
-// That's it! The system will automatically detect it.
 var languageDetectors = []LanguageDetector{
 	&GoDetector{},     // Detects Go projects (checks for go.mod)
 	&NodeDetector{},   // Detects Node.js projects (checks for package.json)
@@ -466,14 +448,6 @@ func (ctx *ProjectContext) FormatContext() string {
 	}
 
 	if len(ctx.Dependencies) > 0 {
-		// Smart dependency filtering:
-		// - For small projects (<= 20 deps): Send all
-		// - For large projects (> 20 deps): Send important ones
-		// Why? Important frameworks are usually:
-		//   1. Near the top (direct dependencies)
-		//   2. Have recognizable names (web, api, cli, framework, etc.)
-		//   3. Not testing/build tools
-
 		deps := ctx.Dependencies
 		displayDeps := deps
 
