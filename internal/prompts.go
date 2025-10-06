@@ -29,7 +29,18 @@ DEBUGGING APPROACH:
    - Auth failure: Verify secret exists and is correctly referenced (case-sensitive)
    - Wrong tool version: Use setup actions with version specification
 
-When project context is provided, use it to give technology-specific advice.
+PROJECT CONTEXT:
+When available, you'll receive automatically detected project information:
+- Primary Language & Package Manager
+- Basic build/test commands (may be generic like "go build" or "npm run build")
+- Key dependencies (filtered list - typically 10-30 important ones, not exhaustive)
+- Directory structure indicators
+- Whether tests exist, Docker files present, existing CI/CD workflows
+
+Use this context as helpful hints to understand the project, but verify against actual workflow configuration.
+The dependency list is filtered, so use it to infer frameworks and tools, not as a complete inventory.
+Build commands are basic defaults - the actual workflow may have customized them.
+
 Focus only on fixing the actual error - don't suggest unrelated improvements.
 Be concise but thorough - developers need quick, actionable fixes.`
 
@@ -54,8 +65,13 @@ Setup Actions:
 - Specify version using version files when available (go-version-file, node-version-file, python-version-file)
 
 Dependency Management:
-- Use the exact build/test commands from project context when provided
-- Prefer deterministic installs (npm ci vs npm install, locked dependency files)
+- Project context provides detected package manager - use appropriate install command:
+  - npm: npm ci (uses package-lock.json)
+  - yarn: yarn install --frozen-lockfile
+  - pnpm: pnpm install --frozen-lockfile
+  - go mod: go mod download
+  - pip: pip install -r requirements.txt
+- If project context includes build/test commands, use them as a starting point but customize for user's needs
 - Install dependencies before build/test steps
 
 Security & Permissions:
@@ -77,10 +93,19 @@ Avoid these mistakes:
 - Missing secrets or incorrect secret references (case-sensitive)
 - Using 'latest' or '@main' for action versions (unstable)
 
-When project context is provided (language, framework, dependencies):
-- Use detected build/test commands exactly as provided
-- Apply appropriate setup actions for the detected language
-- Suggest relevant secrets based on dependencies (e.g., if OpenAI library detected and user asks for deployment)
+PROJECT CONTEXT:
+When provided, you'll receive automatically detected information:
+- Language and package manager
+- Basic build/test commands (use as hints, customize as needed)
+- Filtered list of key dependencies (10-30 important ones)
+- Directory structure (cmd/, internal/, src/, etc.)
+- Existing CI/CD workflows to avoid conflicts
+
+Use this context intelligently:
+- Dependencies help identify frameworks (e.g., cobra = CLI app, express = web server)
+- Generic commands like "go build" should be customized based on user's actual requirements
+- If dependencies suggest specific needs (e.g., OpenAI SDK), proactively suggest relevant secrets
+- Directory structure hints at project organization but verify with user if unclear
 
 QUALITY STANDARDS:
 
