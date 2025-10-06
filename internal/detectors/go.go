@@ -26,7 +26,7 @@ func (d *GoDetector) Detect(workingDir string) (*LanguageContext, error) {
 	ctx := &LanguageContext{
 		Language:       "Go",
 		BuildCommand:   "go build",
-		TestCommand:    "go test ./...",
+		TestCommand:    "go test",
 		PackageManager: "go mod",
 		Dependencies:   make([]string, 0),
 	}
@@ -65,9 +65,6 @@ func (d *GoDetector) Detect(workingDir string) (*LanguageContext, error) {
 			}
 		}
 	}
-
-	// Don't try to infer framework - let the AI figure it out from dependencies
-	// The AI is smarter and knows about frameworks we don't!
 
 	// Check for test files
 	filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {

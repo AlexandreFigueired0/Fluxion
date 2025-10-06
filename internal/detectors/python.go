@@ -45,9 +45,6 @@ func (d *PythonDetector) Detect(workingDir string) (*LanguageContext, error) {
 		content := string(data)
 		ctx.Dependencies = extractPythonDependencies(content)
 
-		// Don't try to infer framework - send all dependencies to AI
-		// The AI can recognize frameworks from the dependency list
-
 		// Check if pytest is in dependencies
 		for _, dep := range ctx.Dependencies {
 			if strings.Contains(strings.ToLower(dep), "pytest") {
