@@ -9,7 +9,6 @@ type LanguageDetector interface {
 // LanguageContext contains language-specific detection results
 type LanguageContext struct {
 	Language       string
-	Framework      string
 	Dependencies   []string
 	BuildCommand   string
 	TestCommand    string

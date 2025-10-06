@@ -12,7 +12,6 @@ import (
 type ProjectContext struct {
 	Languages      []string // e.g., ["Go", "JavaScript"]
 	PrimaryLang    string   // Most likely primary language
-	Framework      string   // e.g., "Cobra CLI", "Express", "Flask"
 	Dependencies   []string // Key dependencies detected
 	HasTests       bool     // Whether test files were found
 	BuildCommand   string   // Suggested build command
@@ -20,7 +19,6 @@ type ProjectContext struct {
 	PackageManager string   // e.g., "go mod", "npm", "pip"
 	Structure      string   // Project structure description
 	DockerFiles    []string // Dockerfile, docker-compose.yml
-	ConfigFiles    []string // Detected config files
 	HasCI          bool     // Has existing CI/CD workflows
 	ExistingCI     []string // Existing workflow files
 }
@@ -37,7 +35,6 @@ func DetectProjectContext(workingDir string) (ProjectContext, error) {
 		Languages:    make([]string, 0),
 		Dependencies: make([]string, 0),
 		DockerFiles:  make([]string, 0),
-		ConfigFiles:  make([]string, 0),
 		ExistingCI:   make([]string, 0),
 	}
 
@@ -49,7 +46,6 @@ func DetectProjectContext(workingDir string) (ProjectContext, error) {
 			// First detected language becomes primary
 			if ctx.PrimaryLang == "" {
 				ctx.PrimaryLang = langCtx.Language
-				ctx.Framework = langCtx.Framework
 				ctx.Dependencies = langCtx.Dependencies
 				ctx.BuildCommand = langCtx.BuildCommand
 				ctx.TestCommand = langCtx.TestCommand
