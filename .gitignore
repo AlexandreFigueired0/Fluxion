@@ -3,6 +3,8 @@
 #
 
 test.go
+generated_pipeline.yaml
+err.log
 
 # Binaries for programs and plugins
 *.exe
