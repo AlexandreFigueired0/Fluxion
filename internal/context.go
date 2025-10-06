@@ -92,13 +92,14 @@ func detectProjectStructure(workingDir string) string {
 
 	// Check common structure patterns
 	patterns := map[string]string{
-		"cmd":      "cmd/ pattern",
-		"src":      "src/ pattern",
-		"internal": "internal/ packages",
-		"pkg":      "pkg/ pattern",
-		"api":      "API project",
-		"web":      "web application",
-		"services": "microservices",
+		"cmd":      "cmd/",
+		"internal": "internal/",
+		"pkg":      "pkg/",
+		"api":      "api/",
+		"web":      "web/",
+		"services": "services/",
+		"apps":     "apps/",
+		"packages": "packages/",
 	}
 
 	for dir, description := range patterns {
