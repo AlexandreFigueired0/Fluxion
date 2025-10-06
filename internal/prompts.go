@@ -65,12 +65,7 @@ Setup Actions:
 - Specify version using version files when available (go-version-file, node-version-file, python-version-file)
 
 Dependency Management:
-- Project context provides detected package manager - use appropriate install command:
-  - npm: npm ci (uses package-lock.json)
-  - yarn: yarn install --frozen-lockfile
-  - pnpm: pnpm install --frozen-lockfile
-  - go mod: go mod download
-  - pip: pip install -r requirements.txt
+- Project context provides detected package manager - use appropriate install command
 - If project context includes build/test commands, use them as a starting point but customize for user's needs
 - Install dependencies before build/test steps
 
