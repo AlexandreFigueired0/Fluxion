@@ -1,16 +1,13 @@
 package cmd
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"fluxion/internal"
 
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	types "fluxion-shared/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -81,7 +78,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 		cmd.Println()
 	}
 
-	generatedConfig, err := generatePipelineConfig(prompt, projectContext)
+	generatedConfig, err := sendGenerateRequest(prompt, projectContext)
 	if err != nil {
 		cmd.PrintErrln("❌ Error generating pipeline configuration:", err)
 		return
@@ -135,71 +132,6 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 
 }
 
-type GenerateResult struct {
-	PipelineConfig      string   `json:"pipeline_config"`
-	PipelineDescription string   `json:"pipeline_description"`
-	Assumptions         []string `json:"assumptions"`
-	Requirements        []string `json:"requirements"`
-	NextSteps           []string `json:"next_steps"`
-}
-
-func generatePipelineConfig(prompt string, projectContext internal.ProjectContext) (GenerateResult, error) {
-	openAiApiKey := os.Getenv("OPENAI_API_KEY")
-	client := openai.NewClient(
-		option.WithAPIKey(openAiApiKey),
-	)
-
-	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:   "generate_result",
-		Schema: internal.GenerateSchema,
-		Strict: openai.Bool(true),
-	}
-
-	// Build enhanced user prompt with project context
-	var userPrompt string
-	if projectContext.PrimaryLang != "" {
-		userPrompt = fmt.Sprintf(`Create a GitHub Actions workflow for this project.
-
-USER REQUEST:
-%s
-
-PROJECT CONTEXT:
-%s
-
-Generate a workflow that is specifically tailored to this project type, uses the correct build/test commands, and follows best practices.`,
-			prompt, projectContext.FormatContext())
-	} else {
-		// Fallback to simple prompt if no context detected
-		userPrompt = "Create a GitHub Actions workflow based on the following prompt:\n" + prompt
-	}
-
-	resp, err := client.Chat.Completions.New(
-		context.Background(),
-		openai.ChatCompletionNewParams{
-			Model: openai.ChatModelGPT4o,
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(internal.GenerateSystemPrompt),
-				openai.UserMessage(userPrompt),
-			},
-			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
-				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
-					JSONSchema: schemaParam,
-				},
-			},
-		},
-	)
-
-	if err != nil {
-		return GenerateResult{}, fmt.Errorf("OpenAI API error: %w", err)
-	}
-
-	// Parse the response
-	var result GenerateResult
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return GenerateResult{}, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
-			err, resp.Choices[0].Message.Content)
-	}
-
-	return result, nil
-
+func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
+	return types.GenerateResult{}, nil
 }

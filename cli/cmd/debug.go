@@ -1,15 +1,12 @@
 package cmd
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
+	types "fluxion-shared/types"
 	"fluxion/internal"
 
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
 	"github.com/spf13/cobra"
 )
 
@@ -91,11 +88,11 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	projectContext, err := internal.DetectProjectContext(workingDir)
 	if err != nil {
 		// Non-fatal: continue without context
-		projectContext = internal.ProjectContext{} // Empty context
+		projectContext = types.ProjectContext{} // Empty context
 	}
 
 	// Debug the pipeline configuration using AI
-	analysis, err := analyzePipelineWithOpenAI(pipelineConfig, errorLogs, projectContext)
+	analysis, err := sendDebugRequest(pipelineConfig, errorLogs, projectContext)
 	if err != nil {
 		cmd.PrintErrln("Error analyzing pipeline configuration:", err)
 		return
@@ -110,80 +107,6 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	cmd.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 }
 
-type DebugResult struct {
-	RootCause   string `json:"root_cause"`
-	Fix         string `json:"fix"`
-	Explanation string `json:"explanation"`
-}
-
-func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext internal.ProjectContext) (DebugResult, error) {
-	if pipelineConfig == "" {
-		return DebugResult{}, fmt.Errorf("pipeline configuration is empty")
-	}
-
-	// Build user prompt with optional project context
-	var userPrompt string
-	if projectContext.PrimaryLang != "" {
-		userPrompt = fmt.Sprintf(`Debug this failed GitHub Actions workflow.
-
-Workflow YAML:
-%s
-
-Error Logs:
-%s
-
-PROJECT CONTEXT:
-%s
-
-Provide the root cause, exact fix, and brief explanation. Consider the project type and tech stack in your analysis.`,
-			pipelineConfig, errorLogs, projectContext.FormatContext())
-	} else {
-		userPrompt = fmt.Sprintf(`Debug this failed GitHub Actions workflow.
-Workflow YAML:
-%s
-
-Error Logs:
-%s
-
-Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, errorLogs)
-	}
-
-	openAiApiKey := os.Getenv("OPENAI_API_KEY")
-	client := openai.NewClient(
-		option.WithAPIKey(openAiApiKey),
-	)
-
-	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:   "debug_result",
-		Schema: internal.DebugSchema,
-		Strict: openai.Bool(true),
-	}
-
-	resp, err := client.Chat.Completions.New(
-		context.Background(),
-		openai.ChatCompletionNewParams{
-			Model: openai.ChatModelGPT4o,
-			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(internal.DebugSystemPrompt),
-				openai.UserMessage(userPrompt),
-			},
-			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
-				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
-					JSONSchema: schemaParam,
-				},
-			},
-		},
-	)
-
-	if err != nil {
-		return DebugResult{}, fmt.Errorf("OpenAI API error: %w", err)
-	}
-
-	// Parse the response
-	var result DebugResult
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return DebugResult{}, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	return result, nil
+func sendDebugRequest(pipelineConfig string, errorLogs string, projectContext types.ProjectContext) (types.DebugResult, error) {
+	return types.DebugResult{}, fmt.Errorf("not implemented")
 }

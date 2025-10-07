@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"encoding/json"
-	shared "fluxion-shared"
+	types "fluxion-shared/types"
 	"fmt"
 	"os"
 
@@ -11,9 +11,9 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
-func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext shared.ProjectContext) (shared.DebugResult, error) {
+func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext types.ProjectContext) (types.DebugResult, error) {
 	if pipelineConfig == "" {
-		return shared.DebugResult{}, fmt.Errorf("pipeline configuration is empty")
+		return types.DebugResult{}, fmt.Errorf("pipeline configuration is empty")
 	}
 
 	// Build user prompt with optional project context
@@ -71,13 +71,13 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 	)
 
 	if err != nil {
-		return shared.DebugResult{}, fmt.Errorf("OpenAI API error: %w", err)
+		return types.DebugResult{}, fmt.Errorf("OpenAI API error: %w", err)
 	}
 
 	// Parse the response
-	var result shared.DebugResult
+	var result types.DebugResult
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return shared.DebugResult{}, fmt.Errorf("failed to parse response: %w", err)
+		return types.DebugResult{}, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	return result, nil

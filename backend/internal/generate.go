@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 
-	shared "fluxion-shared"
+	types "fluxion-shared/types"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
 
-func GeneratePipelineConfig(prompt string, projectContext shared.ProjectContext) (shared.GenerateResult, error) {
+func GeneratePipelineConfig(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),
@@ -67,13 +67,13 @@ Generate a workflow that is specifically tailored to this project type, uses the
 	)
 
 	if err != nil {
-		return shared.GenerateResult{}, fmt.Errorf("OpenAI API error: %w", err)
+		return types.GenerateResult{}, fmt.Errorf("OpenAI API error: %w", err)
 	}
 
 	// Parse the response
-	var result shared.GenerateResult
+	var result types.GenerateResult
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return shared.GenerateResult{}, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
+		return types.GenerateResult{}, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
 			err, resp.Choices[0].Message.Content)
 	}
 
