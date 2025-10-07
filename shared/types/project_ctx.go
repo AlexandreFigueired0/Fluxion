@@ -7,17 +7,17 @@ import (
 
 // ProjectContext contains detected information about the project
 type ProjectContext struct {
-	Languages      []string // e.g., ["Go", "JavaScript"]
-	PrimaryLang    string   // Most likely primary language
-	Dependencies   []string // Key dependencies detected
-	HasTests       bool     // Whether test files were found
-	BuildCommand   string   // Suggested build command
-	TestCommand    string   // Suggested test command
-	PackageManager string   // e.g., "go mod", "npm", "pip"
-	Structure      string   // Project structure description
-	DockerFiles    []string // Dockerfile, docker-compose.yml
-	HasCI          bool     // Has existing CI/CD workflows
-	ExistingCI     []string // Existing workflow files
+	Languages      []string `json:"languages"`       // e.g., ["Go", "JavaScript"]
+	PrimaryLang    string   `json:"primary_lang"`    // Most likely primary language
+	Dependencies   []string `json:"dependencies"`    // Key dependencies detected
+	HasTests       bool     `json:"has_tests"`       // Whether test files were found
+	BuildCommand   string   `json:"build_command"`   // Suggested build command
+	TestCommand    string   `json:"test_command"`    // Suggested test command
+	PackageManager string   `json:"package_manager"` // e.g., "go mod", "npm", "pip"
+	Structure      string   `json:"structure"`       // Project structure description
+	DockerFiles    []string `json:"docker_files"`    // Dockerfile, docker-compose.yml
+	HasCI          bool     `json:"has_ci"`          // Has existing CI/CD workflows
+	ExistingCI     []string `json:"existing_ci"`     // Existing workflow files
 }
 
 // FormatContext formats the project context into a human-readable string for prompts

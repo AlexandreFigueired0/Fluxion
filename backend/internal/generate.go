@@ -8,11 +8,16 @@ import (
 
 	types "fluxion-shared/types"
 
+	"github.com/gin-gonic/gin"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
 
-func GeneratePipelineConfig(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
+func GeneratePipelineConfig(c *gin.Context) {
+
+}
+
+func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),

@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
+	types "fluxion-shared/types"
+	"fluxion/internal"
+	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
-
-	"fluxion/internal"
-
-	types "fluxion-shared/types"
 
 	"github.com/spf13/cobra"
 )
@@ -132,6 +134,38 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 
 }
 
+type requestPayload struct {
+	Prompt         string               `json:"prompt"`
+	ProjectContext types.ProjectContext `json:"project_context"`
+}
+
 func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
-	return types.GenerateResult{}, nil
+	// Prepare request payload
+	payload := requestPayload{
+		Prompt:         prompt,
+		ProjectContext: projectContext,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return types.GenerateResult{}, fmt.Errorf("failed to marshal request payload: %w", err)
+	}
+
+	// Send POST request to backend
+	resp, err := http.Post("http://localhost:8080/generate", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return types.GenerateResult{}, fmt.Errorf("failed to send request to backend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return types.GenerateResult{}, fmt.Errorf("backend returned status: %s", resp.Status)
+	}
+
+	var result types.GenerateResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return types.GenerateResult{}, fmt.Errorf("failed to decode backend response: %w", err)
+	}
+
+	return result, nil
 }
