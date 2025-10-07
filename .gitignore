@@ -3,7 +3,7 @@
 #
 
 test.go
-generated_pipeline.yaml
+*/generated_pipeline.yml
 err.log
 
 # Binaries for programs and plugins

@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const generateEndpoint = "http://localhost:8080/generate"
+
 var (
 	outputPath string
 	promptPath string
@@ -147,7 +149,7 @@ func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (ty
 	}
 
 	// Send POST request to backend
-	resp, err := http.Post("http://localhost:8080/generate", "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post(generateEndpoint, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return types.GenerateResult{}, fmt.Errorf("failed to send request to backend: %w", err)
 	}
