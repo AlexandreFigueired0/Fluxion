@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	types "fluxion-shared/types"
@@ -16,14 +17,18 @@ import (
 func GeneratePipelineConfig(c *gin.Context) {
 	var req types.GenerateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Invalid request payload: %v", err)
 		c.JSON(400, gin.H{"error": "Invalid request payload" + err.Error()})
 		return
 	}
+	log.Printf("Received generate request: prompt=%q, context=%+v", req.Prompt, req.ProjectContext)
 	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
 	if err != nil {
+		log.Printf("Failed to generate pipeline config: %v", err)
 		c.JSON(500, gin.H{"error": "Failed to generate pipeline config: " + err.Error()})
 		return
 	}
+	log.Printf("Successfully generated pipeline config for prompt=%q", req.Prompt)
 	c.JSON(200, result)
 }
 
