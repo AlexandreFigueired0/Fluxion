@@ -5,11 +5,31 @@ import (
 	"encoding/json"
 	types "fluxion-shared/types"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
+
+func DebugPipelineConfig(c *gin.Context) {
+	var req types.DebugRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Invalid request payload: %v", err)
+		c.JSON(400, gin.H{"error": "Invalid request payload: " + err.Error()})
+		return
+	}
+	log.Printf("Received debug request: pipelineConfig=%q, errorLogs=%q, context=%+v", req.PipelineConfig, req.ErrorLogs, req.ProjectContext)
+	result, err := analyzePipelineWithOpenAI(req.PipelineConfig, req.ErrorLogs, req.ProjectContext)
+	if err != nil {
+		log.Printf("Failed to debug pipeline config: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to debug pipeline config: " + err.Error()})
+		return
+	}
+	log.Printf("Successfully analyzed pipeline config for pipelineConfig=%q", req.PipelineConfig)
+	c.JSON(200, result)
+}
 
 func analyzePipelineWithOpenAI(pipelineConfig string, errorLogs string, projectContext types.ProjectContext) (types.DebugResult, error) {
 	if pipelineConfig == "" {
