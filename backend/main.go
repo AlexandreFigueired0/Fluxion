@@ -22,6 +22,7 @@ func main() {
 	r := gin.Default()
 
 	r.POST("/generate", internal.GeneratePipelineConfig)
+	r.POST("/debug", internal.DebugPipelineConfig)
 
 	log.Println("Starting backend server on", address)
 	r.Run(address)

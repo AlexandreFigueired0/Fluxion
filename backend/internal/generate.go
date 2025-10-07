@@ -60,11 +60,10 @@ Test Command: %s
 Package Manager: %s
 Structure: %s
 DockerFiles: %v
-HasCI: %v
 ExistingCI: %v
 
 Generate a workflow that is specifically tailored to this project type, uses the correct build/test commands, and follows best practices.`,
-			prompt, projectContext.PrimaryLang, projectContext.Dependencies, projectContext.BuildCommand, projectContext.TestCommand, projectContext.PackageManager, projectContext.Structure, projectContext.DockerFiles, projectContext.HasCI, projectContext.ExistingCI)
+			prompt, projectContext.PrimaryLang, projectContext.Dependencies, projectContext.BuildCommand, projectContext.TestCommand, projectContext.PackageManager, projectContext.Structure, projectContext.DockerFiles, projectContext.ExistingCI)
 	} else {
 		// Fallback to simple prompt if no context detected
 		userPrompt = "Create a GitHub Actions workflow based on the following prompt:\n" + prompt

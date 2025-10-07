@@ -16,7 +16,6 @@ type ProjectContext struct {
 	PackageManager string   `json:"package_manager"` // e.g., "go mod", "npm", "pip"
 	Structure      string   `json:"structure"`       // Project structure description
 	DockerFiles    []string `json:"docker_files"`    // Dockerfile, docker-compose.yml
-	HasCI          bool     `json:"has_ci"`          // Has existing CI/CD workflows
 	ExistingCI     []string `json:"existing_ci"`     // Existing workflow files
 }
 
@@ -77,7 +76,7 @@ func (ctx *ProjectContext) FormatContext() string {
 		parts = append(parts, fmt.Sprintf("- Docker: %s", strings.Join(ctx.DockerFiles, ", ")))
 	}
 
-	if ctx.HasCI {
+	if len(ctx.ExistingCI) > 0 {
 		parts = append(parts, fmt.Sprintf("- Existing CI/CD: %s", strings.Join(ctx.ExistingCI, ", ")))
 	}
 

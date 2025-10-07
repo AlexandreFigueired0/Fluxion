@@ -3,8 +3,9 @@
 #
 
 test.go
-*/generated_pipeline.yml
+*generated_pipeline.yml
 err.log
+*.log
 
 # Binaries for programs and plugins
 *.exe
