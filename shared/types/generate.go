@@ -7,3 +7,8 @@ type GenerateResult struct {
 	Requirements        []string `json:"requirements"`
 	NextSteps           []string `json:"next_steps"`
 }
+
+type GenerateRequest struct {
+	Prompt         string         `json:"prompt"`
+	ProjectContext ProjectContext `json:"project_context"`
+}
