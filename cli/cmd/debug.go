@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 
 	types "fluxion-shared/types"
@@ -9,6 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+const debugEndpoint = "http://localhost:8080/debug"
 
 var debugCommand = &cobra.Command{
 	Use:   "debug",
@@ -108,5 +113,35 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 }
 
 func sendDebugRequest(pipelineConfig string, errorLogs string, projectContext types.ProjectContext) (types.DebugResult, error) {
-	return types.DebugResult{}, fmt.Errorf("not implemented")
+	// Create the request payload
+	payload := types.DebugRequest{
+		PipelineConfig: pipelineConfig,
+		ErrorLogs:      errorLogs,
+		ProjectContext: projectContext,
+	}
+	// Prepare JSON body
+	jsonBody, err := json.Marshal(payload)
+	if err != nil {
+		return types.DebugResult{}, fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	// Send the request to the backend server
+	response, err := http.Post(debugEndpoint, "application/json", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return types.DebugResult{}, fmt.Errorf("failed to send request to backend: %w", err)
+	}
+	defer response.Body.Close()
+
+	// Check for non-200 status codes
+	if response.StatusCode != http.StatusOK {
+		return types.DebugResult{}, fmt.Errorf("backend returned status code %d", response.StatusCode)
+	}
+
+	// Decode the JSON response
+	var result types.DebugResult
+	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+		return types.DebugResult{}, fmt.Errorf("failed to decode JSON response: %w", err)
+	}
+
+	return result, nil
 }
