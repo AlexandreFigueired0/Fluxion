@@ -24,5 +24,5 @@ func main() {
 	r.POST("/generate", internal.GeneratePipelineConfig)
 
 	log.Println("Starting backend server on", address)
-	r.Run(address) // listen and serve on localhost:8080
+	r.Run(address)
 }
