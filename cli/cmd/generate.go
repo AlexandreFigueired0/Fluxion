@@ -134,14 +134,9 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 
 }
 
-type requestPayload struct {
-	Prompt         string               `json:"prompt"`
-	ProjectContext types.ProjectContext `json:"project_context"`
-}
-
 func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
 	// Prepare request payload
-	payload := requestPayload{
+	payload := types.GenerateRequest{
 		Prompt:         prompt,
 		ProjectContext: projectContext,
 	}

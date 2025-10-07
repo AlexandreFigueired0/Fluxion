@@ -14,7 +14,17 @@ import (
 )
 
 func GeneratePipelineConfig(c *gin.Context) {
-
+	var req types.GenerateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request payload" + err.Error()})
+		return
+	}
+	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to generate pipeline config: " + err.Error()})
+		return
+	}
+	c.JSON(200, result)
 }
 
 func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
