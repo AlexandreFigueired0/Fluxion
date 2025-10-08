@@ -2,9 +2,6 @@
 
 AI-powered toolkit for generating and debugging GitHub Actions workflows with intelligent project awareness. Fluxion ships as a CLI backed by a lightweight API server so you can build, iterate, and fix CI pipelines in minutes.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev)
-
 ---
 
 ## ✨ Highlights
