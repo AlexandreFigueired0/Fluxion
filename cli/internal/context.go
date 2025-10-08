@@ -25,21 +25,24 @@ func DetectProjectContext(workingDir string) (types.ProjectContext, error) {
 
 	runDetectors(workingDir, &ctx)
 
-	subdirs, err := os.ReadDir(workingDir)
-	if err != nil {
-		return ctx, err
-	}
+	// If didn't detect any languages, check subdirectories
+	if len(ctx.Languages) == 0 {
+		subdirs, err := os.ReadDir(workingDir)
+		if err != nil {
+			return ctx, err
+		}
 
-	for _, entry := range subdirs {
-		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
-			subdirPath := filepath.Join(workingDir, entry.Name())
-			runDetectors(subdirPath, &ctx)
+		for _, entry := range subdirs {
+			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+				subdirPath := filepath.Join(workingDir, entry.Name())
+				runDetectors(subdirPath, &ctx)
+			}
 		}
 	}
 
 	// Check for Docker files in all locations
 	dockerFiles := []string{"Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".dockerfile"}
-	filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -51,6 +54,9 @@ func DetectProjectContext(workingDir string) (types.ProjectContext, error) {
 		}
 		return nil
 	})
+	if err != nil {
+		return ctx, err
+	}
 
 	// Check for existing CI/CD
 	ciPath := filepath.Join(workingDir, ".github", "workflows")
@@ -77,7 +83,19 @@ func runDetectors(workingDir string, ctx *types.ProjectContext) {
 	for _, detector := range languageDetectors {
 		if langCtx, err := detector.Detect(workingDir); err == nil && langCtx != nil {
 			ctx.Languages = append(ctx.Languages, langCtx.Language)
-			ctx.HasTests = ctx.HasTests || langCtx.HasTests
+
+			// First detected language becomes primary
+			if ctx.PrimaryLang == "" {
+				ctx.PrimaryLang = langCtx.Language
+				ctx.Dependencies = langCtx.Dependencies
+				ctx.BuildCommand = langCtx.BuildCommand
+				ctx.TestCommand = langCtx.TestCommand
+				ctx.PackageManager = langCtx.PackageManager
+				ctx.HasTests = langCtx.HasTests
+			} else {
+				// Merge additional language info
+				ctx.HasTests = ctx.HasTests || langCtx.HasTests
+			}
 		}
 	}
 }
