@@ -1,76 +1,128 @@
 # Fluxion 🚀
 
-AI-powered CLI tool that generates and debugs GitHub Actions workflows with intelligent project awareness.
+AI-powered toolkit for generating and debugging GitHub Actions workflows with intelligent project awareness. Fluxion ships as a CLI backed by a lightweight API server so you can build, iterate, and fix CI pipelines in minutes.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org)
-
-## ✨ Features
-
-- **🤖 AI-Powered Generation**: Creates GitHub Actions workflows tailored to your project
-- **🔍 Smart Project Detection**: Automatically detects languages, frameworks, and build tools
-- **🐛 Intelligent Debugging**: Analyzes failed workflows and suggests precise fixes
-- **📊 Context-Aware**: Understands your tech stack for accurate configurations
-- **⚡ Fast & Local**: Project scanning happens instantly, offline
-
-### Supported Languages & Frameworks
-
-**Languages:** Go, JavaScript/TypeScript, Python
-
-**Frameworks:** 
-- Go: Cobra, Gin, Fiber, Echo, Gorilla Mux
-- Node: Next.js, React, Vue.js, Angular, Express, NestJS, Vite, Svelte
-- Python: Django, Flask, FastAPI, Tornado, Pyramid
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev)
 
 ---
 
+## ✨ Highlights
+
+- **🤖 AI-Powered Generation** – Tailors GitHub Actions workflows to your repository
+- **🔍 Smart Project Detection** – Picks up languages, frameworks, and build/test commands automatically
+- **🐛 Intelligent Debugging** – Explains workflow failures and recommends fixes
+- **📊 Context-Aware** – Sends only project metadata (never your code) to the model
+- **⚡ Fast & Local** – Context scanning happens instantly on your machine
+
+## 🎯 Why Fluxion?
+
+### Compared to manual authoring
+
+- ⏱️ **10× faster:** minutes instead of hours
+- ✅ **Best practices baked in:** tuned to 2025 GitHub Actions guidance
+- 🎯 **Accurate:** leverages your real build/test commands
+- 📚 **Accessible:** works for both CI beginners and power users
+
+### Compared to generic AI prompts
+
+- 🧠 **Repository-aware:** scans your project structure
+- 🔧 **Command-precise:** avoids hallucinated build steps
+- �️ **Minimal sharing:** only metadata is sent to the model
+
+---
+
+## 🏗️ How it Works
+
+```
+User Request → Project Scan → Context Detection → AI Generation
+                    ↓              ↓                    ↓
+                [go.mod]    [Language: Go]      [Enhanced Prompt]
+                [package.json] [Framework: Next.js]  [with Context]
+                [Dockerfile]   [Has Tests: true]     [GPT-4o API]
+```
+
+1. **Context Scanner** – Inspects repository state offline
+2. **Prompt Enhancer** – Blends user request with project metadata
+3. **AI Generator** – Calls OpenAI GPT-4o with JSON schema enforcement
+
+---
+## 🧭 Repository Layout
+
+```
+.
+├── backend/      # Gin-powered API that talks to OpenAI
+├── cli/          # Cobra-based Fluxion CLI
+├── shared/       # Shared types between the CLI and backend
+├── go.work       # Go workspace wiring the modules together
+└── DevDockerfile # Optional devcontainer image
+```
+
+---
 ## 🚀 Quick Start
 
-### Installation
+### 1. Install prerequisites
 
-**Build from source:**
+- Go **1.25+**
+- An OpenAI API key with access to GPT-4o (`OPENAI_API_KEY`)
+- (Optional) Docker, if you want to run the backend in a container
+
+### 2. Clone and prepare the workspace
+
 ```bash
 git clone https://github.com/AlexandreFigueired0/Fluxion.git
 cd Fluxion
-go build -o fluxion
-sudo mv fluxion /usr/local/bin/
+go work sync            # ensures module replacements are up to date
 ```
 
-**Or download from releases** (coming soon)
+### 3. Export your OpenAI credentials
 
-### Prerequisites
-
-Set your OpenAI API key:
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
 
+### 4. Start the backend API
+
+```bash
+go run ./backend
+```
+
+The server boots on `http://localhost:8080` and exposes `/generate` and `/debug` endpoints.
+
+### 5. Run the CLI against your project
+
+```bash
+# From the Fluxion repo
+go run ./cli generate --output ./generated_pipeline.yml
+
+# Or build/install the binary
+cd cli
+go build -o fluxion
+./fluxion generate
+```
+
+Both `generate` and `debug` commands can run interactively or via flags/prompt files (details below).
+
 ---
 
-## 📖 Usage
+## 📖 CLI Usage
 
-### Generate a Workflow
+### `fluxion generate`
 
-**Interactive mode:**
+Generate a workflow from scratch.
+
 ```bash
-cd your-project/
+# Interactive session (prompts for pipeline description)
 fluxion generate
+
+# Provide a prompt file and output location
+fluxion generate \
+  --prompt_file prompt.txt \
+  --output .github/workflows/ci.yml
 ```
 
-**With prompt file:**
-```bash
-fluxion generate --prompt_file prompt.txt --output .github/workflows/ci.yml
-```
+What you get back:
 
-**Example prompt:**
-```
-Create a workflow that:
-- Builds and tests on every push to main
-- Runs tests with coverage
-- Creates a release when I tag a version
-```
-
-**What Fluxion detects automatically:**
 ```
 🔍 Detected Project Context:
 ───────────────────────────────────────────────────────────────
@@ -83,7 +135,9 @@ Create a workflow that:
 ───────────────────────────────────────────────────────────────
 ```
 
-### Debug a Failed Workflow
+### `fluxion debug`
+
+Analyze an existing workflow alongside failing logs.
 
 ```bash
 fluxion debug \
@@ -91,7 +145,8 @@ fluxion debug \
   --logs error_logs.txt
 ```
 
-**Output example:**
+Sample output:
+
 ```
 🔍 Pipeline Analysis:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -100,154 +155,130 @@ fluxion debug \
 The workflow is using deprecated Node.js 12 action versions
 
 🔧 Fix:
-Update actions in your workflow from v2 to v4:
 - actions/checkout@v2 → actions/checkout@v4
 - actions/setup-node@v2 → actions/setup-node@v4
 
 💡 Explanation:
-GitHub deprecated Node.js 12 runners in 2024. Modern actions 
-require v4 which uses Node.js 20.
+GitHub deprecated Node.js 12 runners in 2024. Modern actions require v4 which uses Node.js 20.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+### Common Flags
+
+| Command | Flag | Description |
+|---------|------|-------------|
+| `generate` | `-o, --output` | Where to write the generated workflow (default `./generated_pipeline.yml`) |
+| `generate` | `-p, --prompt_file` | Path to a text file describing the desired workflow |
+| `debug` | `-f, --file` | Path to the workflow YAML you want to inspect |
+| `debug` | `-l, --logs` | Path to a log file containing the failing run |
+
+Both commands automatically detect your project context; warnings are surfaced if detection is incomplete so you can adjust manually.
+
 ---
 
-## 💡 Examples
+## � Backend API (for automation)
 
-### Example 1: Go CLI Application
+The backend is a thin Gin server that powers the CLI. You can call it directly if you want to integrate Fluxion into other tooling.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/generate` | Generate a workflow from `{ "prompt": string, "projectContext": ProjectContext }` |
+| `POST` | `/debug` | Debug an existing workflow with `{ "pipelineConfig": string, "errorLogs": string, "projectContext": ProjectContext }` |
+
+Environment variables:
+
+- `OPENAI_API_KEY` *(required)* – used server-side to authenticate against the OpenAI API.
+- `GIN_MODE=release` *(optional)* – run the backend without debug logging.
+
+Logs are written to `backend/server.log` by default.
+
+---
+
+## 🛠️ Local Development
+
+- **Run all tests:** `go test ./...`
+- **Lint/Vet (optional but recommended):** `go vet ./...`
+- **Log tailing:** `tail -f backend/server.log`
+- **Regenerate shared types:** see scripts under `shared/` (e.g., `go run ./shared/types/generate.go`).
+
+Because this is a Go workspace, commands such as `go test ./...` or `go build ./cli` should be run from the repository root so that the modules share the `go.work` file.
+
+### Dockerized backend
+
+```bash
+docker build -f backend/Dockerfile -t fluxion-backend .
+docker run --rm -p 8080:8080 -e OPENAI_API_KEY="sk-..." fluxion-backend
+```
+
+Point the CLI (or your own client) at `http://localhost:8080` and you are ready to go.
+
+---
+
+## �💡 Real-World Examples
+
+### Example: Go CLI Application
 
 ```bash
 cd my-go-cli/
 fluxion generate
-# Input: "Create a build and release workflow"
+# "Create a build and release workflow"
 ```
 
-**Generated workflow includes:**
-- ✅ Correct Go version setup with caching
+Produces:
+
+- ✅ Correct Go toolchain with caching
 - ✅ Module download and verification
 - ✅ Cross-platform builds
 - ✅ GitHub release creation
-- ✅ Proper artifact handling
+- ✅ Artifact publishing
 
-### Example 2: Next.js Web App
+### Example: Next.js Web App
 
 ```bash
 cd my-nextjs-app/
 fluxion generate
-# Input: "Build and test on pull requests"
+# "Build and test on pull requests"
 ```
 
-**Generated workflow includes:**
-- ✅ Node.js setup with correct version
-- ✅ Package manager detection (npm/yarn/pnpm)
-- ✅ Dependency caching
-- ✅ Build and test steps
+- ✅ Node.js setup with the right version
+- ✅ pnpm/yarn/npm awareness and caching
+- ✅ Build + test steps
 - ✅ PR-specific triggers
 
-### Example 3: Python API
+### Example: Python API
 
 ```bash
 cd my-flask-api/
 fluxion generate
-# Input: "Run tests and linting on every push"
+# "Run tests and linting on every push"
 ```
 
-**Generated workflow includes:**
-- ✅ Python version setup
-- ✅ pip dependency caching
+- ✅ Python version management
+- ✅ pip caching
 - ✅ pytest with coverage
-- ✅ Linting configuration
-- ✅ Appropriate triggers
-
----
-
-## 🎯 Why Fluxion?
-
-### vs. Manual Workflow Creation
-- ⏱️ **10x faster**: Minutes instead of hours
-- ✅ **Best practices**: Always up-to-date with 2025 standards
-- 🎯 **Accurate**: Uses your actual build commands
-- 📚 **No expertise needed**: Works for beginners and experts
-
-### vs. Generic AI Tools (ChatGPT, etc.)
-- 🧠 **Project-aware**: Scans your actual project structure
-- 🔧 **Correct commands**: Uses your real build/test commands
-- 📦 **Framework-specific**: Knows Next.js vs React vs vanilla Node
-- 🚫 **No hallucinations**: Validates against actual project
-
----
-
-## 🔧 Advanced Usage
-
-### Custom Output Location
-```bash
-fluxion generate --output .github/workflows/custom.yml
-```
-
-### Using Prompt Files
-```bash
-# Create a prompt file
-cat > build-prompt.txt << EOF
-Create a workflow that builds on every PR and deploys to staging
-EOF
-
-fluxion generate --prompt_file build-prompt.txt
-```
-
-### Flags
-
-**Generate command:**
-- `-o, --output`: Output path (default: `./generated_pipeline.yml`)
-- `-p, --prompt_file`: Path to prompt file
-
-**Debug command:**
-- `-f, --file`: Path to workflow file
-- `-l, --logs`: Path to error logs
-
----
-
-## 🏗️ How It Works
-
-```
-User Request → Project Scan → Context Detection → AI Generation → Validation
-                    ↓              ↓                    ↓
-                [go.mod]    [Language: Go]      [Enhanced Prompt]
-                [package.json] [Framework: Next.js]  [with Context]
-                [Dockerfile]   [Has Tests: true]     [GPT-4o API]
-```
-
-**Key Components:**
-1. **Context Scanner**: Analyzes project structure (offline, fast)
-2. **Prompt Enhancer**: Combines user request + project context
-3. **AI Generator**: OpenAI GPT-4o with structured output
-4. **Output Formatter**: Clean, actionable results
+- ✅ Linting hooks
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas we'd love help with:
+We happily welcome PRs! Helpful areas:
 
-- Additional language support (Rust, Java, Ruby, PHP)
-- More framework detection
-- GitLab CI / CircleCI support
-- Workflow optimization features
-- Security scanning capabilities
+- Additional language and framework detectors (Rust, Java, Ruby, PHP)
+- Alternate CI providers (GitLab CI, CircleCI)
+- Security scanning & policy guardrails
+- Local LLM support and caching strategies
 
----
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file
+See open issues or start a discussion before tackling larger features.
 
 ---
 
 ## 🗺️ Roadmap
 
 ### v1.0 (Current)
-- ✅ Generate workflows
-- ✅ Debug workflows
-- ✅ Go/Node/Python support
+- ✅ Workflow generation
+- ✅ Workflow debugging
+- ✅ Go / Node / Python support
 - ✅ Project context detection
 
 ### v1.1 (Next)
@@ -266,25 +297,25 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## ❓ FAQ
 
-**Q: Do I need an OpenAI API key?**  
-A: Yes, currently Fluxion uses OpenAI's GPT-4o. Local LLM support is planned.
+**Do I need an OpenAI API key?**  
+No. You just need the Fluxion Key and enough credits to run your commands.
 
-**Q: What does it cost?**  
-A: Fluxion is free. You only pay for OpenAI API usage (~$0.01-0.05 per workflow).
+**What does it cost?**  
+Fluxion itself is free. You only pay OpenAI usage fees (~$0.01–0.05 per workflow).
 
-**Q: Is my code sent to OpenAI?**  
-A: No! Only project metadata (language, framework, commands) is sent, not your actual code.
+**Is my source code uploaded?**  
+No. Only high-level metadata (language, dependencies, commands) is sent.
 
-**Q: What if detection is wrong?**  
-A: Detection fails gracefully. You can always edit the generated workflow.
+**Detection seems off, now what?**  
+Generation still succeeds. Just tweak the resulting YAML, or rerun with additional hints.
 
 ---
 
 ## 📞 Support
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/AlexandreFigueired0/Fluxion/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/AlexandreFigueired0/Fluxion/discussions)
+- 🐛 [GitHub Issues](https://github.com/AlexandreFigueired0/Fluxion/issues)
+- 💬 [GitHub Discussions](https://github.com/AlexandreFigueired0/Fluxion/discussions)
 
 ---
 
-Made with ❤️ by [Alexandre Figueiredo](https://github.com/AlexandreFigueired0)
+Built with ❤️ by [Alexandre Figueiredo](https://github.com/AlexandreFigueired0)
