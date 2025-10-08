@@ -64,7 +64,7 @@ func (d *NodeDetector) Detect(workingDir string) (*LanguageContext, error) {
 
 // extractNodeDependencies pulls dependency names from package.json content
 func extractNodeDependencies(content string) []string {
-	deps := make([]string, 0)
+	depsMap := make(map[string]bool)
 
 	// Simple regex-like extraction (looking for quoted package names)
 	lines := strings.Split(content, "\n")
@@ -95,11 +95,15 @@ func extractNodeDependencies(content string) []string {
 				// Take last part if scoped (e.g., @angular/core -> core)
 				nameParts := strings.Split(depName, "/")
 				if len(nameParts) > 0 {
-					deps = append(deps, nameParts[len(nameParts)-1])
+					depsMap[nameParts[len(nameParts)-1]] = true
 				}
 			}
 		}
 	}
 
+	deps := make([]string, 0, len(depsMap))
+	for dep := range depsMap {
+		deps = append(deps, dep)
+	}
 	return deps
 }

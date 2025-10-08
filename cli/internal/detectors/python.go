@@ -76,7 +76,7 @@ func (d *PythonDetector) Detect(workingDir string) (*LanguageContext, error) {
 
 // extractPythonDependencies pulls package names from requirements.txt
 func extractPythonDependencies(content string) []string {
-	deps := make([]string, 0)
+	depsMap := make(map[string]bool)
 	lines := strings.Split(content, "\n")
 
 	for _, line := range lines {
@@ -102,9 +102,13 @@ func extractPythonDependencies(content string) []string {
 
 		line = strings.TrimSpace(line)
 		if line != "" {
-			deps = append(deps, line)
+			depsMap[line] = true
 		}
 	}
 
+	deps := make([]string, 0, len(depsMap))
+	for dep := range depsMap {
+		deps = append(deps, dep)
+	}
 	return deps
 }

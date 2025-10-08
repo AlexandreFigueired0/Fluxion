@@ -41,6 +41,8 @@ func (d *GoDetector) Detect(workingDir string) (*LanguageContext, error) {
 	scanner := bufio.NewScanner(file)
 	inRequire := false
 
+	depsMap := make(map[string]bool)
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
@@ -60,10 +62,12 @@ func (d *GoDetector) Detect(workingDir string) (*LanguageContext, error) {
 			parts := strings.Fields(line)
 			if len(parts) >= 1 && !strings.HasPrefix(parts[0], "//") {
 				dep := parts[0]
-				// Collect ALL dependencies - send them all to AI
-				ctx.Dependencies = append(ctx.Dependencies, dep)
+				depsMap[dep] = true
 			}
 		}
+	}
+	for dep := range depsMap {
+		ctx.Dependencies = append(ctx.Dependencies, dep)
 	}
 
 	// Check for test files

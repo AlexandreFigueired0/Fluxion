@@ -40,16 +40,6 @@ func DetectProjectContext(workingDir string) (types.ProjectContext, error) {
 		}
 	}
 
-	// Deduplicate dependencies
-	depSet := make(map[string]struct{})
-	for _, dep := range ctx.Dependencies {
-		depSet[dep] = struct{}{}
-	}
-	ctx.Dependencies = make([]string, 0, len(depSet))
-	for dep := range depSet {
-		ctx.Dependencies = append(ctx.Dependencies, dep)
-	}
-
 	// Check for Docker files in all locations
 	dockerFiles := []string{"Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".dockerfile"}
 	err := filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
