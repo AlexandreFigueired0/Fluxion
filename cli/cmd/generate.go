@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -149,30 +148,9 @@ func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (ty
 		return types.GenerateResult{}, fmt.Errorf("failed to marshal request payload: %w", err)
 	}
 
-	// Optionally show a spinner while the request is in flight (only when stdout is a terminal)
-	done := make(chan struct{})
-	if fi, err := os.Stdout.Stat(); err == nil {
-		if (fi.Mode() & os.ModeCharDevice) != 0 {
-			go func() {
-				frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-				i := 0
-				for {
-					select {
-					case <-done:
-						// clear line and return
-						fmt.Print("\r")
-						return
-					default:
-						fmt.Printf("\r%s Generating pipeline... ", frames[i%len(frames)])
-						time.Sleep(100 * time.Millisecond)
-						i++
-					}
-				}
-			}()
-			// ensure spinner stops when this function returns
-			defer close(done)
-		}
-	}
+	spinner := internal.NewSpinner("Generating pipeline...")
+	spinner.Start()
+	defer spinner.Stop()
 
 	// Send POST request to backend
 	resp, err := http.Post(generateEndpoint, "application/json", bytes.NewBuffer(body))

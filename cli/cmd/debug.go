@@ -125,6 +125,10 @@ func sendDebugRequest(pipelineConfig string, errorLogs string, projectContext ty
 		return types.DebugResult{}, fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
+	spinner := internal.NewSpinner("Analyzing pipeline...")
+	spinner.Start()
+	defer spinner.Stop()
+
 	// Send the request to the backend server
 	response, err := http.Post(debugEndpoint, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
