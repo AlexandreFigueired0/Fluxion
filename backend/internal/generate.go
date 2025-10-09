@@ -15,13 +15,23 @@ import (
 )
 
 func GeneratePipelineConfig(c *gin.Context) {
+	// Read Authorization header
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+		log.Printf("Missing or invalid Authorization header")
+		c.JSON(401, gin.H{"error": "Missing or invalid Authorization header"})
+		return
+	}
+	token := authHeader[7:]
+	// TODO: Validate token, check user credits, etc.
+
 	var req types.GenerateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("Invalid request payload: %v", err)
 		c.JSON(400, gin.H{"error": "Invalid request payload" + err.Error()})
 		return
 	}
-	log.Printf("Received generate request: prompt=%q, context=%+v", req.Prompt, req.ProjectContext)
+	log.Printf("Received generate request: user_token=%s, prompt=%q, context=%+v", token, req.Prompt, req.ProjectContext)
 	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
 	if err != nil {
 		log.Printf("Failed to generate pipeline config: %v", err)
