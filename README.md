@@ -270,28 +270,6 @@ See open issues or start a discussion before tackling larger features.
 
 ---
 
-## 🗺️ Roadmap
-
-### v1.0 (Current)
-- ✅ Workflow generation
-- ✅ Workflow debugging
-- ✅ Go / Node / Python support
-- ✅ Project context detection
-
-### v1.1 (Next)
-- [ ] Enhanced prompt engineering
-- [ ] More language support
-- [ ] Workflow optimization
-- [ ] Security scanning
-
-### v2.0 (Future)
-- [ ] Local LLM support
-- [ ] GitLab CI support
-- [ ] Web interface
-- [ ] Team collaboration features
-
----
-
 ## ❓ FAQ
 
 **Do I need an OpenAI API key?**  

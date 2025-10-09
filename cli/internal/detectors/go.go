@@ -71,13 +71,14 @@ func (d *GoDetector) Detect(workingDir string) (*LanguageContext, error) {
 	}
 
 	// Check for test files
-	filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
-		if !info.IsDir() && strings.HasSuffix(info.Name(), "_test.go") {
+		if !info.IsDir() && strings.HasSuffix(info.Name(), "test.go") {
 			ctx.HasTests = true
-			return filepath.SkipAll
+			// Stop walking further since we found a test file
+			return os.ErrExist // any non-nil error will stop the walk
 		}
 		return nil
 	})
