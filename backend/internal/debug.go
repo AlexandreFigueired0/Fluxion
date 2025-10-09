@@ -14,13 +14,23 @@ import (
 )
 
 func DebugPipelineConfig(c *gin.Context) {
+	// Read Authorization header
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+		log.Printf("Missing or invalid Authorization header")
+		c.JSON(401, gin.H{"error": "Missing or invalid Authorization header"})
+		return
+	}
+	token := authHeader[7:]
+	// TODO: Validate token, check user credits, etc.
+
 	var req types.DebugRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("Invalid request payload: %v", err)
 		c.JSON(400, gin.H{"error": "Invalid request payload: " + err.Error()})
 		return
 	}
-	log.Printf("Received debug request: pipelineConfig=%q, errorLogs=%q, context=%+v", req.PipelineConfig, req.ErrorLogs, req.ProjectContext)
+	log.Printf("Received debug request: user_token=%s, pipelineConfig=%q, errorLogs=%q, context=%+v", token, req.PipelineConfig, req.ErrorLogs, req.ProjectContext)
 	result, err := analyzePipelineWithOpenAI(req.PipelineConfig, req.ErrorLogs, req.ProjectContext)
 	if err != nil {
 		log.Printf("Failed to debug pipeline config: %v", err)

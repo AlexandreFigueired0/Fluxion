@@ -26,24 +26,24 @@ func init() {
 	rootCmd.AddCommand(debugCommand)
 	debugCommand.Flags().StringP("file", "f", "", "Path to your pipeline configuration file")
 	debugCommand.Flags().StringP("logs", "l", "", "Path to your pipeline execution logs, with errors to assess in debugging")
-	debugCommand.Flags().StringP("api-key", "k", "", "Your Fluxion key")
+	debugCommand.Flags().StringP("api-key", "k", "", "Your Fluxion key (can also be set via FLUXION_KEY env var)")
 
 }
 
 func debugPipeline(cmd *cobra.Command, args []string) {
 	file, _ := cmd.Flags().GetString("file")
 	logs, _ := cmd.Flags().GetString("logs")
-	// apiKey, _ := cmd.Flags().GetString("api-key")
+	apiKey, _ := cmd.Flags().GetString("api-key")
 
 	// If no API key provided via flag, check environment variable
-	// if apiKey == "" {
-	// 	apiKey = os.Getenv("FLUXION_KEY")
-	// }
+	if apiKey == "" {
+		apiKey = os.Getenv("FLUXION_KEY")
+	}
 
-	// if apiKey == "" {
-	// 	cmd.PrintErrln("Error: Fluxion key is required. Set it via --api-key flag or FLUXION_KEY environment variable.")
-	// 	return
-	// }
+	if apiKey == "" {
+		cmd.PrintErrln("Error: Fluxion key is required. Set it via --api-key flag or FLUXION_KEY environment variable.")
+		return
+	}
 
 	if file == "" || logs == "" {
 		values, err := internal.RunTextInteractiveMode([]internal.TextInteractive{
@@ -97,7 +97,7 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	}
 
 	// Debug the pipeline configuration using AI
-	analysis, err := sendDebugRequest(pipelineConfig, errorLogs, projectContext)
+	analysis, err := sendDebugRequest(pipelineConfig, errorLogs, projectContext, apiKey)
 	if err != nil {
 		cmd.PrintErrln("Error analyzing pipeline configuration:", err)
 		return
@@ -112,7 +112,7 @@ func debugPipeline(cmd *cobra.Command, args []string) {
 	cmd.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 }
 
-func sendDebugRequest(pipelineConfig string, errorLogs string, projectContext types.ProjectContext) (types.DebugResult, error) {
+func sendDebugRequest(pipelineConfig string, errorLogs string, projectContext types.ProjectContext, apiKey string) (types.DebugResult, error) {
 	// Create the request payload
 	payload := types.DebugRequest{
 		PipelineConfig: pipelineConfig,
@@ -129,8 +129,16 @@ func sendDebugRequest(pipelineConfig string, errorLogs string, projectContext ty
 	spinner.Start()
 	defer spinner.Stop()
 
-	// Send the request to the backend server
-	response, err := http.Post(debugEndpoint, "application/json", bytes.NewBuffer(jsonBody))
+	// Create request with Authorization header
+	req, err := http.NewRequest("POST", debugEndpoint, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return types.DebugResult{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{}
+	response, err := client.Do(req)
 	if err != nil {
 		return types.DebugResult{}, fmt.Errorf("failed to send request to backend: %w", err)
 	}
