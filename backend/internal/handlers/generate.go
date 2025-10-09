@@ -1,8 +1,9 @@
-package internal
+package handlers
 
 import (
 	"context"
 	"encoding/json"
+	"fluxion-be/internal"
 	"fmt"
 	"log"
 	"os"
@@ -12,9 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	supa "github.com/supabase-community/supabase-go"
 )
 
-func GeneratePipelineConfig(c *gin.Context) {
+type GenerateHandler struct {
+	DB *supa.Client
+}
+
+func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	// Read Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
@@ -50,7 +56,7 @@ func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (ty
 
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:   "generate_result",
-		Schema: GenerateSchema,
+		Schema: internal.GenerateSchema,
 		Strict: openai.Bool(true),
 	}
 
@@ -84,7 +90,7 @@ Generate a workflow that is specifically tailored to this project type, uses the
 		openai.ChatCompletionNewParams{
 			Model: openai.ChatModelGPT4o,
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(GenerateSystemPrompt),
+				openai.SystemMessage(internal.GenerateSystemPrompt),
 				openai.UserMessage(userPrompt),
 			},
 			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{

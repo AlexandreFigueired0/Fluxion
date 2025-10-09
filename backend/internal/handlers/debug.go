@@ -1,8 +1,9 @@
-package internal
+package handlers
 
 import (
 	"context"
 	"encoding/json"
+	"fluxion-be/internal"
 	types "fluxion-shared/types"
 	"fmt"
 	"log"
@@ -11,9 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	supa "github.com/supabase-community/supabase-go"
 )
 
-func DebugPipelineConfig(c *gin.Context) {
+type DebugHandler struct {
+	DB *supa.Client
+}
+
+func (h *DebugHandler) DebugPipelineConfig(c *gin.Context) {
 	// Read Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
@@ -80,7 +86,7 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:   "debug_result",
-		Schema: DebugSchema,
+		Schema: internal.DebugSchema,
 		Strict: openai.Bool(true),
 	}
 
@@ -89,7 +95,7 @@ Provide the root cause, exact fix, and brief explanation.`, pipelineConfig, erro
 		openai.ChatCompletionNewParams{
 			Model: openai.ChatModelGPT4o,
 			Messages: []openai.ChatCompletionMessageParamUnion{
-				openai.SystemMessage(DebugSystemPrompt),
+				openai.SystemMessage(internal.DebugSystemPrompt),
 				openai.UserMessage(userPrompt),
 			},
 			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
