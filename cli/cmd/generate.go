@@ -18,6 +18,7 @@ const generateEndpoint = "http://localhost:8080/generate"
 var (
 	outputPath string
 	promptPath string
+	apiKey     string
 )
 
 var generateCmd = &cobra.Command{
@@ -32,11 +33,21 @@ func init() {
 
 	generateCmd.Flags().StringVarP(&outputPath, "output", "o", "./generated_pipeline.yml", "Output path for the generated configuration file")
 	generateCmd.Flags().StringVarP(&promptPath, "prompt_file", "p", "", "Path to a file containing the pipeline description prompt")
+	generateCmd.Flags().StringVarP(&apiKey, "api-key", "k", "", "Your Fluxion key (can also be set via FLUXION_KEY env var)")
 }
 
 func generateConfiguration(cmd *cobra.Command, args []string) {
 	var prompt string
 	var err error
+
+	// Get API key from flag or environment
+	if apiKey == "" {
+		apiKey = os.Getenv("FLUXION_KEY")
+	}
+	if apiKey == "" {
+		cmd.PrintErrln("Error: Fluxion key is required. Set it via --api-key flag or FLUXION_KEY environment variable.")
+		return
+	}
 	if promptPath == "" {
 		values, err := internal.RunTextInteractiveMode([]internal.TextInteractive{
 			{
@@ -82,7 +93,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 		cmd.Println()
 	}
 
-	generatedConfig, err := sendGenerateRequest(prompt, projectContext)
+	generatedConfig, err := sendGenerateRequest(prompt, projectContext, apiKey)
 	if err != nil {
 		cmd.PrintErrln("❌ Error generating pipeline configuration:", err)
 		return
@@ -136,7 +147,7 @@ func generateConfiguration(cmd *cobra.Command, args []string) {
 
 }
 
-func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
+func sendGenerateRequest(prompt string, projectContext types.ProjectContext, apiKey string) (types.GenerateResult, error) {
 	// Prepare request payload
 	payload := types.GenerateRequest{
 		Prompt:         prompt,
@@ -152,8 +163,16 @@ func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (ty
 	spinner.Start()
 	defer spinner.Stop()
 
-	// Send POST request to backend
-	resp, err := http.Post(generateEndpoint, "application/json", bytes.NewBuffer(body))
+	// Create request with Authorization header
+	req, err := http.NewRequest("POST", generateEndpoint, bytes.NewBuffer(body))
+	if err != nil {
+		return types.GenerateResult{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return types.GenerateResult{}, fmt.Errorf("failed to send request to backend: %w", err)
 	}
