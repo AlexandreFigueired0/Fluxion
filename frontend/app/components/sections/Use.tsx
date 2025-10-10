@@ -1,4 +1,6 @@
-export function Use() {
+import React from 'react'
+
+const Use = () => {
   const steps = [
     {
       num: "01",
@@ -41,3 +43,5 @@ export function Use() {
     </div>
   );
 }
+
+export default Use;

@@ -1,5 +1,6 @@
-// components/layout/Nav.tsx
-export function Nav() {
+import React from 'react'
+
+const Nav = () => {
   return (
     <nav className="px-8 py-6 flex justify-between items-center border-b border-zinc-800">
       <div className="flex items-center gap-2">
@@ -18,3 +19,5 @@ export function Nav() {
     </nav>
   );
 }
+
+export default Nav;

@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/Button';
+import Button from '../ui/Button';
 
-export function CTA() {
+const CTA = () => {
   return (
     <div className="max-w-4xl mx-auto px-8 py-32 text-center border-t border-zinc-800">
       <h2 className="text-5xl font-black mb-6">
@@ -17,3 +17,4 @@ export function CTA() {
   );
 }
 
+export default CTA;

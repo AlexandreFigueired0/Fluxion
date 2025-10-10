@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { AlertCircle, Zap } from 'lucide-react';
+import React from 'react'
+import { useState, useEffect } from 'react'
+import { AlertCircle, Zap } from 'lucide-react'
 
-export function TerminalDemo() {
+const TerminalDemo = () => {
   const [terminalText, setTerminalText] = useState('');
   const [showOutput, setShowOutput] = useState(false);
   
@@ -74,6 +75,8 @@ export function TerminalDemo() {
     </div>
   );
 }
+
+export default TerminalDemo;
 
 // components/sections/ProblemSolution.tsx
 export function ProblemSolution() {

@@ -1,8 +1,8 @@
-// components/sections/Hero.tsx
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import React from 'react'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import  Button from '../ui/Button'
 
-export function Hero() {
+const Hero = () => {
   return (
     <div className="max-w-7xl mx-auto px-8 pt-32 pb-24">
       <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -50,3 +50,5 @@ export function Hero() {
     </div>
   );
 }
+
+export default Hero;
