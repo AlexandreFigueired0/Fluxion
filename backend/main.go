@@ -24,8 +24,8 @@ func main() {
 	generateHandler := &handlers.GenerateHandler{DB: db_conn}
 	debugHandler := &handlers.DebugHandler{DB: db_conn}
 
-	r.POST("/generate", generateHandler.GeneratePipelineConfig)
-	r.POST("/debug", debugHandler.DebugPipelineConfig)
+	r.POST("/api/generate", generateHandler.GeneratePipelineConfig)
+	r.POST("/api/debug", debugHandler.DebugPipelineConfig)
 
 	log.Println("Starting backend server on", address)
 	r.Run(address)

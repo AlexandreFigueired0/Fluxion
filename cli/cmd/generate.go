@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const generateEndpoint = "http://localhost:8080/generate"
+const generateEndpoint = "http://localhost:8080/api/generate"
 
 var (
 	outputPath string

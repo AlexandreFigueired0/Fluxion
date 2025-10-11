@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const debugEndpoint = "http://localhost:8080/debug"
+const debugEndpoint = "http://localhost:8080/api/debug"
 
 var debugCommand = &cobra.Command{
 	Use:   "debug",
