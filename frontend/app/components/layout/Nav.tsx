@@ -2,7 +2,7 @@ import React from 'react'
 
 const Nav = () => {
   return (
-    <nav className="px-8 py-6 flex justify-between items-center border-b border-zinc-800">
+    <nav className="px-8 py-6 bg-zinc-900 flex justify-between items-center border-b border-zinc-800">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-black text-sm">
           FX
