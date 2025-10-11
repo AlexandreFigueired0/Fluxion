@@ -12,13 +12,6 @@ export default function Home() {
       {/* Grid background */}
       <div 
         className="fixed inset-0 opacity-20"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgb(82, 82, 91) 1px, transparent 1px),
-            linear-gradient(to bottom, rgb(82, 82, 91) 1px, transparent 1px)
-          `,
-          backgroundSize: '80px 80px'
-        }}
       />
 
       <div className="relative z-10">

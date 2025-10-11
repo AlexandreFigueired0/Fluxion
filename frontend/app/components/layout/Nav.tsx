@@ -10,7 +10,7 @@ const Nav = () => {
         <span className="text-xl font-bold">FLUXION</span>
       </div>
       <div className="space-x-8">
-        <a href="#" className="text-zinc-400 hover:text-white transition">Documentation</a>
+        <a href="#" className="text-zinc-400 hover:text-white transition">Login</a>
         <a href="#" className="text-zinc-400 hover:text-white transition">Pricing</a>
         <button className="bg-orange-600 text-white px-6 py-2 rounded font-semibold hover:bg-orange-700 transition">
           Get Started
