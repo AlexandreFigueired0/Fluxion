@@ -1,5 +1,6 @@
 import React from 'react'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import Link from 'next/link'
 import  Button from '../ui/Button'
 
 const Hero = () => {
@@ -24,12 +25,11 @@ const Hero = () => {
 
           <div className="flex gap-4">
             <Button>
-              <span className="flex items-center gap-2">
+              <Link href="/login" className="flex items-center gap-2">
                 Start for Free
                 <ArrowRight size={20} />
-              </span>
+              </Link>
             </Button>
-            <Button variant="secondary">View on GitHub</Button>
           </div>
 
           <div className="mt-12 flex items-center gap-8 text-sm">
