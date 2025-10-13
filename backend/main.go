@@ -24,8 +24,16 @@ func main() {
 	generateHandler := &handlers.GenerateHandler{DB: db_conn}
 	debugHandler := &handlers.DebugHandler{DB: db_conn}
 
-	r.POST("/api/generate", generateHandler.GeneratePipelineConfig)
-	r.POST("/api/debug", debugHandler.DebugPipelineConfig)
+	commands := r.Group("/api")
+	commands.POST("/generate", generateHandler.GeneratePipelineConfig)
+	commands.POST("/debug", debugHandler.DebugPipelineConfig)
+
+
+	authHandler := &handlers.AuthHandler{DB: db_conn}
+	auth := r.Group("/api/auth")
+	auth.POST("/signup", authHandler.HandleSignup) // Email/password signup
+	auth.POST("/login", authHandler.HandleLogin)   // Email/password login
+	auth.POST("/oauth", authHandler.HandleOAuth)   // Google/GitHub OAuth
 
 	log.Println("Starting backend server on", address)
 	r.Run(address)

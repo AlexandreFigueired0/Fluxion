@@ -5,13 +5,18 @@ import (
 	"log"
 	"net/http"
 
+	db "fluxion-be/internal/db"
+	"fluxion-be/internal/models"
+
 	"github.com/gin-gonic/gin"
+	supa "github.com/supabase-community/supabase-go"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthHandler holds the database connection
 type AuthHandler struct {
-	DB *sql.DB
+	DB *supa.Client
 }
 
 // Request structs
@@ -33,7 +38,6 @@ type OAuthRequest struct {
 	ProviderID string `json:"providerId" binding:"required"`
 }
 
-
 // HandleSignup - POST /api/auth/signup
 func (h *AuthHandler) HandleSignup(c *gin.Context) {
 	var req SignupRequest
@@ -48,21 +52,18 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 	log.Printf("📝 Signup attempt: %s (%s)", req.Name, req.Email)
 
 	// Check if user exists
-	var exists bool
-	err := h.DB.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)",
-		req.Email,
-	).Scan(&exists)
+	var user *models.User
+	user, err := db.GetUserByEmail(req.Email, h.DB)
+
+	if err == sql.ErrNoRows {
+		log.Printf("⚠️  User not found: %s", req.Email)
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
+		return
+	}
 
 	if err != nil {
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
-		return
-	}
-
-	if exists {
-		log.Printf("⚠️  User already exists: %s", req.Email)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "User already exists"})
 		return
 	}
 
@@ -77,18 +78,7 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 		return
 	}
 
-	// Create user with 50 free credits
-	var user User
-	err = h.DB.QueryRow(`
-		INSERT INTO users (name, email, password_hash, provider, credits) 
-		VALUES ($1, $2, $3, $4, $5) 
-		RETURNING id, name, email, credits`,
-		req.Name,
-		req.Email,
-		string(hashedPassword),
-		"credentials",
-		50,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Credits)
+	user, err = db.CreateUser(req.Name, req.Email, string(hashedPassword), h.DB)
 
 	if err != nil {
 		log.Println("❌ Error creating user:", err)
@@ -121,15 +111,8 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 	log.Printf("🔐 Login attempt: %s", req.Email)
 
 	// Find user
-	var user User
-	var passwordHash string
-	err := h.DB.QueryRow(`
-		SELECT id, name, email, password_hash, credits
-		FROM users 
-		WHERE email = $1 AND provider = $2`,
-		req.Email,
-		"credentials",
-	).Scan(&user.ID, &user.Name, &user.Email, &passwordHash, &user.Credits)
+	var user *models.User
+	user, err := db.GetUserByEmail(req.Email, h.DB)
 
 	if err == sql.ErrNoRows {
 		log.Printf("⚠️  User not found: %s", req.Email)
@@ -145,7 +128,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 
 	// Verify password
 	err = bcrypt.CompareHashAndPassword(
-		[]byte(passwordHash),
+		[]byte(user.PasswordHash),
 		[]byte(req.Password),
 	)
 	if err != nil {
@@ -162,8 +145,8 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		"email":   user.Email,
 		"credits": user.Credits,
 	})
-}
-
+	
+// TODO
 // HandleOAuth - POST /api/auth/oauth
 func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 	var req OAuthRequest
@@ -176,13 +159,20 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 	log.Printf("🔑 OAuth login attempt: %s via %s", req.Email, req.Provider)
 
 	// Check if user exists
-	var user User
-	err := h.DB.QueryRow(`
-		SELECT id, name, email, credits
-		FROM users 
-		WHERE email = $1`,
-		req.Email,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Credits)
+	var user *models.User
+	user, err := db.GetUserByEmail(req.Email, h.DB)
+
+	if err == sql.ErrNoRows {
+		log.Printf("⚠️  User not found: %s", req.Email)
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
+		return
+	}
+
+	if err != nil {
+		log.Println("❌ Database error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
 
 	if err == sql.ErrNoRows {
 		// Create new OAuth user
