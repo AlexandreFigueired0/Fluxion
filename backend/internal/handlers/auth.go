@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 
 	db "fluxion-be/internal/db"
-	"fluxion-be/internal/models"
 
 	"github.com/gin-gonic/gin"
 	supa "github.com/supabase-community/supabase-go"
@@ -51,17 +50,14 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 
 	log.Printf("📝 Signup attempt: %s (%s)", req.Name, req.Email)
 
-	// Check if user exists
-	var user *models.User
-	user, err := db.GetUserByEmail(req.Email, h.DB)
-
-	if err == sql.ErrNoRows {
-		log.Printf("⚠️  User not found: %s", req.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
+	// Ensure the email is not already registered
+	_, err := db.GetUserByEmail(req.Email, h.DB)
+	if err == nil {
+		log.Printf("⚠️  User already exists: %s", req.Email)
+		c.JSON(http.StatusConflict, gin.H{"message": "User already exists"})
 		return
 	}
-
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrUserNotFound) {
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
@@ -78,7 +74,7 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 		return
 	}
 
-	user, err = db.CreateUser(req.Name, req.Email, string(hashedPassword), h.DB)
+	user, err := db.CreateUser(req.Name, req.Email, string(hashedPassword), h.DB)
 
 	if err != nil {
 		log.Println("❌ Error creating user:", err)
@@ -110,28 +106,24 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 
 	log.Printf("🔐 Login attempt: %s", req.Email)
 
-	// Find user
-	var user *models.User
 	user, err := db.GetUserByEmail(req.Email, h.DB)
-
-	if err == sql.ErrNoRows {
-		log.Printf("⚠️  User not found: %s", req.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
-		return
-	}
-
 	if err != nil {
+		if errors.Is(err, db.ErrUserNotFound) {
+			log.Printf("⚠️  User not found: %s", req.Email)
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
+			return
+		}
+
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
 	}
 
 	// Verify password
-	err = bcrypt.CompareHashAndPassword(
+	if err := bcrypt.CompareHashAndPassword(
 		[]byte(user.PasswordHash),
 		[]byte(req.Password),
-	)
-	if err != nil {
+	); err != nil {
 		log.Printf("⚠️  Invalid password for: %s", req.Email)
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
 		return
@@ -145,8 +137,8 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		"email":   user.Email,
 		"credits": user.Credits,
 	})
-	
-// TODO
+}
+
 // HandleOAuth - POST /api/auth/oauth
 func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 	var req OAuthRequest
@@ -159,36 +151,15 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 	log.Printf("🔑 OAuth login attempt: %s via %s", req.Email, req.Provider)
 
 	// Check if user exists
-	var user *models.User
 	user, err := db.GetUserByEmail(req.Email, h.DB)
 
-	if err == sql.ErrNoRows {
-		log.Printf("⚠️  User not found: %s", req.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid credentials"})
-		return
-	}
-
-	if err != nil {
-		log.Println("❌ Database error:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		// Create new OAuth user
+	switch {
+	case err == nil:
+		log.Printf("✅ Existing user logged in: %s (ID: %d)", user.Email, user.ID)
+	case errors.Is(err, db.ErrUserNotFound):
 		log.Printf("📝 Creating new %s user: %s", req.Provider, req.Email)
 
-		err = h.DB.QueryRow(`
-			INSERT INTO users (name, email, provider, provider_id, credits) 
-			VALUES ($1, $2, $3, $4, $5) 
-			RETURNING id, name, email, credits`,
-			req.Name,
-			req.Email,
-			req.Provider,
-			req.ProviderID,
-			50,
-		).Scan(&user.ID, &user.Name, &user.Email, &user.Credits)
-
+		user, err = db.CreateOAuthUser(req.Name, req.Email, req.Provider, req.ProviderID, h.DB)
 		if err != nil {
 			log.Println("❌ Error creating OAuth user:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
@@ -197,13 +168,10 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 
 		log.Printf("✅ Created new %s user: %s (ID: %d) with %d credits",
 			req.Provider, user.Email, user.ID, user.Credits)
-
-	} else if err != nil {
+	default:
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
-	} else {
-		log.Printf("✅ Existing user logged in: %s (ID: %d)", user.Email, user.ID)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
