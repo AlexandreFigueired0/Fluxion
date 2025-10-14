@@ -52,6 +52,7 @@ const handler = NextAuth({
     async signIn({ user, account, profile }) {
       // For OAuth providers (Google/GitHub), create user in your backend
       if (account?.provider === "google" || account?.provider === "github") {
+        console.log("Provider account:", account)
         try {
           await fetch(`${process.env.BACKEND_URL}/api/auth/oauth`, {
             method: "POST",
