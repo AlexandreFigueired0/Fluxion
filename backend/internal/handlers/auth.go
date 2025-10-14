@@ -52,14 +52,14 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 
 	// Ensure the email is not already registered
 	_, err := db.GetUserByEmail(req.Email, h.DB)
-	if err == nil {
-		log.Printf("⚠️  User already exists: %s", req.Email)
-		c.JSON(http.StatusConflict, gin.H{"message": "User already exists"})
-		return
-	}
 	if err != nil && !errors.Is(err, db.ErrUserNotFound) {
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+	if err == nil {
+		log.Printf("⚠️  User already exists: %s", req.Email)
+		c.JSON(http.StatusConflict, gin.H{"message": "User already exists"})
 		return
 	}
 

@@ -14,7 +14,7 @@ var ErrUserNotFound = errors.New("user not found")
 // Get user by email
 func GetUserByEmail(email string, db *supa.Client) (*models.User, error) {
 	var users []models.User
-	_, err := db.From("users").Select("*", "", false).Eq("email", email).Limit(1).ExecuteTo(&users)
+	_, err := db.From("users").Select("*", "", false).Eq("email", email).Limit(1, "").ExecuteTo(&users)
 	if err != nil {
 		return nil, err
 	}
