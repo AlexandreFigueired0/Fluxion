@@ -12,7 +12,9 @@
 		"--env-file",
 		".devcontainer/devcontainer.env",
 		"--name",
-		"fluxion-devcontainer"
+		"fluxion-devcontainer",
+		"--network",
+		"fluxion_net"
 	],
 	"customizations": {
 		"vscode": {
