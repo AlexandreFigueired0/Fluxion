@@ -123,7 +123,7 @@ export default function DashboardPage() {
               </div>
               
               <p className="text-xs text-zinc-500 mt-3">
-                Keep this secret. Don't commit it to git.
+                Keep this secret. Don&apos;t commit it to git.
               </p>
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-zinc-400 mb-2">3. Generate your first workflow</p>
                 <code className="block px-4 py-3 bg-zinc-950 border border-zinc-800 rounded font-mono text-sm text-orange-400">
-                  fluxion generate "build and test my app"
+                  fluxion generate &quot;build and test my app&quot;
                 </code>
               </div>
             </div>
