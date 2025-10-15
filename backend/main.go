@@ -34,6 +34,11 @@ func main() {
 	auth.POST("/login", authHandler.HandleLogin)   // Email/password login
 	auth.POST("/oauth", authHandler.HandleOAuth)   // Google/GitHub OAuth
 
+	// User routes
+	userHandler := &handlers.UserHandler{DB: db_conn}
+	userRoutes := r.Group("/api/users")
+	userRoutes.GET("/:id", userHandler.GetUserByID)
+
 	log.Println("Starting backend server on", address)
 	r.Run(address)
 }

@@ -62,3 +62,16 @@ func CreateOAuthUser(name, email, provider, providerID string, db *supa.Client) 
 	}
 	return &user, nil
 }
+
+// GetUserByID retrieves a user by their ID
+func GetUserByID(id string, db *supa.Client) (*models.User, error) {
+	var users []models.User
+	_, err := db.From("users").Select("*", "", false).Eq("id", id).Limit(1, "").ExecuteTo(&users)
+	if err != nil {
+		return nil, err
+	}
+	if len(users) == 0 {
+		return nil, ErrUserNotFound
+	}
+	return &users[0], nil
+}
