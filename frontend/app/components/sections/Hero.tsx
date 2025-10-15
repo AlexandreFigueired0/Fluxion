@@ -25,7 +25,7 @@ const Hero = () => {
 
           <div className="flex gap-4">
             <Button>
-              <Link href="/login" className="flex items-center gap-2">
+              <Link href="/login" className="flex items-center gap-2 cursor-pointer">
                 Start for Free
                 <ArrowRight size={20} />
               </Link>

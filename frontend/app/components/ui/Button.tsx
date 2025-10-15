@@ -9,7 +9,7 @@ interface ButtonProps {
 }
 
 const Button = ({ children, variant = 'primary', onClick, className = '' }: ButtonProps) => {
-  const baseStyles = "px-8 py-4 rounded font-bold transition";
+  const baseStyles = "px-8 py-4 rounded font-bold transition cursor-pointer";
   const variants = {
     primary: "bg-orange-600 text-white hover:bg-orange-700",
     secondary: "border-2 border-zinc-700 hover:border-zinc-600"

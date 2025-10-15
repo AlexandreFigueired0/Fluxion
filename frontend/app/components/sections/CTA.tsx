@@ -10,7 +10,7 @@ const CTA = () => {
       <p className="text-xl text-zinc-400 mb-12">
         50 free credits. No credit card. Get your API key in 30 seconds.
       </p>
-      <Button className="text-lg px-12 py-5">
+      <Button className="text-lg px-12 py-5 cursor-pointer">
         Get Started Free →
       </Button>
     </div>

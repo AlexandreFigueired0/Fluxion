@@ -11,9 +11,9 @@ const Nav = () => {
         <span className="text-xl font-bold">FLUXION</span>
       </div>
       <div className="space-x-8">
-        <Link href="/login" className="text-zinc-400 hover:text-white transition">Login</Link>
-        <a href="#" className="text-zinc-400 hover:text-white transition">Pricing</a>
-        <Link href="/login" className="bg-orange-600 text-white px-6 py-2 rounded font-semibold hover:bg-orange-700 transition">
+        <Link href="/login" className="text-zinc-400 hover:text-white transition cursor-pointer">Login</Link>
+        <a href="#" className="text-zinc-400 hover:text-white transition cursor-pointer">Pricing</a>
+        <Link href="/login" className="bg-orange-600 text-white px-6 py-2 rounded font-semibold hover:bg-orange-700 transition cursor-pointer">
           Get Started
         </Link>
       </div>

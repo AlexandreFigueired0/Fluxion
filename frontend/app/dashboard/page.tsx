@@ -42,12 +42,12 @@ export default function DashboardPage() {
           </Link>
           
           <div className="flex items-center gap-6">
-            <Link href="/docs" className="text-zinc-400 hover:text-white transition">
+            <Link href="/docs" className="text-zinc-400 hover:text-white transition cursor-pointer">
               Docs
             </Link>
             <button 
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="flex items-center gap-2 text-zinc-400 hover:text-white transition"
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition cursor-pointer"
             >
               <LogOut size={18} />
               <span>Logout</span>
@@ -72,7 +72,7 @@ export default function DashboardPage() {
                 </div>
                 <Link 
                   href="/pricing" 
-                  className="text-sm text-orange-500 hover:text-orange-400 transition font-semibold"
+                  className="text-sm text-orange-500 hover:text-orange-400 transition font-semibold cursor-pointer"
                 >
                   Buy more
                 </Link>
@@ -98,7 +98,7 @@ export default function DashboardPage() {
                 <div className="w-10 h-10 bg-orange-600/20 rounded-lg flex items-center justify-center">
                   <Key className="text-orange-500" size={20} />
                 </div>
-                <button className="text-sm text-zinc-400 hover:text-white transition">
+                <button className="text-sm text-zinc-400 hover:text-white transition cursor-pointer">
                   Revoke
                 </button>
               </div>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                 </code>
                 <button
                   onClick={handleCopy}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition flex items-center gap-2"
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition flex items-center gap-2 cursor-pointer"
                 >
                   {copied ? (
                     <>
