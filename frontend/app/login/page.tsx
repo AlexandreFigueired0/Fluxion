@@ -17,7 +17,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { data: session } = useSession() // ✅ no more 'status'
+  const { data: session } = useSession() 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Copy, Check, Key, CreditCard, Terminal, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 
 export default function DashboardPage() {
   const [apiKey] = useState('flx_1a2b3c4d5e6f7g8h9i0j');
@@ -44,7 +45,10 @@ export default function DashboardPage() {
             <Link href="/docs" className="text-zinc-400 hover:text-white transition">
               Docs
             </Link>
-            <button className="flex items-center gap-2 text-zinc-400 hover:text-white transition">
+            <button 
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition"
+            >
               <LogOut size={18} />
               <span>Logout</span>
             </button>
