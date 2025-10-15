@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 
 // ArrowRight icon component
 const ArrowRight = ({ size = 18 }: { size?: number }) => (
@@ -17,8 +17,25 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { data: session } = useSession() // ✅ no more 'status'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ If already logged in, redirect
+  useEffect(() => {
+    if (session) {
+      router.replace("/dashboard") // or your home page
+    }
+  }, [session, router])
+
+  // just to avoid flicker
+  if (session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-600"></div>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +65,7 @@ export default function LoginPage() {
   const handleOAuth = (provider: "google" | "github") => {
     signIn(provider, { callbackUrl: "/dashboard" })
   }
-
+  
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 relative overflow-hidden flex items-center justify-center">
       {/* Grid background */}

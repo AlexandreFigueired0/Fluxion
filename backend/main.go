@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const address = "localhost:8080"
+const address = "0.0.0.0:8080"
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -27,7 +27,6 @@ func main() {
 	commands := r.Group("/api")
 	commands.POST("/generate", generateHandler.GeneratePipelineConfig)
 	commands.POST("/debug", debugHandler.DebugPipelineConfig)
-
 
 	authHandler := &handlers.AuthHandler{DB: db_conn}
 	auth := r.Group("/api/auth")

@@ -37,7 +37,7 @@ func CreateUser(name, email, passwordHash string, db *supa.Client) (*models.User
 	}
 
 	var user models.User
-	_, err := db.From("users").Insert(newUser, false, "", "*", "").Single().ExecuteTo(&user)
+	_, err := db.From("users").Insert(newUser, false, "", "", "").Single().ExecuteTo(&user)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func CreateOAuthUser(name, email, provider, providerID string, db *supa.Client) 
 	}
 
 	var user models.User
-	_, err := db.From("users").Insert(newUser, false, "", "*", "").Single().ExecuteTo(&user)
+	_, err := db.From("users").Insert(newUser, false, "", "", "").Single().ExecuteTo(&user)
 	if err != nil {
 		return nil, err
 	}

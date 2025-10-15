@@ -3,8 +3,8 @@ package models
 import "time"
 
 type ApiKeys struct {
-	id         uint      `json:"id"`
-	userID     uint      `json:"user_id"`
+	id         string    `json:"id"`
+	userID     string    `json:"user_id"`
 	key_hash   string    `json:"key_hash"`
 	key_prefix string    `json:"key_prefix"`
 	name       string    `json:"name"`

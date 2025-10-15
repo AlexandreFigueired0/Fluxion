@@ -82,7 +82,7 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 		return
 	}
 
-	log.Printf("✅ User created: %s (ID: %d) with %d credits", user.Email, user.ID, user.Credits)
+	log.Printf("✅ User created: %s (ID: %s) with %d credits", user.Email, user.ID, user.Credits)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User created successfully",
@@ -129,7 +129,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		return
 	}
 
-	log.Printf("✅ Login successful: %s (ID: %d)", user.Email, user.ID)
+	log.Printf("✅ Login successful: %s (ID: %s)", user.Email, user.ID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"id":      user.ID,
@@ -155,7 +155,7 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 
 	switch {
 	case err == nil:
-		log.Printf("✅ Existing user logged in: %s (ID: %d)", user.Email, user.ID)
+		log.Printf("✅ Existing user logged in: %s (ID: %s)", user.Email, user.ID)
 	case errors.Is(err, db.ErrUserNotFound):
 		log.Printf("📝 Creating new %s user: %s", req.Provider, req.Email)
 
@@ -166,7 +166,7 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 			return
 		}
 
-		log.Printf("✅ Created new %s user: %s (ID: %d) with %d credits",
+		log.Printf("✅ Created new %s user: %s (ID: %s) with %d credits",
 			req.Provider, user.Email, user.ID, user.Credits)
 	default:
 		log.Println("❌ Database error:", err)

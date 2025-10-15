@@ -78,6 +78,7 @@ const handler = NextAuth({
       return token
     },
     async session({ session, token }) {
+      console.log("Session callback:", { session, token });
       if (session.user) {
         session.user.id = token.id as string
       }
