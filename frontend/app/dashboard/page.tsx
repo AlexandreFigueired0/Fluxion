@@ -1,16 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Copy, Check, Key, CreditCard, Terminal, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+
 
 export default function DashboardPage() {
-  const [apiKey] = useState('flx_1a2b3c4d5e6f7g8h9i0j');
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [credits, setCredits] = useState(0);
+  const [userName, setUserName] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [credits] = useState(42);
 
-  const handleCopy = () => {
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+      return;
+    }
+
+    if (status === 'authenticated' && session?.user?.id) {
+      fetchUserData(session.user.id);
+    }
+  }, [status, session, router]);
+
+  const fetchUserData = async (userId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch user data');
+      const data = await response.json();
+      setCredits(data.credits);
+      setUserName(data.name);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = (apiKey: string) => {
     navigator.clipboard.writeText(apiKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -23,6 +54,17 @@ export default function DashboardPage() {
     { id: 4, endpoint: 'debug', timestamp: '1 day ago' },
     { id: 5, endpoint: 'generate', timestamp: '2 days ago' },
   ];
+
+  if (loading || status === 'loading') {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -58,7 +100,7 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-8 py-12">
           {/* Header */}
           <div className="mb-12">
-            <h1 className="text-4xl font-black mb-2">Dashboard</h1>
+            <h1 className="text-4xl font-black mb-2">Welcome, {userName}!</h1>
             <p className="text-zinc-400">Manage your API keys and view usage</p>
           </div>
 
@@ -88,7 +130,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="text-xs text-zinc-500 mt-2">
-                {credits} of 50 free credits used
+                {50 - credits} of 50 free credits used
               </div>
             </div>
 
@@ -104,31 +146,42 @@ export default function DashboardPage() {
               </div>
               <div className="text-sm font-semibold mb-2">Your API Key</div>
               
-              <div className="flex items-center gap-2">
-                <code className="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded font-mono text-sm text-zinc-300 truncate">
-                  {apiKey}
-                </code>
-                <button
-                  onClick={handleCopy}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition flex items-center gap-2 cursor-pointer"
-                >
-                  {copied ? (
-                    <>
-                      <Check size={16} className="text-green-500" />
-                      <span className="text-sm">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={16} />
-                      <span className="text-sm">Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              
-              <p className="text-xs text-zinc-500 mt-3">
-                Keep this secret. Don&apos;t commit it to git.
-              </p>
+              {apiKey ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded font-mono text-sm text-zinc-300 truncate">
+                      {apiKey}*********************
+                    </code>
+                    <button
+                      onClick={() => handleCopy(apiKey)}
+                      className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition flex items-center gap-2 cursor-pointer"
+                    >
+                      {copied ? (
+                        <>
+                          <Check size={16} className="text-green-500" />
+                          <span className="text-sm">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={16} />
+                          <span className="text-sm">Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <p className="text-xs text-zinc-500 mt-3">
+                    Keep this secret. Don&apos;t commit it to git.
+                  </p>
+                </>
+              ) : (
+                <div className="text-center py-6 text-zinc-500">
+                  <p className="mb-4">No API key found</p>
+                  <button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded transition text-white cursor-pointer">
+                    Generate API Key
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -150,7 +203,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-zinc-400 mb-2">2. Set your API key</p>
                 <code className="block px-4 py-3 bg-zinc-950 border border-zinc-800 rounded font-mono text-sm text-orange-400">
-                  fluxion config set {apiKey}
+                  fluxion config set {apiKey || 'YOUR_API_KEY'}
                 </code>
               </div>
               

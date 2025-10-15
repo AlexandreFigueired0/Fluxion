@@ -54,7 +54,7 @@ const handler = NextAuth({
       if (account?.provider === "google" || account?.provider === "github") {
         console.log("Provider account:", account)
         try {
-          await fetch(`${process.env.BACKEND_URL}/api/auth/oauth`, {
+          const res = await fetch(`${process.env.BACKEND_URL}/api/auth/oauth`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -64,6 +64,12 @@ const handler = NextAuth({
               providerId: account.providerAccountId
             })
           })
+          const dbUser = await res.json()
+          if (!res.ok || !dbUser?.id) {
+            console.error("OAuth user creation failed:", dbUser)
+            return false
+          }
+          user.id = dbUser.id
         } catch (error) {
           console.error("Error creating OAuth user:", error)
           return false
