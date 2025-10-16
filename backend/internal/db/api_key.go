@@ -29,7 +29,7 @@ func CreateAPIKey(userID string, name string, db supa.Client) (*models.APIKey, e
 	return &apiKey, nil
 }
 
-func GetAPIKeyByUserID(userID string, db supa.Client) (models.APIKey, error) {
+func GetAPIKeyByUserID(userID string, db *supa.Client) (models.APIKey, error) {
 	var apiKeys models.APIKey
 
 	_, err := db.
@@ -45,7 +45,7 @@ func GetAPIKeyByUserID(userID string, db supa.Client) (models.APIKey, error) {
 
 	return apiKeys, nil
 }
-func RevokeAPIKey(user_id string, db supa.Client) error {
+func RevokeAPIKey(user_id string, db *supa.Client) error {
 	// Use a map to update revoked_at
 	updates := map[string]interface{}{
 		"revoked_at": time.Now(),

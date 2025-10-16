@@ -14,6 +14,8 @@ export function useDashboardData() {
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
+  const [apiKeyName, setApiKeyName] = useState('');
+  const [apiKeyPrefix, setApiKeyPrefix] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -23,6 +25,7 @@ export function useDashboardData() {
 
     if (status === 'authenticated' && session?.user?.id) {
       fetchUserData(session.user.id);
+      fetchApiKey(session.user.id);
     }
   }, [status, session, router]);
 
@@ -30,6 +33,7 @@ export function useDashboardData() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
       if (!response.ok) throw new Error('Failed to fetch user data');
+      
       const data: UserData = await response.json();
       setCredits(data.credits);
       setUserName(data.name);
@@ -40,6 +44,19 @@ export function useDashboardData() {
       setLoading(false);
     }
   };
+
+  const fetchApiKey = async (userId: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`);
+      if (!response.ok) throw new Error('Failed to fetch API key');
+      
+      const data = await response.json();
+      setApiKeyName(data.name);
+      setApiKeyPrefix(data.key_prefix);
+    } catch (error) {
+      console.error('Error fetching API key:', error);
+    }
+  }
 
   return {
     userId,

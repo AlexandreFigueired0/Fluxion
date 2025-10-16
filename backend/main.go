@@ -49,6 +49,7 @@ func main() {
 	userHandler := &handlers.UserHandler{DB: db_conn}
 	userRoutes := r.Group("/api/users")
 	userRoutes.GET("/:id", userHandler.GetUserByID)
+	userRoutes.GET("/api_key/:user_id", userHandler.GetAPIKeyByUserID)
 
 	log.Println("Starting backend server on", address)
 	r.Run(address)
