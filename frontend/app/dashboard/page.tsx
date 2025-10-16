@@ -13,7 +13,7 @@ import {
 } from './components';
 
 export default function DashboardPage() {
-  const { credits, userName, loading, isLoading } = useDashboardData();
+  const { credits, userName, loading, isLoading, userId } = useDashboardData();
   const [apiKey] = useState('');
 
   const handleRevokeApiKey = () => {
@@ -21,9 +21,22 @@ export default function DashboardPage() {
     console.log('Revoke API key');
   };
 
-  const handleGenerateApiKey = () => {
-    // TODO: Implement API key generation
-    console.log('Generate API key');
+  const handleGenerateApiKey = (name: string) => {
+    // Send request to backend to generate a new API key with a name
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    })
+    .then(res => {
+      if (res.ok) {
+        // Optionally refresh the page or update state
+        window.location.reload();
+      }
+    })
+    .catch(err => console.error('Error generating API key:', err));
   };
 
   if (loading || isLoading) {

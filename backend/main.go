@@ -47,10 +47,15 @@ func main() {
 
 	// User routes
 	userHandler := &handlers.UserHandler{DB: db_conn}
-	apiKeyHandler := &handlers.APIKeyHandler{DB: db_conn}
 	userRoutes := r.Group("/api/users")
+
+	// API Key routes - must be defined before the catch-all :id route
+	apiKeyHandler := &handlers.APIKeyHandler{DB: db_conn}
+	userRoutes.GET("/:id/apikey", apiKeyHandler.GetAPIKeyByUserID)
+	userRoutes.POST("/:id/apikey", apiKeyHandler.CreateAPIKey)
+
+	// User by ID route
 	userRoutes.GET("/:id", userHandler.GetUserByID)
-	userRoutes.GET("/:user_id/apikey", apiKeyHandler.GetAPIKeyByUserID)
 
 	log.Println("Starting backend server on", address)
 	r.Run(address)
