@@ -40,6 +40,7 @@ export function useDashboardData() {
   };
 
   return {
+    userId: session!.user.id,
     credits,
     userName,
     loading,
