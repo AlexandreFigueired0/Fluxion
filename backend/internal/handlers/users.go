@@ -29,22 +29,3 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, userResponse)
 }
-
-// GetAPIKeyByUserID retrieves the API key for a given user ID.
-func (h *UserHandler) GetAPIKeyByUserID(c *gin.Context) {
-	userID := c.Param("user_id")
-	apiKey, err := db.GetAPIKeyByUserID(userID, h.DB)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "API key not found"})
-		return
-	}
-	apiKeyResponse := dto.APIKeyDTO{
-		ID:         apiKey.ID,
-		UserID:     apiKey.UserID,
-		Name:       apiKey.Name,
-		KeyPrefix:  apiKey.KeyPrefix,
-		CreatedAt:  apiKey.CreatedAt,
-		LastUsedAt: apiKey.LastUsedAt,
-	}
-	c.JSON(http.StatusOK, apiKeyResponse)
-}
