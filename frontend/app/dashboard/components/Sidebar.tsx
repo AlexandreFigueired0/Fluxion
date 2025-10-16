@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -21,8 +21,27 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = true }: SidebarProps) {
   const pathname = usePathname();
-  const [generateExpanded, setGenerateExpanded] = useState(false);
-  const [debugExpanded, setDebugExpanded] = useState(false);
+  const [generateExpanded, setGenerateExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('sidebar-generate-expanded');
+      return stored === 'true';
+    }
+    return false;
+  });
+  const [debugExpanded, setDebugExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('sidebar-debug-expanded');
+      return stored === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-generate-expanded', generateExpanded.toString());
+  }, [generateExpanded]);
+  useEffect(() => {
+    localStorage.setItem('sidebar-debug-expanded', debugExpanded.toString());
+  }, [debugExpanded]);
 
   const isActive = (path: string) => pathname === path;
 
