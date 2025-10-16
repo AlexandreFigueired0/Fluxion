@@ -83,28 +83,6 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-
-          {/* Notifications */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Bell className="text-orange-500" size={20} />
-              <h2 className="text-xl font-bold">Notifications</h2>
-            </div>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-zinc-700 bg-zinc-800" defaultChecked />
-                <span className="text-sm">Email notifications for workflow completions</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-zinc-700 bg-zinc-800" defaultChecked />
-                <span className="text-sm">Email notifications for failed workflows</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-zinc-700 bg-zinc-800" />
-                <span className="text-sm">Marketing emails and updates</span>
-              </label>
-            </div>
-          </div>
         </div>
       </div>
     </DashboardLayout>

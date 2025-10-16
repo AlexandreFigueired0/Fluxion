@@ -47,7 +47,6 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
 
   const debugOptions = [
     { name: 'Debug Session', href: '/dashboard/debug/session', icon: Bug },
-    { name: 'Quick Debug', href: '/dashboard/debug/quick', icon: Zap },
     { name: 'Debug History', href: '/dashboard/debug/history', icon: FileCode },
   ];
 

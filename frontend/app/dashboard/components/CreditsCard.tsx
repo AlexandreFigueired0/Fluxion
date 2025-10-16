@@ -3,12 +3,10 @@ import Link from 'next/link';
 
 interface CreditsCardProps {
   credits: number;
-  maxCredits?: number;
 }
 
-export default function CreditsCard({ credits, maxCredits = 50 }: CreditsCardProps) {
-  const usedCredits = maxCredits - credits;
-  const progressPercentage = (credits / maxCredits) * 100;
+export default function CreditsCard({ credits }: CreditsCardProps) {
+  const isLowCredits = credits < 10;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
@@ -18,23 +16,29 @@ export default function CreditsCard({ credits, maxCredits = 50 }: CreditsCardPro
         </div>
         <Link 
           href="/pricing" 
-          className="text-sm text-orange-500 hover:text-orange-400 transition font-semibold cursor-pointer"
+          className="text-sm text-orange-500 hover:text-orange-400 transition font-semibold cursor-pointer border border-orange-500/20 px-3 py-1 rounded-lg"
         >
           Buy more
         </Link>
       </div>
-      <div className="text-4xl font-black mb-2">{credits}</div>
-      <div className="text-sm text-zinc-400">Credits remaining</div>
       
-      {/* Progress bar */}
-      <div className="mt-4 h-2 bg-zinc-800 rounded-full overflow-hidden">
-        <div 
-          className="h-full bg-orange-500 rounded-full transition-all"
-          style={{ width: `${progressPercentage}%` }}
-        />
-      </div>
-      <div className="text-xs text-zinc-500 mt-2">
-        {usedCredits} of {maxCredits} free credits used
+      <div className="flex flex-col items-center justify-center flex-1">
+        <div className="flex items-baseline gap-2">
+          <div className="text-5xl font-black">{credits}</div>
+          <div className="text-zinc-400 text-base font-medium">credits</div>
+        </div>
+        
+        {isLowCredits && credits > 0 && (
+          <div className="mt-3 text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1">
+            Running low
+          </div>
+        )}
+        
+        {credits === 0 && (
+          <div className="mt-3 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded px-2 py-1">
+            No credits remaining
+          </div>
+        )}
       </div>
     </div>
   );
