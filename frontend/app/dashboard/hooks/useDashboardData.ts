@@ -13,6 +13,7 @@ export function useDashboardData() {
   const [credits, setCredits] = useState(0);
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -32,6 +33,7 @@ export function useDashboardData() {
       const data: UserData = await response.json();
       setCredits(data.credits);
       setUserName(data.name);
+      setUserId(userId);
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
@@ -40,7 +42,7 @@ export function useDashboardData() {
   };
 
   return {
-    userId: session!.user.id,
+    userId,
     credits,
     userName,
     loading,

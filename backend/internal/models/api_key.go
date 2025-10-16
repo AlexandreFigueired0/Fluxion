@@ -2,13 +2,13 @@ package models
 
 import "time"
 
-type ApiKeys struct {
-	id         string    `json:"id"`
-	userID     string    `json:"user_id"`
-	key_hash   string    `json:"key_hash"`
-	key_prefix string    `json:"key_prefix"`
-	name       string    `json:"name"`
-	createdAt  time.Time `json:"created_at"`
-	lastUsedAt time.Time `json:"last_used_at"`
-	revokedAt  time.Time `json:"revoked_at"`
+type APIKey struct {
+	ID         string    `json:"id"`
+	UserID     string    `json:"user_id"`
+	KeyHash    string    `json:"key_hash"`
+	KeyPrefix  string    `json:"key_prefix"`
+	Name       string    `json:"name"`
+	CreatedAt  time.Time `json:"created_at"`
+	LastUsedAt time.Time `json:"last_used_at"`
+	RevokedAt  time.Time `json:"revoked_at"`
 }
