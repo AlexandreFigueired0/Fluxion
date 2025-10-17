@@ -1,10 +1,12 @@
 package handlers
 
 import (
-	db "fluxion-be/internal/db"
-	"fluxion-be/internal/dto"
+	"errors"
 	"log"
 	"net/http"
+
+	db "fluxion-be/internal/db"
+	"fluxion-be/internal/dto"
 
 	"github.com/gin-gonic/gin"
 	supa "github.com/supabase-community/supabase-go"
@@ -15,6 +17,10 @@ type APIKeyHandler struct {
 }
 
 type CreateAPIKeyRequest struct {
+	Name string `json:"name" binding:"required"`
+}
+
+type RevokeAPIKeyRequest struct {
 	Name string `json:"name" binding:"required"`
 }
 
@@ -66,8 +72,18 @@ func (h *APIKeyHandler) CreateAPIKey(c *gin.Context) {
 // DeleteAPIKey revokes the API key for a given user ID.
 func (h *APIKeyHandler) DeleteAPIKey(c *gin.Context) {
 	userID := c.Param("id")
-	err := db.RevokeAPIKey(userID, h.DB)
+	var req RevokeAPIKeyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	err := db.RevokeAPIKey(userID, req.Name, h.DB)
 	if err != nil {
+		if errors.Is(err, db.ErrAPIKeyNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "API key not found"})
+			return
+		}
 		log.Printf("Error revoking API key for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke API key"})
 		return

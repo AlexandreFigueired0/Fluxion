@@ -17,13 +17,37 @@ export default function DashboardPage() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
 
-  const handleRevokeApiKey = () => {
-    // TODO: Implement API key revocation
-    console.log('Revoke API key');
+  const handleRevokeApiKey = async (name: string) => {
+    if (!userId) {
+      console.warn('Attempted to revoke API key before userId was available');
+      return;
+    }
+    setIsRevoking(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to revoke API key');
+      setJustCreatedKey(null);
+      await refetchApiKey();
+    } catch (err) {
+      console.error('Error revoking API key:', err);
+    } finally {
+      setIsRevoking(false);
+    }
   };
 
   const handleGenerateApiKey = async (name: string) => {
+    if (!userId) {
+      console.warn('Attempted to generate API key before userId was available');
+      return;
+    }
     setIsGenerating(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
@@ -63,6 +87,7 @@ export default function DashboardPage() {
             apiKeyPrefix={apiKeyPrefix}
             justCreatedKey={justCreatedKey}
             isGenerating={isGenerating}
+            isRevoking={isRevoking}
             onRevoke={handleRevokeApiKey}
             onGenerate={handleGenerateApiKey}
           />

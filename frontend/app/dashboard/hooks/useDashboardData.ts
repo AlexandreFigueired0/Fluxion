@@ -24,6 +24,7 @@ export function useDashboardData() {
     }
 
     if (status === 'authenticated' && session?.user?.id) {
+      setUserId(session.user.id);
       fetchUserData(session.user.id);
       fetchApiKey(session.user.id);
     }
@@ -46,15 +47,24 @@ export function useDashboardData() {
   };
 
   const fetchApiKey = async (userId: string) => {
+    if (!userId) return;
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`);
+      if (response.status === 404 || response.status === 204) {
+        setApiKeyName('');
+        setApiKeyPrefix('');
+        return;
+      }
+
       if (!response.ok) throw new Error('Failed to fetch API key: ' + response.statusText);
-      
+
       const data = await response.json();
-      setApiKeyName(data.name);
-      setApiKeyPrefix(data.key_prefix);
+      setApiKeyName(data.name ?? '');
+      setApiKeyPrefix(data.key_prefix ?? '');
     } catch (error) {
       console.error('Error fetching API key:', error);
+      setApiKeyName('');
+      setApiKeyPrefix('');
     }
   }
 
@@ -67,6 +77,6 @@ export function useDashboardData() {
     loading,
     isAuthenticated: status === 'authenticated',
     isLoading: status === 'loading',
-    refetchApiKey: () => fetchApiKey(userId),
+  refetchApiKey: () => fetchApiKey(userId),
   };
 }

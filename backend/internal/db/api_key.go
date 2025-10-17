@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"fluxion-be/internal/models"
@@ -12,6 +13,8 @@ import (
 )
 
 const keyPrefix = "FLX_"
+
+var ErrAPIKeyNotFound = errors.New("api key not found")
 
 func CreateAPIKey(userID string, name string, db *supa.Client) (*models.APIKey, string, error) {
 	unhashedKey := keyPrefix + GenerateRandomString(32)
@@ -53,23 +56,27 @@ func GetAPIKeyByUserID(userID string, db *supa.Client) (models.APIKey, error) {
 
 	return apiKeys, nil
 }
-func RevokeAPIKey(user_id string, db *supa.Client) error {
-	// Use a map to update revoked_at
+
+func RevokeAPIKey(userID string, name string, db *supa.Client) error {
 	updates := map[string]interface{}{
 		"revoked_at": time.Now(),
 	}
 
-	// Use slice to hold returned row(s) (optional, depending on version)
-	var updated models.APIKey
+	var updated []models.APIKey
 
 	_, err := db.
 		From("api_keys").
 		Update(updates, "", "").
-		Eq("user_id", user_id).
-		Single().
+		Eq("user_id", userID).
+		Eq("name", name).
+		Filter("revoked_at", "is", "null").
 		ExecuteTo(&updated)
 	if err != nil {
 		return err
+	}
+
+	if len(updated) == 0 {
+		return ErrAPIKeyNotFound
 	}
 
 	return nil

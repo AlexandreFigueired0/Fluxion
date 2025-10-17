@@ -6,11 +6,12 @@ interface ApiKeyCardProps {
   apiKeyPrefix: string;
   justCreatedKey?: string | null;
   isGenerating?: boolean;
-  onRevoke?: () => void;
+  isRevoking?: boolean;
+  onRevoke?: (name: string) => void;
   onGenerate?: (name: string) => void;
 }
 
-export default function ApiKeyCard({ apiKeyName, apiKeyPrefix, justCreatedKey, isGenerating, onRevoke, onGenerate }: ApiKeyCardProps) {
+export default function ApiKeyCard({ apiKeyName, apiKeyPrefix, justCreatedKey, isGenerating, isRevoking, onRevoke, onGenerate }: ApiKeyCardProps) {
   const [copied, setCopied] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [showNameInput, setShowNameInput] = useState(false);
@@ -40,10 +41,11 @@ export default function ApiKeyCard({ apiKeyName, apiKeyPrefix, justCreatedKey, i
         </div>
         {apiKeyName && onRevoke && (
           <button 
-            onClick={onRevoke}
-            className="text-sm text-zinc-400 hover:text-white transition cursor-pointer"
+            onClick={() => onRevoke(apiKeyName)}
+            disabled={isRevoking}
+            className="text-sm text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Revoke
+            {isRevoking ? 'Revoking...' : 'Revoke'}
           </button>
         )}
       </div>
