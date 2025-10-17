@@ -53,6 +53,7 @@ func main() {
 	apiKeyHandler := &handlers.APIKeyHandler{DB: db_conn}
 	userRoutes.GET("/:id/apikey", apiKeyHandler.GetAPIKeyByUserID)
 	userRoutes.POST("/:id/apikey", apiKeyHandler.CreateAPIKey)
+	userRoutes.DELETE("/:id/apikey", apiKeyHandler.DeleteAPIKey)
 
 	// User by ID route
 	userRoutes.GET("/:id", userHandler.GetUserByID)

@@ -62,3 +62,15 @@ func (h *APIKeyHandler) CreateAPIKey(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, apiKeyResponse)
 }
+
+// DeleteAPIKey revokes the API key for a given user ID.
+func (h *APIKeyHandler) DeleteAPIKey(c *gin.Context) {
+	userID := c.Param("id")
+	err := db.RevokeAPIKey(userID, h.DB)
+	if err != nil {
+		log.Printf("Error revoking API key for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke API key"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "API key revoked successfully"})
+}
