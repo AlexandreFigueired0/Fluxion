@@ -2,18 +2,24 @@ import { useState } from 'react';
 import { Copy, Check, Key } from 'lucide-react';
 
 interface ApiKeyCardProps {
-  apiKey: string;
+  apiKeyName: string;
+  apiKeyPrefix: string;
+  justCreatedKey?: string | null;
+  isGenerating?: boolean;
   onRevoke?: () => void;
   onGenerate?: (name: string) => void;
 }
 
-export default function ApiKeyCard({ apiKey, onRevoke, onGenerate }: ApiKeyCardProps) {
+export default function ApiKeyCard({ apiKeyName, apiKeyPrefix, justCreatedKey, isGenerating, onRevoke, onGenerate }: ApiKeyCardProps) {
   const [copied, setCopied] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [showNameInput, setShowNameInput] = useState(false);
 
+  // Show the full key only if justCreatedKey is set
+  const displayKey = (typeof justCreatedKey === 'string' && justCreatedKey.length > 0) ? justCreatedKey : apiKeyPrefix;
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(apiKey);
+    navigator.clipboard.writeText(justCreatedKey!);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -32,7 +38,7 @@ export default function ApiKeyCard({ apiKey, onRevoke, onGenerate }: ApiKeyCardP
         <div className="w-10 h-10 bg-orange-600/20 rounded-lg flex items-center justify-center">
           <Key className="text-orange-500" size={20} />
         </div>
-        {apiKey && onRevoke && (
+        {apiKeyName && onRevoke && (
           <button 
             onClick={onRevoke}
             className="text-sm text-zinc-400 hover:text-white transition cursor-pointer"
@@ -43,32 +49,45 @@ export default function ApiKeyCard({ apiKey, onRevoke, onGenerate }: ApiKeyCardP
       </div>
       <div className="text-sm font-semibold mb-2">Your API Key</div>
       
-      {apiKey ? (
+      {isGenerating ? (
+        <div className="flex items-center justify-center py-8">
+          <svg className="animate-spin h-6 w-6 text-orange-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+          <span className="text-orange-500 font-semibold">Generating API Key...</span>
+        </div>
+      ) : apiKeyName ? (
         <>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded font-mono text-sm text-zinc-300 truncate">
-              {apiKey}...
+              {displayKey}{justCreatedKey ? '' : '...'}
             </code>
-            <button
-              onClick={handleCopy}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition flex items-center gap-2 cursor-pointer"
-            >
-              {copied ? (
-                <>
-                  <Check size={16} className="text-green-500" />
-                  <span className="text-sm">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy size={16} />
-                  <span className="text-sm">Copy</span>
-                </>
-              )}
-            </button>
+            {justCreatedKey && (
+              <button
+                onClick={handleCopy}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition flex items-center gap-2 cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} className="text-green-500" />
+                    <span className="text-sm">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    <span className="text-sm">Copy</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
-          
           <p className="text-xs text-zinc-500 mt-3">
-            Keep this secret. Don&apos;t commit it to git.
+            {justCreatedKey ? (
+              <>This is your new API key. Please copy and store it securely. You will not be able to see it again!</>
+            ) : (
+              <>Keep this secret. Don&apos;t commit it to git.</>
+            )}
           </p>
         </>
       ) : (

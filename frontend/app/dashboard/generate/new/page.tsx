@@ -11,7 +11,7 @@ import { Sparkles, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 
 export default function GenerateNewPage() {
-  const { loading, isLoading, userId } = useDashboardData();
+  const { loading, isLoading, userId, apiKeyName, apiKeyPrefix } = useDashboardData();
   const [description, setDescription] = useState('');
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);

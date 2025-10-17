@@ -13,30 +13,35 @@ import {
 } from './components';
 
 export default function DashboardPage() {
-  const { credits, userName, loading, isLoading, userId } = useDashboardData();
-  const [apiKey] = useState('');
+  const { credits, userName, loading, isLoading, userId, apiKeyName, apiKeyPrefix, refetchApiKey } = useDashboardData();
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleRevokeApiKey = () => {
     // TODO: Implement API key revocation
     console.log('Revoke API key');
   };
 
-  const handleGenerateApiKey = (name: string) => {
-    // Send request to backend to generate a new API key with a name
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name }),
-    })
-    .then(res => {
-      if (res.ok) {
-        // Optionally refresh the page or update state
-        window.location.reload();
-      }
-    })
-    .catch(err => console.error('Error generating API key:', err));
+  const handleGenerateApiKey = async (name: string) => {
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to generate API key');
+      const data = await res.json();
+      setJustCreatedKey(data.key);
+      await refetchApiKey();
+    } catch (err) {
+      console.error('Error generating API key:', err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (loading || isLoading) {
@@ -54,13 +59,16 @@ export default function DashboardPage() {
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           <CreditsCard credits={credits} />
           <ApiKeyCard 
-            apiKey={apiKey} 
+            apiKeyName={apiKeyName}
+            apiKeyPrefix={apiKeyPrefix}
+            justCreatedKey={justCreatedKey}
+            isGenerating={isGenerating}
             onRevoke={handleRevokeApiKey}
             onGenerate={handleGenerateApiKey}
           />
         </div>
 
-        <QuickStart apiKey={apiKey} />
+        <QuickStart apiKey={apiKeyPrefix} />
 
       </div>
     </DashboardLayout>

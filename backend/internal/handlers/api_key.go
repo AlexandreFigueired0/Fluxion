@@ -45,7 +45,7 @@ func (h *APIKeyHandler) CreateAPIKey(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
-	apiKey, err := db.CreateAPIKey(userID, req.Name, h.DB)
+	apiKey, unhashedKey, err := db.CreateAPIKey(userID, req.Name, h.DB)
 	if err != nil {
 		log.Printf("Error creating API key for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create API key"})
@@ -57,6 +57,7 @@ func (h *APIKeyHandler) CreateAPIKey(c *gin.Context) {
 		Name:       apiKey.Name,
 		KeyPrefix:  apiKey.KeyPrefix,
 		CreatedAt:  apiKey.CreatedAt,
+		Key:        unhashedKey,
 		LastUsedAt: apiKey.LastUsedAt,
 	}
 	c.JSON(http.StatusOK, apiKeyResponse)

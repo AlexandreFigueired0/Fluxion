@@ -13,17 +13,17 @@ import (
 
 const keyPrefix = "FLX_"
 
-func CreateAPIKey(userID string, name string, db *supa.Client) (*models.APIKey, error) {
-	key := keyPrefix + GenerateRandomString(32)
+func CreateAPIKey(userID string, name string, db *supa.Client) (*models.APIKey, string, error) {
+	unhashedKey := keyPrefix + GenerateRandomString(32)
 	h := sha256.New()
-	h.Write([]byte(key))
+	h.Write([]byte(unhashedKey))
 	keyHash := hex.EncodeToString(h.Sum(nil))
-	keyPrefix := "flx_" + key[:8]
+	keyStart := unhashedKey[:13]
 
 	newKey := map[string]interface{}{
 		"user_id":    userID,
 		"key_hash":   keyHash,
-		"key_prefix": keyPrefix,
+		"key_prefix": keyStart,
 		"name":       name,
 		"created_at": time.Now(),
 	}
@@ -31,9 +31,10 @@ func CreateAPIKey(userID string, name string, db *supa.Client) (*models.APIKey, 
 	var apiKey models.APIKey
 	_, err := db.From("api_keys").Insert(newKey, false, "", "", "").Single().ExecuteTo(&apiKey)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return &apiKey, nil
+	// When creating the API key, we only return the unhashed key to the user once.
+	return &apiKey, unhashedKey, nil
 }
 
 func GetAPIKeyByUserID(userID string, db *supa.Client) (models.APIKey, error) {

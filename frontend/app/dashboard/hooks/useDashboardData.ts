@@ -48,7 +48,7 @@ export function useDashboardData() {
   const fetchApiKey = async (userId: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`);
-      if (!response.ok) throw new Error('Failed to fetch API key');
+      if (!response.ok) throw new Error('Failed to fetch API key: ' + response.statusText);
       
       const data = await response.json();
       setApiKeyName(data.name);
@@ -60,10 +60,13 @@ export function useDashboardData() {
 
   return {
     userId,
+    apiKeyName,
+    apiKeyPrefix,
     credits,
     userName,
     loading,
     isAuthenticated: status === 'authenticated',
     isLoading: status === 'loading',
+    refetchApiKey: () => fetchApiKey(userId),
   };
 }
