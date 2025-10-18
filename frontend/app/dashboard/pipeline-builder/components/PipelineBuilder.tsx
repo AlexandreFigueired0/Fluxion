@@ -23,6 +23,7 @@ import { downloadPipelineYaml, copyPipelineYamlToClipboard } from '../utils/yaml
 import { JobNode } from './JobNode';
 import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
+import { YamlPreviewModal } from './YamlPreviewModal';
 import { CustomEdge } from './CustomEdge';
 import { Save, Download, Plus, Maximize2, Copy, Check } from 'lucide-react';
 
@@ -42,6 +43,7 @@ function PipelineBuilderFlow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const [showYamlPreview, setShowYamlPreview] = useState(false);
 
   // Helper to get job key from name (same as YAML generator)
   // Memoize to prevent infinite useEffect loops
@@ -298,36 +300,22 @@ function PipelineBuilderFlow() {
           </button>
 
           <button
-            onClick={() => copyPipelineYamlToClipboard(pipeline).then(() => {
-              setCopiedToClipboard(true);
-              setTimeout(() => setCopiedToClipboard(false), 2000);
-            })}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
-            title="Copy YAML to clipboard"
-          >
-            {copiedToClipboard ? (
-              <>
-                <Check size={18} />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy size={18} />
-                Copy YAML
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => downloadPipelineYaml(pipeline)}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
-            title="Download as .yml file"
+            onClick={() => setShowYamlPreview(true)}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+            title="Preview YAML"
           >
             <Download size={18} />
-            Download YAML
+            Preview YAML
           </button>
         </div>
       </div>
+
+      {/* YAML Preview Modal */}
+      <YamlPreviewModal 
+        pipeline={pipeline} 
+        isOpen={showYamlPreview} 
+        onClose={() => setShowYamlPreview(false)}
+      />
     </div>
   );
 }
