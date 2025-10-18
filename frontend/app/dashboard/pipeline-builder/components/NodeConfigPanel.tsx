@@ -8,9 +8,10 @@ interface NodeConfigPanelProps {
   node: { id: string; data: NodeData } | null;
   onClose: () => void;
   onUpdate: (id: string, data: Partial<NodeData>) => void;
+  onDelete: (id: string) => void;
 }
 
-export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onClose, onUpdate, onDelete }: NodeConfigPanelProps) {
   const [label, setLabel] = useState('');
   const [config, setConfig] = useState<Record<string, any>>({});
 
@@ -26,6 +27,12 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
   const handleSave = () => {
     onUpdate(node.id, { label, config });
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this node?')) {
+      onDelete(node.id);
+    }
   };
 
   const updateConfig = (key: string, value: any) => {
@@ -242,6 +249,13 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
             Cancel
           </button>
         </div>
+
+        <button
+          onClick={handleDelete}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded transition mt-2"
+        >
+          Delete Node
+        </button>
       </div>
     </div>
   );

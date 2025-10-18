@@ -28,8 +28,8 @@ A drag-and-drop visual editor for creating GitHub Actions CI/CD workflows.
    - Or click a node type to add it to the canvas
 
 2. **Connect Nodes**: 
-   - Click and drag from the bottom handle of one node to the top handle of another
-   - This defines the execution order
+   - Click and drag from the right handle of one node to the left handle of another
+   - This defines the execution order (flows left-to-right)
 
 3. **Configure Nodes**: 
    - Click any node to open the configuration panel on the right
@@ -96,7 +96,7 @@ Click the "Basic Pipeline" button to create a starter pipeline with:
 
 ### Tips
 
-- **Execution Order**: Nodes are executed in the order they're connected (top to bottom)
+- **Execution Order**: Nodes are executed in the order they're connected (left to right)
 - **Multiple Paths**: You can create parallel execution paths by connecting multiple nodes to the same parent
 - **Validation**: The YAML generator validates node connections before generating output
 - **Best Practices**: Start with a Trigger node, then Checkout, then Setup, then your build/test/deploy steps
@@ -104,17 +104,7 @@ Click the "Basic Pipeline" button to create a starter pipeline with:
 ## Example Pipeline
 
 ```
-Trigger (on push)
-    ↓
-Checkout Code
-    ↓
-Setup Node.js 18.x
-    ↓
-Build (npm run build)
-    ↓
-Run Tests (npm test)
-    ↓
-Deploy to Production
+Trigger (on push) → Checkout Code → Setup Node.js 18.x → Build (npm run build) → Run Tests (npm test) → Deploy to Production
 ```
 
 ## Generated YAML Example

@@ -20,12 +20,17 @@ import 'reactflow/dist/style.css';
 import { PipelineNode as PipelineNodeComponent } from './PipelineNode';
 import { NodePalette } from './NodePalette';
 import { NodeConfigPanel } from './NodeConfigPanel';
+import { CustomEdge } from './CustomEdge';
 import { NodeType, NodeData, PipelineNode } from '../types';
 import { generateGitHubActionsYAML, downloadYAML } from '../utils/yamlGenerator';
 import { Download, Play, Trash2, FileCode } from 'lucide-react';
 
 const nodeTypes = {
   pipelineNode: PipelineNodeComponent,
+};
+
+const edgeTypes = {
+  custom: CustomEdge,
 };
 
 let nodeId = 0;
@@ -40,9 +45,13 @@ function PipelineBuilderFlow() {
   const [showYAML, setShowYAML] = useState(false);
   const [generatedYAML, setGeneratedYAML] = useState('');
 
+  const deleteEdge = useCallback((id: string) => {
+    setEdges((eds) => eds.filter((edge) => edge.id !== id));
+  }, [setEdges]);
+
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, type: 'custom', data: { onDelete: deleteEdge } }, eds)),
+    [setEdges, deleteEdge]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -121,6 +130,12 @@ function PipelineBuilderFlow() {
     );
   };
 
+  const deleteNode = (id: string) => {
+    setNodes((nds) => nds.filter((node) => node.id !== id));
+    setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
+    setSelectedNode(null);
+  };
+
   const clearPipeline = () => {
     if (confirm('Are you sure you want to clear the pipeline?')) {
       setNodes([]);
@@ -144,7 +159,7 @@ function PipelineBuilderFlow() {
     const triggerNode: PipelineNode = {
       id: getId(),
       type: 'pipelineNode',
-      position: { x: 250, y: 50 },
+      position: { x: 50, y: 200 },
       data: {
         label: 'On Push to Main',
         type: 'trigger',
@@ -155,7 +170,7 @@ function PipelineBuilderFlow() {
     const checkoutNode: PipelineNode = {
       id: getId(),
       type: 'pipelineNode',
-      position: { x: 250, y: 150 },
+      position: { x: 300, y: 200 },
       data: {
         label: 'Checkout Code',
         type: 'checkout',
@@ -166,7 +181,7 @@ function PipelineBuilderFlow() {
     const setupNode: PipelineNode = {
       id: getId(),
       type: 'pipelineNode',
-      position: { x: 250, y: 250 },
+      position: { x: 550, y: 200 },
       data: {
         label: 'Setup Node.js',
         type: 'setup',
@@ -177,7 +192,7 @@ function PipelineBuilderFlow() {
     const buildNode: PipelineNode = {
       id: getId(),
       type: 'pipelineNode',
-      position: { x: 250, y: 350 },
+      position: { x: 800, y: 200 },
       data: {
         label: 'Build',
         type: 'build',
@@ -188,7 +203,7 @@ function PipelineBuilderFlow() {
     const testNode: PipelineNode = {
       id: getId(),
       type: 'pipelineNode',
-      position: { x: 250, y: 450 },
+      position: { x: 1050, y: 200 },
       data: {
         label: 'Run Tests',
         type: 'test',
@@ -198,10 +213,10 @@ function PipelineBuilderFlow() {
 
     setNodes([triggerNode, checkoutNode, setupNode, buildNode, testNode]);
     setEdges([
-      { id: 'e1-2', source: triggerNode.id, target: checkoutNode.id },
-      { id: 'e2-3', source: checkoutNode.id, target: setupNode.id },
-      { id: 'e3-4', source: setupNode.id, target: buildNode.id },
-      { id: 'e4-5', source: buildNode.id, target: testNode.id },
+      { id: 'e1-2', source: triggerNode.id, target: checkoutNode.id, type: 'custom', data: { onDelete: deleteEdge } },
+      { id: 'e2-3', source: checkoutNode.id, target: setupNode.id, type: 'custom', data: { onDelete: deleteEdge } },
+      { id: 'e3-4', source: setupNode.id, target: buildNode.id, type: 'custom', data: { onDelete: deleteEdge } },
+      { id: 'e4-5', source: buildNode.id, target: testNode.id, type: 'custom', data: { onDelete: deleteEdge } },
     ]);
   };
 
@@ -236,8 +251,16 @@ function PipelineBuilderFlow() {
           onDragOver={onDragOver}
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           className="bg-zinc-950"
+          deleteKeyCode="Delete"
+          defaultEdgeOptions={{
+            type: 'custom',
+            animated: true,
+            style: { stroke: '#52525b', strokeWidth: 2 },
+            data: { onDelete: deleteEdge },
+          }}
         >
           <Background color="#3f3f46" variant={BackgroundVariant.Dots} />
           <Controls className="bg-zinc-900 border border-zinc-800" />
@@ -293,6 +316,7 @@ function PipelineBuilderFlow() {
             node={selectedNode}
             onClose={() => setSelectedNode(null)}
             onUpdate={updateNode}
+            onDelete={deleteNode}
           />
         </div>
       )}

@@ -40,7 +40,7 @@ export function PipelineNode({ data, selected }: NodeProps<NodeData>) {
     <div
       className={`
         ${colorClass}
-        border-2 rounded-lg px-4 py-3 min-w-[200px]
+        border-2 rounded-lg px-4 py-3 min-w-[180px]
         transition-all duration-200
         ${selected ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900' : ''}
         shadow-lg
@@ -48,7 +48,7 @@ export function PipelineNode({ data, selected }: NodeProps<NodeData>) {
     >
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         className="!bg-white !w-3 !h-3 !border-2 !border-zinc-900"
       />
       
@@ -78,7 +78,7 @@ export function PipelineNode({ data, selected }: NodeProps<NodeData>) {
 
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         className="!bg-white !w-3 !h-3 !border-2 !border-zinc-900"
       />
     </div>
