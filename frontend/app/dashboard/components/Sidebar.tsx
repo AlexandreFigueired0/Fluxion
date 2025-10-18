@@ -60,13 +60,13 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
 
   const generateOptions = [
     { name: 'New Workflow', href: '/dashboard/generate/new', icon: Sparkles },
-    { name: 'Templates', href: '/dashboard/generate/templates', icon: FileCode },
-    { name: 'History', href: '/dashboard/generate/history', icon: Workflow },
+    // { name: 'Templates', href: '/dashboard/generate/templates', icon: FileCode },
+    // { name: 'History', href: '/dashboard/generate/history', icon: Workflow },
   ];
 
   const debugOptions = [
     { name: 'Debug Session', href: '/dashboard/debug/session', icon: Bug },
-    { name: 'Debug History', href: '/dashboard/debug/history', icon: FileCode },
+    // { name: 'Debug History', href: '/dashboard/debug/history', icon: FileCode },
   ];
 
   return (

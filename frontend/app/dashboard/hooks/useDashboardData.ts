@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 interface UserData {
   credits: number;
   name: string;
+  email: string;
 }
 
 export function useDashboardData() {
@@ -12,6 +13,7 @@ export function useDashboardData() {
   const router = useRouter();
   const [credits, setCredits] = useState(0);
   const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
   const [apiKeyName, setApiKeyName] = useState('');
@@ -38,6 +40,7 @@ export function useDashboardData() {
       const data: UserData = await response.json();
       setCredits(data.credits);
       setUserName(data.name);
+      setEmail(data.email);
       setUserId(userId);
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -70,6 +73,7 @@ export function useDashboardData() {
 
   return {
     userId,
+    email,
     apiKeyName,
     apiKeyPrefix,
     credits,

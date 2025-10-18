@@ -43,7 +43,7 @@ export default function ApiKeyCard({ apiKeyName, apiKeyPrefix, justCreatedKey, i
           <button 
             onClick={() => onRevoke(apiKeyName)}
             disabled={isRevoking}
-            className="text-sm text-zinc-400 hover:text-white transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-sm text-red-500 hover:bg-red-700 hover:text-white transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 rounded"
           >
             {isRevoking ? 'Revoking...' : 'Revoke'}
           </button>

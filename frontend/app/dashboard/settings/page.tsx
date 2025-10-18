@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
+import ApiKeyCard from '../components/ApiKeyCard';
 import {
   DashboardLayout,
   DashboardNav,
@@ -9,7 +11,49 @@ import {
 import { Settings as SettingsIcon, Key, Bell, User, CreditCard } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { userName, credits, loading, isLoading } = useDashboardData();
+  const { userName, email, credits, loading, isLoading, userId, apiKeyName, apiKeyPrefix, refetchApiKey } = useDashboardData();
+  const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
+
+  const handleRevokeApiKey = async (name: string) => {
+    if (!userId) return;
+    setIsRevoking(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to revoke API key');
+      setJustCreatedKey(null);
+      await refetchApiKey();
+    } catch (err) {
+      console.error('Error revoking API key:', err);
+    } finally {
+      setIsRevoking(false);
+    }
+  };
+
+  const handleGenerateApiKey = async (name: string) => {
+    if (!userId) return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error('Failed to generate API key');
+      const data = await res.json();
+      setJustCreatedKey(data.key);
+      await refetchApiKey();
+    } catch (err) {
+      console.error('Error generating API key:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   if (loading || isLoading) {
     return <LoadingState />;
@@ -39,6 +83,7 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-semibold mb-2">Name</label>
                 <input
+                  readOnly
                   type="text"
                   defaultValue={userName}
                   className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 focus:border-orange-500 focus:outline-none"
@@ -47,8 +92,9 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-semibold mb-2">Email</label>
                 <input
+                  readOnly
                   type="email"
-                  placeholder="your@email.com"
+                  defaultValue={email}
                   className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 focus:border-orange-500 focus:outline-none"
                 />
               </div>
@@ -56,16 +102,15 @@ export default function SettingsPage() {
           </div>
 
           {/* API Keys */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Key className="text-orange-500" size={20} />
-              <h2 className="text-xl font-bold">API Keys</h2>
-            </div>
-            <p className="text-sm text-zinc-400 mb-4">Manage your API keys for CLI access</p>
-            <button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition text-white font-semibold cursor-pointer">
-              Manage API Keys
-            </button>
-          </div>
+          <ApiKeyCard
+            apiKeyName={apiKeyName}
+            apiKeyPrefix={apiKeyPrefix}
+            justCreatedKey={justCreatedKey}
+            isGenerating={isGenerating}
+            isRevoking={isRevoking}
+            onRevoke={handleRevokeApiKey}
+            onGenerate={handleGenerateApiKey}
+          />
 
           {/* Billing */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
