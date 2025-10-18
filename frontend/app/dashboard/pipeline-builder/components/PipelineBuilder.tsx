@@ -301,7 +301,7 @@ function PipelineBuilderFlow() {
 
           <button
             onClick={() => setShowYamlPreview(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
             title="Preview YAML"
           >
             <Download size={18} />
