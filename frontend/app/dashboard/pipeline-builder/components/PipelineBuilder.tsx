@@ -142,10 +142,17 @@ function PipelineBuilderFlow() {
     });
   };
 
-  const handleFitToView = () => {
+    const handleFitToView = () => {
     if (reactFlowInstance) {
-      reactFlowInstance.fitView();
+      reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 2 });
     }
+  };
+
+  const handleTriggerExpandChange = (isExpanded: boolean) => {
+    // Re-fit the canvas when trigger expands/collapses
+    setTimeout(() => {
+      handleFitToView();
+    }, 150); // Wait for CSS transition to complete
   };
 
   const selectedJob = pipeline.jobs.find((j) => j.id === selectedJobId);
@@ -154,7 +161,11 @@ function PipelineBuilderFlow() {
     <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
       {/* Trigger Editor - Top Panel */}
       <div className="flex-shrink-0">
-        <TriggerEditor trigger={pipeline.trigger} onUpdate={handleTriggerUpdate} />
+        <TriggerEditor 
+          trigger={pipeline.trigger} 
+          onUpdate={handleTriggerUpdate}
+          onExpandChange={handleTriggerExpandChange}
+        />
       </div>
 
       {/* Main Content Area */}

@@ -7,6 +7,7 @@ import { Trigger, TriggerEvent } from '../types';
 interface TriggerEditorProps {
   trigger: Trigger;
   onUpdate: (trigger: Trigger) => void;
+  onExpandChange?: (isExpanded: boolean) => void;
 }
 
 const TRIGGER_EVENTS: { value: TriggerEvent; label: string; description: string }[] = [
@@ -37,13 +38,18 @@ const TRIGGER_EVENTS: { value: TriggerEvent; label: string; description: string 
   },
 ];
 
-export function TriggerEditor({ trigger, onUpdate }: TriggerEditorProps) {
+export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localTrigger, setLocalTrigger] = useState<Trigger>(trigger);
 
   useEffect(() => {
     setLocalTrigger(trigger);
   }, [trigger]);
+
+  const handleToggleExpand = (expanded: boolean) => {
+    setIsExpanded(expanded);
+    onExpandChange?.(expanded);
+  };
 
   const handleEventChange = (event: TriggerEvent) => {
     const updated = { ...localTrigger, event };
@@ -132,7 +138,7 @@ export function TriggerEditor({ trigger, onUpdate }: TriggerEditorProps) {
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg">
       {/* Header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => handleToggleExpand(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800 transition rounded-t-lg"
       >
         <div className="flex items-center gap-2">
