@@ -21,7 +21,7 @@ import { JobNode } from './JobNode';
 import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
 import { CustomEdge } from './CustomEdge';
-import { Save, Download, Plus } from 'lucide-react';
+import { Save, Download, Plus, Maximize2 } from 'lucide-react';
 
 const nodeTypes = {
   jobNode: JobNode,
@@ -44,7 +44,7 @@ function PipelineBuilderFlow() {
     const newNodes = pipeline.jobs.map((job, idx) => ({
       id: job.id,
       type: 'jobNode',
-      position: { x: idx * 300, y: 0 },
+      position: { x: idx * 350, y: 100 }, // Better spacing and offset from top
       data: {
         job,
         isSelected: job.id === selectedJobId,
@@ -65,7 +65,14 @@ function PipelineBuilderFlow() {
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [pipeline, selectedJobId, setNodes, setEdges]);
+
+    // Fit to view after nodes are set
+    setTimeout(() => {
+      if (reactFlowInstance) {
+        reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 2 });
+      }
+    }, 100);
+  }, [pipeline, selectedJobId, setNodes, setEdges, reactFlowInstance]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -135,6 +142,12 @@ function PipelineBuilderFlow() {
     });
   };
 
+  const handleFitToView = () => {
+    if (reactFlowInstance) {
+      reactFlowInstance.fitView();
+    }
+  };
+
   const selectedJob = pipeline.jobs.find((j) => j.id === selectedJobId);
 
   return (
@@ -146,47 +159,53 @@ function PipelineBuilderFlow() {
 
       {/* Main Content Area */}
       <div className="flex flex-1 gap-4 min-h-0">
-        {/* Canvas */}
-        <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onInit={setReactFlowInstance}
-            onDragOver={onDragOver}
-            onNodeClick={handleJobClick}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            className="bg-zinc-950"
-            deleteKeyCode="Delete"
-          >
-            <Background color="#3f3f46" variant={BackgroundVariant.Dots} />
-            <Controls className="bg-zinc-900 border border-zinc-800" />
-          </ReactFlow>
+      {/* Canvas */}
+      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onInit={setReactFlowInstance}
+          onDragOver={onDragOver}
+          onNodeClick={handleJobClick}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          className="bg-zinc-950"
+          deleteKeyCode="Delete"
+        >
+          <Background color="#3f3f46" variant={BackgroundVariant.Dots} />
+          <Controls className="bg-zinc-900 border border-zinc-800" />
+        </ReactFlow>
 
-          {/* Add Job Button (floating) */}
+        {/* Floating Action Buttons */}
+        <div className="absolute bottom-4 left-4 flex flex-col gap-2">
           <button
             onClick={handleAddJob}
-            className="absolute bottom-4 left-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition shadow-lg"
+            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition shadow-lg"
           >
             <Plus size={18} />
             Add Job
           </button>
+          <button
+            onClick={handleFitToView}
+            className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition shadow-lg"
+            title="Fit all jobs in view"
+          >
+            <Maximize2 size={18} />
+            Fit View
+          </button>
         </div>
-
-        {/* Right Sidebar - Job Config Panel */}
+      </div>        {/* Right Sidebar - Job Config Panel */}
         {selectedJob && (
-          <div className="w-80 flex-shrink-0 overflow-hidden">
-            <JobConfigPanel
-              job={selectedJob}
-              onUpdate={(updatedJob) => updateJob(selectedJob.id, updatedJob)}
-              onDelete={() => deleteJob(selectedJob.id)}
-              onClose={() => setSelectedJobId(null)}
-            />
-          </div>
+          <JobConfigPanel
+            job={selectedJob}
+            onUpdate={(updatedJob) => updateJob(selectedJob.id, updatedJob)}
+            onDelete={() => deleteJob(selectedJob.id)}
+            onClose={() => setSelectedJobId(null)}
+          />
         )}
       </div>
 

@@ -38,7 +38,7 @@ const TRIGGER_EVENTS: { value: TriggerEvent; label: string; description: string 
 ];
 
 export function TriggerEditor({ trigger, onUpdate }: TriggerEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [localTrigger, setLocalTrigger] = useState<Trigger>(trigger);
 
   useEffect(() => {
