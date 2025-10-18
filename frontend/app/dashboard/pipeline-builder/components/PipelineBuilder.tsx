@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -11,31 +11,78 @@ import ReactFlow, {
   useEdgesState,
   ReactFlowProvider,
   BackgroundVariant,
+  Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { PipelineNode as PipelineNodeComponent } from './PipelineNode';
-import { NodePalette } from './NodePalette';
-import { NodeConfigPanel } from './NodeConfigPanel';
-import { NodeType, NodeData, PipelineNode } from '../types';
+import { Pipeline, Job, Trigger } from '../types';
+import { createDefaultPipeline, generateId } from '../utils/pipelineUtils';
+import { JobNode } from './JobNode';
+import { TriggerEditor } from './TriggerEditor';
+import { JobConfigPanel } from './JobConfigPanel';
+import { CustomEdge } from './CustomEdge';
+import { Save, Download, Plus } from 'lucide-react';
 
 const nodeTypes = {
-  pipelineNode: PipelineNodeComponent,
+  jobNode: JobNode,
 };
 
-let nodeId = 0;
-const getId = () => `node_${nodeId++}`;
+const edgeTypes = {
+  custom: CustomEdge,
+};
 
 function PipelineBuilderFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
+  const [pipeline, setPipeline] = useState<Pipeline>(createDefaultPipeline());
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(pipeline.jobs[0]?.id || null);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState<{ id: string; data: NodeData } | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
+  // Initialize nodes and edges from pipeline jobs
+  useEffect(() => {
+    const newNodes = pipeline.jobs.map((job, idx) => ({
+      id: job.id,
+      type: 'jobNode',
+      position: { x: idx * 300, y: 0 },
+      data: {
+        job,
+        isSelected: job.id === selectedJobId,
+      },
+    }));
+
+    // Create edges from job dependencies
+    const newEdges = pipeline.jobs
+      .flatMap((job) =>
+        (job.needs || []).map((dependencyId) => ({
+          id: `${dependencyId}-${job.id}`,
+          source: dependencyId,
+          target: job.id,
+          type: 'custom',
+          animated: true,
+        }))
+      );
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+  }, [pipeline, selectedJobId, setNodes, setEdges]);
+
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (connection: Connection) => {
+      // Validate connection and update job dependencies
+      if (connection.source && connection.target) {
+        const targetJob = pipeline.jobs.find((j) => j.id === connection.target);
+        if (targetJob) {
+          const updatedJob = {
+            ...targetJob,
+            needs: [...(targetJob.needs || []), connection.source],
+          };
+          updateJob(connection.target, updatedJob);
+        }
+      }
+      setEdges((eds) => addEdge(connection, eds));
+    },
+    [pipeline]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -43,106 +90,139 @@ function PipelineBuilderFlow() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-
-      const type = event.dataTransfer.getData('application/reactflow') as NodeType;
-      if (!type || !reactFlowWrapper.current || !reactFlowInstance) return;
-
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = reactFlowInstance.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      });
-
-      addNode(type, position);
-    },
-    [reactFlowInstance]
-  );
-
-  const addNode = (type: NodeType, position?: { x: number; y: number }) => {
-    const newNode: PipelineNode = {
-      id: getId(),
-      type: 'pipelineNode',
-      position: position || { x: Math.random() * 400, y: Math.random() * 400 },
-      data: {
-        label: `New ${type}`,
-        type,
-        config: {},
-      },
-    };
-
-    setNodes((nds) => [...nds, newNode]);
-  };
-
-  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node<NodeData>) => {
-    setSelectedNode({ id: node.id, data: node.data });
+  const handleJobClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setSelectedJobId(node.id);
   }, []);
 
-  const updateNode = (id: string, data: Partial<NodeData>) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === id) {
-          return {
-            ...node,
-            data: { ...node.data, ...data },
-          };
-        }
-        return node;
-      })
-    );
+  const handleAddJob = () => {
+    const newJob: Job = {
+      id: generateId('job'),
+      name: `Job ${pipeline.jobs.length + 1}`,
+      runsOn: 'ubuntu-latest',
+      steps: [],
+    };
+
+    setPipeline({
+      ...pipeline,
+      jobs: [...pipeline.jobs, newJob],
+      updatedAt: new Date().toISOString(),
+    });
+    setSelectedJobId(newJob.id);
   };
 
-  const deleteNode = (id: string) => {
-    setNodes((nds) => nds.filter((node) => node.id !== id));
-    setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
-    setSelectedNode(null);
+  const updateJob = (jobId: string, updatedJob: Job) => {
+    setPipeline({
+      ...pipeline,
+      jobs: pipeline.jobs.map((job) => (job.id === jobId ? updatedJob : job)),
+      updatedAt: new Date().toISOString(),
+    });
   };
+
+  const deleteJob = (jobId: string) => {
+    setPipeline({
+      ...pipeline,
+      jobs: pipeline.jobs.filter((job) => job.id !== jobId),
+      updatedAt: new Date().toISOString(),
+    });
+    setSelectedJobId(null);
+  };
+
+  const handleTriggerUpdate = (trigger: Trigger) => {
+    setPipeline({
+      ...pipeline,
+      trigger,
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
+  const selectedJob = pipeline.jobs.find((j) => j.id === selectedJobId);
 
   return (
-    <div className="flex h-[calc(100vh-200px)] gap-4">
-      {/* Left Sidebar - Node Palette */}
-      <div className="w-64 flex-shrink-0">
-        <NodePalette onAddNode={(type) => addNode(type)} />
-        <div className="mt-4 bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-zinc-400 text-sm">
-          Logic refactor in progress. Use the palette to sketch layout only.
-        </div>
+    <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
+      {/* Trigger Editor - Top Panel */}
+      <div className="flex-shrink-0">
+        <TriggerEditor trigger={pipeline.trigger} onUpdate={handleTriggerUpdate} />
       </div>
 
-      {/* Main Canvas */}
-      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={setReactFlowInstance}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onNodeClick={onNodeClick}
-          nodeTypes={nodeTypes}
-          fitView
-          className="bg-zinc-950"
-          deleteKeyCode="Delete"
-        >
-          <Background color="#3f3f46" variant={BackgroundVariant.Dots} />
-          <Controls className="bg-zinc-900 border border-zinc-800" />
-        </ReactFlow>
+      {/* Main Content Area */}
+      <div className="flex flex-1 gap-4 min-h-0">
+        {/* Canvas */}
+        <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={setReactFlowInstance}
+            onDragOver={onDragOver}
+            onNodeClick={handleJobClick}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            fitView
+            className="bg-zinc-950"
+            deleteKeyCode="Delete"
+          >
+            <Background color="#3f3f46" variant={BackgroundVariant.Dots} />
+            <Controls className="bg-zinc-900 border border-zinc-800" />
+          </ReactFlow>
+
+          {/* Add Job Button (floating) */}
+          <button
+            onClick={handleAddJob}
+            className="absolute bottom-4 left-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition shadow-lg"
+          >
+            <Plus size={18} />
+            Add Job
+          </button>
+        </div>
+
+        {/* Right Sidebar - Job Config Panel */}
+        {selectedJob && (
+          <div className="w-80 flex-shrink-0 overflow-hidden">
+            <JobConfigPanel
+              job={selectedJob}
+              onUpdate={(updatedJob) => updateJob(selectedJob.id, updatedJob)}
+              onDelete={() => deleteJob(selectedJob.id)}
+              onClose={() => setSelectedJobId(null)}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Right Sidebar - Configuration Panel */}
-      {selectedNode && (
-        <div className="w-80 flex-shrink-0">
-          <NodeConfigPanel
-            node={selectedNode}
-            onClose={() => setSelectedNode(null)}
-            onUpdate={updateNode}
-            onDelete={deleteNode}
-          />
+      {/* Bottom Action Bar */}
+      <div className="flex-shrink-0 bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-white">{pipeline.name}</h3>
+          <p className="text-xs text-zinc-400">
+            {pipeline.jobs.length} job{pipeline.jobs.length !== 1 ? 's' : ''} • Last updated{' '}
+            {new Date(pipeline.updatedAt).toLocaleTimeString()}
+          </p>
         </div>
-      )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              // Save to localStorage for now
+              localStorage.setItem('pipeline', JSON.stringify(pipeline));
+              alert('Pipeline saved to localStorage');
+            }}
+            className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+          >
+            <Save size={18} />
+            Save
+          </button>
+
+          <button
+            disabled
+            className="bg-zinc-800 text-zinc-500 font-semibold px-4 py-2 rounded flex items-center gap-2 cursor-not-allowed"
+            title="Export YAML - Coming in Phase 2"
+          >
+            <Download size={18} />
+            Export YAML
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
