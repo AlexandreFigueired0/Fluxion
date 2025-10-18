@@ -3,3 +3,7 @@ export { PipelineNode } from './PipelineNode';
 export { NodePalette } from './NodePalette';
 export { NodeConfigPanel } from './NodeConfigPanel';
 export { CustomEdge } from './CustomEdge';
+export { TriggerEditor } from './TriggerEditor';
+export { JobNode } from './JobNode';
+export { StepEditor } from './StepEditor';
+export { JobConfigPanel } from './JobConfigPanel';
