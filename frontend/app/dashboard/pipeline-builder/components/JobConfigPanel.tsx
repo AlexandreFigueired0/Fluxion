@@ -304,16 +304,16 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
                         type="text"
                         placeholder="e.g., ubuntu-latest, windows-latest, macos-latest (comma-separated)"
                         defaultValue={values?.join(', ') || ''}
-                        onChange={(e) => {
-                          const newValues = e.target.value
+                        onBlur={(e) => {
+                          const newValues = e.currentTarget.value
                             .split(',')
                             .map((v) => v.trim())
                             .filter((v) => v);
                           const updated = {
                             ...localJob,
                             strategy: {
-                              ...localJob.strategy,
-                              [key]: newValues.length > 0 ? newValues : undefined,
+                              ...(localJob.strategy || {}),
+                              [key]: newValues,
                             },
                           };
                           setLocalJob(updated);
@@ -336,7 +336,7 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
                       const updated = {
                         ...localJob,
                         strategy: {
-                          ...localJob.strategy,
+                          ...(localJob.strategy || {}),
                           [key]: [],
                         },
                       };
