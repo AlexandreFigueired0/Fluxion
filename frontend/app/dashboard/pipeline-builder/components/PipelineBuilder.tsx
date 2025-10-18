@@ -19,11 +19,12 @@ import './pipelineBuilder.css';
 
 import { Pipeline, Job, Trigger } from '../types';
 import { createDefaultPipeline, generateId } from '../utils/pipelineUtils';
+import { downloadPipelineYaml, copyPipelineYamlToClipboard } from '../utils/yamlGenerator';
 import { JobNode } from './JobNode';
 import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
 import { CustomEdge } from './CustomEdge';
-import { Save, Download, Plus, Maximize2 } from 'lucide-react';
+import { Save, Download, Plus, Maximize2, Copy, Check } from 'lucide-react';
 
 const nodeTypes = {
   jobNode: JobNode,
@@ -40,6 +41,7 @@ function PipelineBuilderFlow() {
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
   // Initialize nodes and edges from pipeline jobs
   useEffect(() => {
@@ -245,12 +247,33 @@ function PipelineBuilderFlow() {
           </button>
 
           <button
-            disabled
-            className="bg-zinc-800 text-zinc-500 font-semibold px-4 py-2 rounded flex items-center gap-2 cursor-not-allowed"
-            title="Export YAML - Coming in Phase 2"
+            onClick={() => copyPipelineYamlToClipboard(pipeline).then(() => {
+              setCopiedToClipboard(true);
+              setTimeout(() => setCopiedToClipboard(false), 2000);
+            })}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+            title="Copy YAML to clipboard"
+          >
+            {copiedToClipboard ? (
+              <>
+                <Check size={18} />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={18} />
+                Copy YAML
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => downloadPipelineYaml(pipeline)}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+            title="Download as .yml file"
           >
             <Download size={18} />
-            Export YAML
+            Download YAML
           </button>
         </div>
       </div>
