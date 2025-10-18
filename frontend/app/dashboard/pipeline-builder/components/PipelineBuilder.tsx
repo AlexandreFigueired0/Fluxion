@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   Background,
-  Controls,
   addEdge,
   Connection,
   Node,
@@ -14,6 +13,9 @@ import ReactFlow, {
   Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+// Hide React Flow watermark
+import './pipelineBuilder.css';
 
 import { Pipeline, Job, Trigger } from '../types';
 import { createDefaultPipeline, generateId } from '../utils/pipelineUtils';
@@ -171,7 +173,7 @@ function PipelineBuilderFlow() {
       {/* Main Content Area */}
       <div className="flex flex-1 gap-4 min-h-0">
       {/* Canvas */}
-      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper}>
+      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative overflow-hidden" ref={reactFlowWrapper} style={{ '--rf-watermark': 'none' } as any}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -188,7 +190,6 @@ function PipelineBuilderFlow() {
           deleteKeyCode="Delete"
         >
           <Background color="#3f3f46" variant={BackgroundVariant.Dots} />
-          <Controls className="bg-zinc-900 border border-zinc-800" />
         </ReactFlow>
 
         {/* Floating Action Buttons */}

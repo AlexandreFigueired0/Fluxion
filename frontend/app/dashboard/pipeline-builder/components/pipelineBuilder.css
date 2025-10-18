@@ -1,0 +1,4 @@
+/* Hide React Flow watermark/attribution */
+.react-flow__attribution {
+  display: none !important;
+}
