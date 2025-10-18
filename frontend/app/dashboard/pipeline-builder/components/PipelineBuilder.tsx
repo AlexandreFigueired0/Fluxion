@@ -46,7 +46,7 @@ function PipelineBuilderFlow() {
     const newNodes = pipeline.jobs.map((job, idx) => ({
       id: job.id,
       type: 'jobNode',
-      position: { x: idx * 350, y: 100 }, // Better spacing and offset from top
+      position: { x: idx * 420, y: 100 }, // Increased spacing for larger cards
       data: {
         job,
         isSelected: job.id === selectedJobId,

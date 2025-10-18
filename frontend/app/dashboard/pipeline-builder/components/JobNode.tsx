@@ -30,60 +30,65 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
     <div
       className={`
         ${baseColor}
-        border-2 rounded-lg px-4 py-3 min-w-[240px]
+        border-2 rounded-lg px-6 py-4 min-w-[300px]
         transition-all duration-200 shadow-lg
         ${selected || isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900' : ''}
       `}
+      style={{ fontSize: '16px' }}
     >
       {/* Input Handle (for job dependencies) */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!bg-white !w-3 !h-3 !border-2 !border-zinc-900"
+        className="!bg-white !w-4 !h-4 !border-2 !border-zinc-900"
       />
 
       {/* Job Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-white font-semibold text-sm truncate">{job.name}</h3>
-          <p className="text-white/60 text-xs mt-0.5">{job.runsOn}</p>
+          <h3 className="text-white font-black text-lg truncate" style={{ lineHeight: '1.2' }}>
+            {job.name}
+          </h3>
+          <p className="text-white/70 text-base mt-1" style={{ lineHeight: '1.2' }}>
+            {job.runsOn}
+          </p>
         </div>
 
         {/* Quick indicators */}
-        <div className="flex gap-1 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0">
           {hasMatrix && (
             <div
-              className="bg-blue-500/30 rounded px-1.5 py-0.5"
+              className="bg-blue-500/30 rounded px-2 py-1"
               title="Matrix strategy enabled"
             >
-              <Zap size={12} className="text-blue-300" />
+              <Zap size={16} className="text-blue-300" />
             </div>
           )}
           {job.timeout && (
             <div
-              className="bg-purple-500/30 rounded px-1.5 py-0.5"
+              className="bg-purple-500/30 rounded px-2 py-1"
               title={`${job.timeout} min timeout`}
             >
-              <span className="text-xs text-purple-300">{job.timeout}m</span>
+              <span className="text-sm text-purple-300 font-bold">{job.timeout}m</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Steps Preview */}
-      <div className="bg-white/10 rounded px-2 py-1.5 mb-2">
-        <p className="text-white/70 text-xs font-medium">
+      <div className="bg-white/10 rounded px-3 py-2 mb-3">
+        <p className="text-white/80 text-base font-bold" style={{ lineHeight: '1.2' }}>
           {job.steps.length} step{job.steps.length !== 1 ? 's' : ''}
         </p>
         {job.steps.length > 0 && (
-          <div className="mt-1 space-y-1">
+          <div className="mt-2 space-y-1">
             {job.steps.slice(0, 2).map((step, idx) => (
-              <div key={idx} className="text-white/50 text-xs truncate">
+              <div key={idx} className="text-white/60 text-sm truncate" style={{ lineHeight: '1.2' }}>
                 • {step.name || step.uses?.split('@')[0] || step.run?.split(' ')[0] || 'Step'}
               </div>
             ))}
             {job.steps.length > 2 && (
-              <div className="text-white/40 text-xs">
+              <div className="text-white/50 text-sm" style={{ lineHeight: '1.2' }}>
                 + {job.steps.length - 2} more
               </div>
             )}
@@ -93,9 +98,9 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
 
       {/* Environment Indicator */}
       {job.environment && (
-        <div className="flex items-center gap-1 text-xs text-white/60 mb-2">
-          <Settings size={12} />
-          <span>{job.environment}</span>
+        <div className="flex items-center gap-2 text-sm text-white/70 mb-2" style={{ lineHeight: '1.2' }}>
+          <Settings size={16} />
+          <span className="font-bold">{job.environment}</span>
         </div>
       )}
 
@@ -103,7 +108,7 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!bg-white !w-3 !h-3 !border-2 !border-zinc-900"
+        className="!bg-white !w-4 !h-4 !border-2 !border-zinc-900"
       />
     </div>
   );
