@@ -119,8 +119,7 @@ export interface MatrixStrategy {
  * Each job runs on a specified runner and contains a sequence of steps.
  */
 export interface Job {
-  id: string; // Unique identifier for this job (e.g., 'build', 'test', 'deploy')
-  name: string; // Display name, shown in GitHub Actions UI
+  name: string; // Display name, used as unique identifier (shown in GitHub Actions UI)
   
   // Execution environment
   runsOn: RunsOnValue | RunsOnValue[]; // Runner(s) to use
@@ -135,7 +134,7 @@ export interface Job {
   strategy?: MatrixStrategy;
   
   // Job dependencies - ensures job doesn't run until these complete
-  needs?: string[]; // Array of job IDs this job depends on
+  needs?: string[]; // Array of job names this job depends on
   
   // Steps in this job - run sequentially
   steps: PipelineStep[];

@@ -27,7 +27,6 @@ export function createCheckoutStep(): PipelineStep {
  */
 export function createDefaultJob(name: string = 'Build'): Job {
   return {
-    id: `job_${Date.now()}`,
     name,
     runsOn: 'ubuntu-latest',
     steps: [createCheckoutStep()],

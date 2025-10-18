@@ -126,15 +126,28 @@ function generateTriggerYaml(trigger: Trigger, indent: number): string {
 }
 
 /**
+ * Generate a YAML-safe job key from the job name
+ * Converts "Build App" -> "build-app", "Deploy (Prod)" -> "deploy-prod"
+ */
+function generateJobKey(jobName: string): string {
+  return jobName
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special chars
+    .replace(/\s+/g, '-') // Replace spaces with dashes
+    .replace(/-+/g, '-') // Remove consecutive dashes
+    .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
+}
+
+/**
  * Generate YAML for a single job
  */
 function generateJobYaml(job: Job, indent: number): string {
   const lines: string[] = [];
   const ind = ' '.repeat(indent);
   const jobInd = ' '.repeat(indent + 2);
+  const jobKey = generateJobKey(job.name);
 
-  lines.push(`${ind}${job.id}:`);
-  lines.push(`${jobInd}name: ${job.name || job.id}`);
+  lines.push(`${ind}${jobKey}:`);
 
   // runs-on
   if (Array.isArray(job.runsOn)) {
@@ -186,12 +199,13 @@ function generateJobYaml(job: Job, indent: number): string {
     });
   }
 
-  // needs (dependencies)
+  // needs (dependencies) - convert job names to job keys
   if (job.needs && job.needs.length > 0) {
-    if (job.needs.length === 1) {
-      lines.push(`${jobInd}needs: ${job.needs[0]}`);
+    const needsKeys = job.needs.map((jobName) => generateJobKey(jobName));
+    if (needsKeys.length === 1) {
+      lines.push(`${jobInd}needs: ${needsKeys[0]}`);
     } else {
-      lines.push(`${jobInd}needs: [${job.needs.join(', ')}]`);
+      lines.push(`${jobInd}needs: [${needsKeys.join(', ')}]`);
     }
   }
 

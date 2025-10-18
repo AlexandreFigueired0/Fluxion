@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
   addEdge,
@@ -37,63 +37,89 @@ const edgeTypes = {
 function PipelineBuilderFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [pipeline, setPipeline] = useState<Pipeline>(createDefaultPipeline());
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(pipeline.jobs[0]?.id || null);
+  const [selectedJobName, setSelectedJobName] = useState<string | null>(pipeline.jobs[0]?.name || null);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
-  // Initialize nodes and edges from pipeline jobs
-  useEffect(() => {
+  // Helper to get job key from name (same as YAML generator)
+  // Memoize to prevent infinite useEffect loops
+  const getJobKey = useCallback((jobName: string) =>
+    jobName
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, ''), []);
+
+    // Compute nodes and edges from pipeline (memoized to prevent constant re-renders)
+  const { nodes: computedNodes, edges: computedEdges } = useMemo(() => {
     const newNodes = pipeline.jobs.map((job, idx) => ({
-      id: job.id,
+      id: getJobKey(job.name),
       type: 'jobNode',
       position: { x: idx * 420, y: 100 }, // Increased spacing for larger cards
       data: {
         job,
-        isSelected: job.id === selectedJobId,
+        isSelected: job.name === selectedJobName,
       },
     }));
 
     // Create edges from job dependencies
     const newEdges = pipeline.jobs
       .flatMap((job) =>
-        (job.needs || []).map((dependencyId) => ({
-          id: `${dependencyId}-${job.id}`,
-          source: dependencyId,
-          target: job.id,
-          type: 'custom',
-          animated: true,
-        }))
+        (job.needs || []).map((dependencyName) => {
+          const dependencyKey = getJobKey(dependencyName);
+          const jobKey = getJobKey(job.name);
+          return {
+            id: `${dependencyKey}-${jobKey}`,
+            source: dependencyKey,
+            target: jobKey,
+            type: 'custom',
+            animated: true,
+          };
+        })
       );
 
-    setNodes(newNodes);
-    setEdges(newEdges);
+    return { nodes: newNodes, edges: newEdges };
+  }, [pipeline.jobs, selectedJobName, getJobKey]);
 
-    // Fit to view after nodes are set
-    setTimeout(() => {
-      if (reactFlowInstance) {
+  // Update React Flow nodes and edges when computed values change
+  useEffect(() => {
+    setNodes(computedNodes);
+    setEdges(computedEdges);
+  }, [computedNodes, computedEdges, setNodes, setEdges]);
+
+  // Initial fit to view on mount and when job count changes
+  useEffect(() => {
+    if (reactFlowInstance && computedNodes.length > 0) {
+      setTimeout(() => {
         reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 2 });
-      }
-    }, 100);
-  }, [pipeline, selectedJobId, setNodes, setEdges, reactFlowInstance]);
+      }, 100);
+    }
+  }, [reactFlowInstance, computedNodes.length]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
       // Validate connection and update job dependencies
       if (connection.source && connection.target) {
-        const targetJob = pipeline.jobs.find((j) => j.id === connection.target);
-        if (targetJob) {
-          const updatedJob = {
-            ...targetJob,
-            needs: [...(targetJob.needs || []), connection.source],
-          };
-          updateJob(connection.target, updatedJob);
+        const targetJobName = pipeline.jobs.find((j) => getJobKey(j.name) === connection.target)?.name;
+        const sourceJobName = pipeline.jobs.find((j) => getJobKey(j.name) === connection.source)?.name;
+        
+        if (targetJobName && sourceJobName) {
+          const targetJob = pipeline.jobs.find((j) => j.name === targetJobName);
+          if (targetJob && !targetJob.needs?.includes(sourceJobName)) {
+            const updatedJob = {
+              ...targetJob,
+              needs: [...(targetJob.needs || []), sourceJobName],
+            };
+            updateJob(targetJobName, updatedJob);
+          }
         }
       }
       setEdges((eds) => addEdge(connection, eds));
     },
-    [pipeline]
+    [pipeline, getJobKey]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -102,12 +128,14 @@ function PipelineBuilderFlow() {
   }, []);
 
   const handleJobClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelectedJobId(node.id);
-  }, []);
+    const jobName = pipeline.jobs.find((j) => getJobKey(j.name) === node.id)?.name;
+    if (jobName) {
+      setSelectedJobName(jobName);
+    }
+  }, [pipeline, getJobKey]);
 
   const handleAddJob = () => {
     const newJob: Job = {
-      id: generateId('job'),
       name: `Job ${pipeline.jobs.length + 1}`,
       runsOn: 'ubuntu-latest',
       steps: [],
@@ -118,24 +146,47 @@ function PipelineBuilderFlow() {
       jobs: [...pipeline.jobs, newJob],
       updatedAt: new Date().toISOString(),
     });
-    setSelectedJobId(newJob.id);
+    setSelectedJobName(newJob.name);
   };
 
-  const updateJob = (jobId: string, updatedJob: Job) => {
-    setPipeline({
-      ...pipeline,
-      jobs: pipeline.jobs.map((job) => (job.id === jobId ? updatedJob : job)),
-      updatedAt: new Date().toISOString(),
+  const updateJob = (jobName: string, updatedJob: Job) => {
+    setPipeline((prev) => {
+      const renamed = jobName !== updatedJob.name;
+
+      const jobs = prev.jobs.map((job) => {
+        if (job.name === jobName) {
+          return updatedJob;
+        }
+
+        if (renamed && job.needs?.includes(jobName)) {
+          return {
+            ...job,
+            needs: job.needs.map((need) => (need === jobName ? updatedJob.name : need)),
+          };
+        }
+
+        return job;
+      });
+
+      return {
+        ...prev,
+        jobs,
+        updatedAt: new Date().toISOString(),
+      };
     });
+
+    if (selectedJobName === jobName) {
+      setSelectedJobName(updatedJob.name);
+    }
   };
 
-  const deleteJob = (jobId: string) => {
+  const deleteJob = (jobName: string) => {
     setPipeline({
       ...pipeline,
-      jobs: pipeline.jobs.filter((job) => job.id !== jobId),
+      jobs: pipeline.jobs.filter((job) => job.name !== jobName),
       updatedAt: new Date().toISOString(),
     });
-    setSelectedJobId(null);
+    setSelectedJobName(null);
   };
 
   const handleTriggerUpdate = (trigger: Trigger) => {
@@ -146,7 +197,7 @@ function PipelineBuilderFlow() {
     });
   };
 
-    const handleFitToView = () => {
+  const handleFitToView = () => {
     if (reactFlowInstance) {
       reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 2 });
     }
@@ -159,7 +210,7 @@ function PipelineBuilderFlow() {
     }, 150); // Wait for CSS transition to complete
   };
 
-  const selectedJob = pipeline.jobs.find((j) => j.id === selectedJobId);
+  const selectedJob = pipeline.jobs.find((j) => j.name === selectedJobName);
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
@@ -216,9 +267,9 @@ function PipelineBuilderFlow() {
         {selectedJob && (
           <JobConfigPanel
             job={selectedJob}
-            onUpdate={(updatedJob) => updateJob(selectedJob.id, updatedJob)}
-            onDelete={() => deleteJob(selectedJob.id)}
-            onClose={() => setSelectedJobId(null)}
+            onUpdate={(updatedJob) => updateJob(selectedJob.name, updatedJob)}
+            onDelete={() => deleteJob(selectedJob.name)}
+            onClose={() => setSelectedJobName(null)}
           />
         )}
       </div>
