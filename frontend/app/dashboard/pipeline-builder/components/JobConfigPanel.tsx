@@ -269,97 +269,85 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
           {expandedSections.matrix && (
             <div className="px-4 py-3 space-y-3 border-t border-zinc-800">
               <p className="text-xs text-zinc-400">
-                Run this job multiple times with different configurations (e.g., test across multiple
-                Node versions).
+                Run this job multiple times with different configurations. Add any custom matrix dimensions.
               </p>
 
-              {/* OS Matrix */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                  Operating Systems
-                </label>
-                <p className="text-xs text-zinc-500 mb-2">
-                  Leave empty or list OSes to test against
-                </p>
-                <input
-                  type="text"
-                  placeholder="e.g., ubuntu-latest, windows-latest, macos-latest (comma-separated)"
-                  defaultValue={localJob.strategy?.os?.join(', ') || ''}
-                  onChange={(e) => {
-                    const values = e.target.value
-                      .split(',')
-                      .map((v) => v.trim())
-                      .filter((v) => v);
-                    const updated = {
-                      ...localJob,
-                      strategy: {
-                        ...localJob.strategy,
-                        os: values.length > 0 ? values : undefined,
-                      },
-                    };
-                    setLocalJob(updated);
-                    onUpdate(updated);
-                  }}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-                />
-              </div>
+              {/* Dynamic Matrix Fields */}
+              {localJob.strategy &&
+                Object.entries(localJob.strategy)
+                  .filter(([key]) => !['exclude', 'include'].includes(key))
+                  .map(([key, values]) => (
+                    <div key={key}>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-medium text-zinc-300 capitalize">
+                          {key.replace(/([A-Z])/g, ' $1')}
+                        </label>
+                        <button
+                          onClick={() => {
+                            const updated = {
+                              ...localJob,
+                              strategy: {
+                                ...localJob.strategy,
+                                [key]: undefined,
+                              },
+                            };
+                            delete updated.strategy[key];
+                            setLocalJob(updated);
+                            onUpdate(updated);
+                          }}
+                          className="text-xs text-red-400 hover:text-red-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="e.g., ubuntu-latest, windows-latest, macos-latest (comma-separated)"
+                        defaultValue={values?.join(', ') || ''}
+                        onChange={(e) => {
+                          const newValues = e.target.value
+                            .split(',')
+                            .map((v) => v.trim())
+                            .filter((v) => v);
+                          const updated = {
+                            ...localJob,
+                            strategy: {
+                              ...localJob.strategy,
+                              [key]: newValues.length > 0 ? newValues : undefined,
+                            },
+                          };
+                          setLocalJob(updated);
+                          onUpdate(updated);
+                        }}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm mb-2"
+                      />
+                    </div>
+                  ))}
 
-              {/* Node Version Matrix */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                  Node Versions
-                </label>
-                <p className="text-xs text-zinc-500 mb-2">Leave empty if not using Node</p>
+              {/* Add New Matrix Dimension */}
+              <div className="bg-zinc-950 border border-zinc-800 rounded p-3 space-y-2">
+                <p className="text-xs text-zinc-400 font-semibold">Add New Dimension</p>
                 <input
                   type="text"
-                  placeholder="e.g., 18, 20, 21 (comma-separated)"
-                  defaultValue={localJob.strategy?.nodeVersion?.join(', ') || ''}
-                  onChange={(e) => {
-                    const values = e.target.value
-                      .split(',')
-                      .map((v) => v.trim())
-                      .filter((v) => v);
-                    const updated = {
-                      ...localJob,
-                      strategy: {
-                        ...localJob.strategy,
-                        nodeVersion: values.length > 0 ? values : undefined,
-                      },
-                    };
-                    setLocalJob(updated);
-                    onUpdate(updated);
+                  placeholder="e.g., node-version, python-version, os, custom-var"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      const key = e.currentTarget.value.trim().toLowerCase().replace(/\s+/g, '-');
+                      const updated = {
+                        ...localJob,
+                        strategy: {
+                          ...localJob.strategy,
+                          [key]: [],
+                        },
+                      };
+                      setLocalJob(updated);
+                      onUpdate(updated);
+                      e.currentTarget.value = '';
+                    }
                   }}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
                 />
-              </div>
-
-              {/* Python Version Matrix */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                  Python Versions
-                </label>
-                <p className="text-xs text-zinc-500 mb-2">Leave empty if not using Python</p>
-                <input
-                  type="text"
-                  placeholder="e.g., 3.9, 3.10, 3.11 (comma-separated)"
-                  defaultValue={localJob.strategy?.pythonVersion?.join(', ') || ''}
-                  onChange={(e) => {
-                    const values = e.target.value
-                      .split(',')
-                      .map((v) => v.trim())
-                      .filter((v) => v);
-                    const updated = {
-                      ...localJob,
-                      strategy: {
-                        ...localJob.strategy,
-                        pythonVersion: values.length > 0 ? values : undefined,
-                      },
-                    };
-                    setLocalJob(updated);
-                    onUpdate(updated);
-                  }}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-                />
+                <p className="text-xs text-zinc-500">Press Enter to add dimension</p>
               </div>
             </div>
           )}
