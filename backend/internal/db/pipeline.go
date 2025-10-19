@@ -26,8 +26,8 @@ func CreatePipeline(userID, name, description, configYAML string, db *supa.Clien
 	return &pipeline, nil
 }
 
-// GetPipelinesByID retrieves a pipeline by its ID.
-func GetPipelinesByID(pipelineID string, db *supa.Client) (*models.Pipeline, error) {
+// GetPipelineByID retrieves a pipeline by its ID.
+func GetPipelineByID(pipelineID string, db *supa.Client) (*models.Pipeline, error) {
 	var pipeline models.Pipeline
 	_, err := db.From("pipelines").Select("*", "", false).Eq("id", pipelineID).Single().ExecuteTo(&pipeline)
 	if err != nil {
