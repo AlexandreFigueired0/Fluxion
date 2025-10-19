@@ -24,7 +24,10 @@ import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
 import { YamlPreviewModal } from './YamlPreviewModal';
 import { CustomEdge } from './CustomEdge';
-import { Save, Download, Plus, Maximize2, Copy, Check } from 'lucide-react';
+import { Save, Download, Plus, Maximize2, Copy, Check, AlertCircle, Loader } from 'lucide-react';
+import pipelineService from '../services/pipelineService';
+import { pipelineToYaml } from '../utils/yamlGenerator';
+import { useSession } from 'next-auth/react';
 
 const nodeTypes = {
   jobNode: JobNode,
@@ -35,6 +38,8 @@ const edgeTypes = {
 };
 
 function PipelineBuilderFlow() {
+  const { data: session } = useSession();
+  
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [pipeline, setPipeline] = useState<Pipeline>(createDefaultPipeline());
   const [selectedJobName, setSelectedJobName] = useState<string | null>(pipeline.jobs[0]?.name || null);
@@ -42,6 +47,8 @@ function PipelineBuilderFlow() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [showYamlPreview, setShowYamlPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Helper to get job key from name (same as YAML generator)
   // Memoize to prevent infinite useEffect loops
@@ -210,6 +217,30 @@ function PipelineBuilderFlow() {
     }, 150); // Wait for CSS transition to complete
   };
 
+  const handleSavePipeline = async () => {
+    if (!session?.user?.id) {
+      setSaveError('Authentication required');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+
+      const userToken = session.user.id; // Using user ID as token for now
+      const userID = session.user.id;
+      const configYAML = pipelineToYaml(pipeline);
+
+      await pipelineService.createPipeline(userToken, userID, pipeline, configYAML);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save pipeline';
+      setSaveError(errorMessage);
+      console.error('Save error:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const selectedJob = pipeline.jobs.find((j) => j.name === selectedJobName);
 
   return (
@@ -282,19 +313,31 @@ function PipelineBuilderFlow() {
             {pipeline.jobs.length} job{pipeline.jobs.length !== 1 ? 's' : ''} • Last updated{' '}
             {new Date(pipeline.updatedAt).toLocaleTimeString()}
           </p>
+          {saveError && (
+            <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+              <AlertCircle size={14} />
+              {saveError}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              // Save to localStorage for now
-              localStorage.setItem('pipeline', JSON.stringify(pipeline));
-              alert('Pipeline saved to localStorage');
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
+            onClick={handleSavePipeline}
+            disabled={isSaving}
+            className="bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded flex items-center gap-2 transition"
           >
-            <Save size={18} />
-            Save
+            {isSaving ? (
+              <>
+                <Loader size={18} className="animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={18} />
+                Save
+              </>
+            )}
           </button>
 
           <button
