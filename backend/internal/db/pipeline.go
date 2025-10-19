@@ -25,3 +25,46 @@ func CreatePipeline(userID, name, description, configYAML string, db *supa.Clien
 	}
 	return &pipeline, nil
 }
+
+// GetPipelinesByID retrieves a pipeline by its ID.
+func GetPipelinesByID(pipelineID string, db *supa.Client) (*models.Pipeline, error) {
+	var pipeline models.Pipeline
+	_, err := db.From("pipelines").Select("*", "", false).Eq("id", pipelineID).Single().ExecuteTo(&pipeline)
+	if err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
+}
+
+// DeletePipelineByID deletes a pipeline by its ID.
+func DeletePipelineByID(pipelineID string, db *supa.Client) error {
+	_, _, err := db.From("pipelines").Delete("", "").Eq("id", pipelineID).Execute()
+	return err
+}
+
+// UpdatePipeline updates an existing pipeline's details.
+func UpdatePipeline(pipelineID, name, description, configYAML string, db *supa.Client) (*models.Pipeline, error) {
+	updatedPipeline := map[string]interface{}{
+		"name":        name,
+		"description": description,
+		"config_yaml": configYAML,
+		"updated_at":  time.Now(),
+	}
+
+	var pipeline models.Pipeline
+	_, err := db.From("pipelines").Update(updatedPipeline, "", "").Eq("id", pipelineID).Single().ExecuteTo(&pipeline)
+	if err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
+}
+
+// ListPipelinesByUserID retrieves all pipelines for a specific user.
+func ListPipelinesByUserID(userID string, db *supa.Client) ([]models.Pipeline, error) {
+	var pipelines []models.Pipeline
+	_, err := db.From("pipelines").Select("*", "", false).Eq("user_id", userID).ExecuteTo(&pipelines)
+	if err != nil {
+		return nil, err
+	}
+	return pipelines, nil
+}
