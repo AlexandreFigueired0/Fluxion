@@ -58,6 +58,14 @@ func main() {
 	// User by ID route
 	userRoutes.GET("/:id", userHandler.GetUserByID)
 
+	// Pipeline routes
+	pipelineHandler := &handlers.PipelineHandler{DB: db_conn}
+	pipelineRoutes := r.Group("/api/pipelines")
+	pipelineRoutes.POST("", pipelineHandler.CreatePipeline)
+	pipelineRoutes.GET("/:id", pipelineHandler.GetPipeline)
+	pipelineRoutes.PUT("/:id", pipelineHandler.UpdatePipeline)
+	pipelineRoutes.DELETE("/:id", pipelineHandler.DeletePipeline)
+
 	log.Println("Starting backend server on", address)
 	r.Run(address)
 }
