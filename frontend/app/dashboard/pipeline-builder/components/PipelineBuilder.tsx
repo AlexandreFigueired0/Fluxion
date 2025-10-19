@@ -26,7 +26,6 @@ import { YamlPreviewModal } from './YamlPreviewModal';
 import { CustomEdge } from './CustomEdge';
 import { Save, Download, Plus, Maximize2, Copy, Check, AlertCircle, Loader } from 'lucide-react';
 import pipelineService from '../services/pipelineService';
-import { pipelineToYaml } from '../utils/yamlGenerator';
 import { useSession } from 'next-auth/react';
 
 const nodeTypes = {
@@ -229,9 +228,8 @@ function PipelineBuilderFlow() {
 
       const userToken = session.user.id; // Using user ID as token for now
       const userID = session.user.id;
-      const configYAML = pipelineToYaml(pipeline);
 
-      await pipelineService.createPipeline(userToken, userID, pipeline, configYAML);
+      await pipelineService.createPipeline(userToken, userID, pipeline);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save pipeline';
       setSaveError(errorMessage);

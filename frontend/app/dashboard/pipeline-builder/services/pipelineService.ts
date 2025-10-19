@@ -21,13 +21,11 @@ class PipelineService {
    * @param userToken - Auth token (placeholder for now)
    * @param userID - User ID
    * @param pipeline - Pipeline object
-   * @param configYAML - Generated YAML string
    */
   async createPipeline(
     userToken: string,
     userID: string,
-    pipeline: Pipeline,
-    configYAML: string
+    pipeline: Pipeline
   ): Promise<PipelineResponse> {
     const response = await fetch(`${API_BASE_URL}/api/pipelines`, {
       method: 'POST',
@@ -39,7 +37,7 @@ class PipelineService {
         user_id: userID,
         name: pipeline.name,
         description: pipeline.description || '',
-        config_yaml: configYAML,
+        config_yaml: pipeline,  // Send the full Pipeline object as JSON
       }),
     });
 
@@ -81,13 +79,11 @@ class PipelineService {
    * @param userToken - Auth token (placeholder for now)
    * @param pipelineID - Pipeline ID
    * @param pipeline - Updated pipeline object
-   * @param configYAML - Updated YAML string
    */
   async updatePipeline(
     userToken: string,
     pipelineID: string,
-    pipeline: Pipeline,
-    configYAML: string
+    pipeline: Pipeline
   ): Promise<PipelineResponse> {
     const response = await fetch(`${API_BASE_URL}/api/pipelines/${pipelineID}`, {
       method: 'PUT',
@@ -98,7 +94,7 @@ class PipelineService {
       body: JSON.stringify({
         name: pipeline.name,
         description: pipeline.description || '',
-        config_yaml: configYAML,
+        config_yaml: pipeline,  // Send the full Pipeline object as JSON
       }),
     });
 
