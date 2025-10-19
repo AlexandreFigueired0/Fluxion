@@ -19,7 +19,6 @@ import './pipelineBuilder.css';
 
 import { Pipeline, Job, Trigger } from '../types';
 import { createDefaultPipeline, generateId } from '../utils/pipelineUtils';
-import { downloadPipelineYaml, copyPipelineYamlToClipboard } from '../utils/yamlGenerator';
 import { JobNode } from './JobNode';
 import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
@@ -42,7 +41,6 @@ function PipelineBuilderFlow() {
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
   const [showYamlPreview, setShowYamlPreview] = useState(false);
 
   // Helper to get job key from name (same as YAML generator)
@@ -96,7 +94,7 @@ function PipelineBuilderFlow() {
   useEffect(() => {
     if (reactFlowInstance && computedNodes.length > 0) {
       setTimeout(() => {
-        reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 2 });
+        reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 1 });
       }, 100);
     }
   }, [reactFlowInstance, computedNodes.length]);
@@ -201,7 +199,7 @@ function PipelineBuilderFlow() {
 
   const handleFitToView = () => {
     if (reactFlowInstance) {
-      reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 2 });
+      reactFlowInstance.fitView({ padding: 0.3, minZoom: 0.3, maxZoom: 1 });
     }
   };
 
