@@ -300,6 +300,32 @@ function PipelineBuilderFlow({ pipelineId }: PipelineBuilderFlowProps) {
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
+      {/* Pipeline Metadata Panel */}
+      <div className="flex-shrink-0 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-semibold text-zinc-400 block mb-2">Pipeline Name</label>
+            <input
+              type="text"
+              value={pipeline.name}
+              onChange={(e) => setPipeline({ ...pipeline, name: e.target.value })}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              placeholder="e.g., CI/CD Pipeline"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-zinc-400 block mb-2">Description</label>
+            <input
+              type="text"
+              value={pipeline.description || ''}
+              onChange={(e) => setPipeline({ ...pipeline, description: e.target.value })}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              placeholder="What does this pipeline do?"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Trigger Editor - Top Panel */}
       <div className="flex-shrink-0">
         <TriggerEditor 
