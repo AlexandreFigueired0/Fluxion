@@ -1,7 +1,5 @@
 export { PipelineBuilder } from './PipelineBuilder';
-export { PipelineNode } from './PipelineNode';
-export { NodePalette } from './NodePalette';
-export { NodeConfigPanel } from './NodeConfigPanel';
+export { PipelinesList } from './PipelinesList';
 export { CustomEdge } from './CustomEdge';
 export { TriggerEditor } from './TriggerEditor';
 export { JobNode } from './JobNode';

@@ -1,15 +1,15 @@
 'use client';
 
-import { useDashboardData } from '../hooks/useDashboardData';
+import { useDashboardData } from '../../hooks/useDashboardData';
 import {
   DashboardLayout,
   DashboardNav,
   LoadingState,
-} from '../components';
+} from '../../components';
 import { Workflow } from 'lucide-react';
-import { PipelinesList } from './components/PipelinesList';
+import { PipelineBuilder } from '../components/PipelineBuilder';
 
-export default function PipelineBuilderPage() {
+export default function NewPipelinePage() {
   const { loading, isLoading } = useDashboardData();
 
   if (loading || isLoading) {
@@ -21,15 +21,15 @@ export default function PipelineBuilderPage() {
       <DashboardNav />
 
       <div className="max-w-[1800px] mx-auto px-8 py-8">
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Workflow className="text-orange-500" size={32} />
-            <h1 className="text-4xl font-black">Pipeline Builder</h1>
+            <h1 className="text-4xl font-black">New Pipeline</h1>
           </div>
-          <p className="text-zinc-400">Create and manage your CI/CD pipelines visually. Drag nodes from the palette, connect them, and generate GitHub Actions workflows.</p>
+          <p className="text-zinc-400">Create your CI/CD pipeline visually. Drag, connect, and configure.</p>
         </div>
 
-        <PipelinesList />
+        <PipelineBuilder />
       </div>
     </DashboardLayout>
   );
