@@ -60,8 +60,8 @@ func UpdatePipeline(pipelineID, name, description string, configYAML json.RawMes
 	return &pipeline, nil
 }
 
-// ListPipelinesByUserID retrieves all pipelines for a specific user.
-func ListPipelinesByUserID(userID string, db *supa.Client) ([]models.Pipeline, error) {
+// GetPipelinesByUserID retrieves all pipelines for a specific user.
+func GetPipelinesByUserID(userID string, db *supa.Client) ([]models.Pipeline, error) {
 	var pipelines []models.Pipeline
 	_, err := db.From("pipelines").Select("*", "", false).Eq("user_id", userID).ExecuteTo(&pipelines)
 	if err != nil {

@@ -33,7 +33,17 @@ func (h *PipelineHandler) CreatePipeline(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, pipeline)
+	createdPipelineDTO := dto.PipelineDTO{
+		ID:          pipeline.ID,
+		UserID:      pipeline.UserID,
+		Name:        pipeline.Name,
+		Description: pipeline.Description,
+		ConfigYAML:  pipeline.ConfigYAML,
+		CreatedAt:   pipeline.CreatedAt,
+		UpdatedAt:   pipeline.UpdatedAt,
+	}
+
+	c.JSON(http.StatusCreated, createdPipelineDTO)
 }
 
 // GetPipelineHandler retrieves a pipeline by its ID.
@@ -46,7 +56,17 @@ func (h *PipelineHandler) GetPipeline(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, pipeline)
+	pipelineDTO := dto.PipelineDTO{
+		ID:          pipeline.ID,
+		UserID:      pipeline.UserID,
+		Name:        pipeline.Name,
+		Description: pipeline.Description,
+		ConfigYAML:  pipeline.ConfigYAML,
+		CreatedAt:   pipeline.CreatedAt,
+		UpdatedAt:   pipeline.UpdatedAt,
+	}
+
+	c.JSON(http.StatusOK, pipelineDTO)
 }
 
 // DeletePipelineHandler deletes a pipeline by its ID.
@@ -82,5 +102,41 @@ func (h *PipelineHandler) UpdatePipeline(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, pipeline)
+	createdPipelineDTO := dto.PipelineDTO{
+		ID:          pipeline.ID,
+		UserID:      pipeline.UserID,
+		Name:        pipeline.Name,
+		Description: pipeline.Description,
+		ConfigYAML:  pipeline.ConfigYAML,
+		CreatedAt:   pipeline.CreatedAt,
+		UpdatedAt:   pipeline.UpdatedAt,
+	}
+
+	c.JSON(http.StatusOK, createdPipelineDTO)
+}
+
+// ListUserPipelinesHandler lists all pipelines for a specific user.
+func (h *PipelineHandler) ListUserPipelines(c *gin.Context) {
+	userID := c.Param("user_id")
+
+	pipelines, err := db.GetPipelinesByUserID(userID, h.DB)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var pipelineDTOs []dto.PipelineDTO
+	for _, pipeline := range pipelines {
+		pipelineDTOs = append(pipelineDTOs, dto.PipelineDTO{
+			ID:          pipeline.ID,
+			UserID:      pipeline.UserID,
+			Name:        pipeline.Name,
+			Description: pipeline.Description,
+			ConfigYAML:  pipeline.ConfigYAML,
+			CreatedAt:   pipeline.CreatedAt,
+			UpdatedAt:   pipeline.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, pipelineDTOs)
 }
