@@ -10,9 +10,7 @@ import {
   Bug, 
   Settings,
   ChevronDown,
-  ChevronRight,
-  FileCode,
-  Zap
+  ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -43,7 +41,13 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
     localStorage.setItem('sidebar-debug-expanded', debugExpanded.toString());
   }, [debugExpanded]);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => {
+    // Exact match for most routes
+    if (pathname === path) return true;
+    // For Pipeline Builder, match all sub-routes
+    if (path === '/dashboard/pipeline-builder' && pathname.startsWith('/dashboard/pipeline-builder')) return true;
+    return false;
+  };
 
   const navItems = [
     {
