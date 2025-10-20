@@ -27,6 +27,7 @@ import { CustomEdge } from './CustomEdge';
 import { Save, Download, Plus, Maximize2, Copy, Check, AlertCircle, Loader } from 'lucide-react';
 import pipelineService from '../services/pipelineService';
 import { useSession } from 'next-auth/react';
+import { parsePipelineFromBackend } from '../utils/pipelineParser';
 
 const nodeTypes = {
   jobNode: JobNode,
@@ -36,7 +37,11 @@ const edgeTypes = {
   custom: CustomEdge,
 };
 
-function PipelineBuilderFlow() {
+interface PipelineBuilderFlowProps {
+  pipelineId?: string;
+}
+
+function PipelineBuilderFlow({ pipelineId }: PipelineBuilderFlowProps) {
   const { data: session } = useSession();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -48,6 +53,8 @@ function PipelineBuilderFlow() {
   const [showYamlPreview, setShowYamlPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(!!pipelineId);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Helper to get job key from name (same as YAML generator)
   // Memoize to prevent infinite useEffect loops
@@ -58,6 +65,36 @@ function PipelineBuilderFlow() {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, ''), []);
+
+  // Load pipeline from backend if pipelineId is provided
+  useEffect(() => {
+    if (!pipelineId || !session?.user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadPipeline = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+
+        const userToken = session.user.id;
+        const response = await pipelineService.getPipeline(userToken, pipelineId);
+        const loadedPipeline = parsePipelineFromBackend(response);
+
+        setPipeline(loadedPipeline);
+        setSelectedJobName(loadedPipeline.jobs[0]?.name || null);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load pipeline';
+        setLoadError(errorMessage);
+        console.error('Load pipeline error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPipeline();
+  }, [pipelineId, session?.user?.id]);
 
     // Compute nodes and edges from pipeline (memoized to prevent constant re-renders)
   const { nodes: computedNodes, edges: computedEdges } = useMemo(() => {
@@ -222,10 +259,16 @@ function PipelineBuilderFlow() {
       setIsSaving(true);
       setSaveError(null);
 
-      const userToken = session.user.id; // Using user ID as token for now
+      const userToken = session.user.id;
       const userID = session.user.id;
 
-      await pipelineService.createPipeline(userToken, userID, pipeline);
+      if (pipelineId) {
+        // Update existing pipeline
+        await pipelineService.updatePipeline(userToken, pipelineId, pipeline);
+      } else {
+        // Create new pipeline
+        await pipelineService.createPipeline(userToken, userID, pipeline);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save pipeline';
       setSaveError(errorMessage);
@@ -236,6 +279,24 @@ function PipelineBuilderFlow() {
   };
 
   const selectedJob = pipeline.jobs.find((j) => j.name === selectedJobName);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <Loader className="animate-spin" size={40} />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-red-900/20 border border-red-800 rounded-lg p-8 text-center">
+        <AlertCircle className="text-red-400 mx-auto mb-4" size={40} />
+        <p className="text-red-400 font-semibold mb-2">Failed to Load Pipeline</p>
+        <p className="text-red-300 text-sm">{loadError}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
@@ -354,10 +415,10 @@ function PipelineBuilderFlow() {
   );
 }
 
-export function PipelineBuilder() {
+export function PipelineBuilder({ pipelineId }: PipelineBuilderFlowProps) {
   return (
     <ReactFlowProvider>
-      <PipelineBuilderFlow />
+      <PipelineBuilderFlow pipelineId={pipelineId} />
     </ReactFlowProvider>
   );
 }
