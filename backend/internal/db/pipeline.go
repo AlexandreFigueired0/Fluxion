@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"fluxion-be/internal/models"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 )
 
 // CreatePipeline creates a new pipeline in the database.
-func CreatePipeline(userID, name, description, configYAML string, db *supa.Client) (*models.Pipeline, error) {
+func CreatePipeline(userID, name, description string, configYAML json.RawMessage, db *supa.Client) (*models.Pipeline, error) {
 	newPipeline := map[string]interface{}{
 		"user_id":     userID,
 		"name":        name,
@@ -43,7 +44,7 @@ func DeletePipelineByID(pipelineID string, db *supa.Client) error {
 }
 
 // UpdatePipeline updates an existing pipeline's details.
-func UpdatePipeline(pipelineID, name, description, configYAML string, db *supa.Client) (*models.Pipeline, error) {
+func UpdatePipeline(pipelineID, name, description string, configYAML json.RawMessage, db *supa.Client) (*models.Pipeline, error) {
 	updatedPipeline := map[string]interface{}{
 		"name":        name,
 		"description": description,
