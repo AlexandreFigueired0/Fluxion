@@ -61,6 +61,7 @@ func main() {
 	// Pipeline routes
 	pipelineHandler := &handlers.PipelineHandler{DB: db_conn}
 	pipelineRoutes := r.Group("/api/pipelines")
+	pipelineRoutes.GET("/user/:user_id", pipelineHandler.ListUserPipelines)
 	pipelineRoutes.POST("", pipelineHandler.CreatePipeline)
 	pipelineRoutes.GET("/:id", pipelineHandler.GetPipeline)
 	pipelineRoutes.PUT("/:id", pipelineHandler.UpdatePipeline)

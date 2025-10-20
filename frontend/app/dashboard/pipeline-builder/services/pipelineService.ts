@@ -75,6 +75,31 @@ class PipelineService {
   }
 
   /**
+   * List all pipelines for a user
+   * @param userToken - Auth token (placeholder for now)
+   * @param userID - User ID
+   */
+  async listPipelines(
+    userToken: string,
+    userID: string
+  ): Promise<PipelineResponse[]> {
+    const response = await fetch(`${API_BASE_URL}/api/pipelines/user/${userID}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch pipelines');
+    }
+
+    return response.json();
+  }
+
+  /**
    * Update an existing pipeline
    * @param userToken - Auth token (placeholder for now)
    * @param pipelineID - Pipeline ID
