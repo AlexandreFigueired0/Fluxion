@@ -150,7 +150,6 @@ function PipelineBuilderFlow() {
     setPipeline({
       ...pipeline,
       jobs: [...pipeline.jobs, newJob],
-      updatedAt: new Date().toISOString(),
     });
     setSelectedJobName(newJob.name);
   };
@@ -177,7 +176,6 @@ function PipelineBuilderFlow() {
       return {
         ...prev,
         jobs,
-        updatedAt: new Date().toISOString(),
       };
     });
 
@@ -190,7 +188,6 @@ function PipelineBuilderFlow() {
     setPipeline({
       ...pipeline,
       jobs: pipeline.jobs.filter((job) => job.name !== jobName),
-      updatedAt: new Date().toISOString(),
     });
     setSelectedJobName(null);
   };
@@ -199,7 +196,6 @@ function PipelineBuilderFlow() {
     setPipeline({
       ...pipeline,
       trigger,
-      updatedAt: new Date().toISOString(),
     });
   };
 
@@ -308,8 +304,7 @@ function PipelineBuilderFlow() {
         <div>
           <h3 className="text-sm font-semibold text-white">{pipeline.name}</h3>
           <p className="text-xs text-zinc-400">
-            {pipeline.jobs.length} job{pipeline.jobs.length !== 1 ? 's' : ''} • Last updated{' '}
-            {new Date(pipeline.updatedAt).toLocaleTimeString()}
+            {pipeline.jobs.length} job{pipeline.jobs.length !== 1 ? 's' : ''}
           </p>
           {saveError && (
             <p className="text-xs text-red-400 mt-1 flex items-center gap-1">

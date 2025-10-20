@@ -149,7 +149,6 @@ export interface Job {
  * This is the top-level object that gets serialized to YAML.
  */
 export interface Pipeline {
-  id: string; // Unique identifier for this pipeline
   name: string; // Workflow name (shown in GitHub UI)
   description?: string; // Optional description
   
@@ -165,10 +164,6 @@ export interface Pipeline {
   // Secrets this workflow needs (just names - values stored in GitHub)
   // Used as a checklist for users: "Make sure these secrets are configured in GitHub"
   secrets?: string[]; // e.g., ['DOCKER_USERNAME', 'DOCKER_TOKEN']
-  
-  // Metadata
-  createdAt: string;
-  updatedAt: string;
 }
 
 // ============================================================================

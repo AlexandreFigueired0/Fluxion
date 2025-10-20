@@ -38,13 +38,10 @@ export function createDefaultJob(name: string = 'Build'): Job {
  */
 export function createDefaultPipeline(name: string = 'New Workflow'): Pipeline {
   return {
-    id: `pipeline_${Date.now()}`,
     name,
     description: '',
     trigger: createDefaultTrigger(),
     jobs: [createDefaultJob('Build')],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   };
 }
 
