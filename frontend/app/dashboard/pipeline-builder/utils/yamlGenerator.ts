@@ -275,6 +275,7 @@ function generateJobYaml(job: Job, indent: number): string {
     lines.push(`${jobInd}steps:`);
     job.steps.forEach((step) => {
       lines.push(generateStepYaml(step, indent + 4));
+      lines.push('');
     });
   }
 
