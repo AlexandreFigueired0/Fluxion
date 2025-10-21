@@ -1,190 +1,236 @@
 /**
- * Fluxion Pipeline Builder Type Definitions
+ * GitHub Actions Workflow Type Definitions
  * 
- * This module defines the data structure for GitHub Actions workflows.
- * The model is organized around three core concepts:
- * 1. Trigger - What events start the workflow
- * 2. Jobs - Parallel execution units that run on specific runners
- * 3. Steps - Sequential commands/actions within a job
+ * This module defines types that match the GitHub Actions YAML format exactly.
+ * This ensures we can represent ANY valid GitHub Actions workflow without data loss.
+ * 
+ * Key naming: Uses kebab-case for field names to match YAML (runs-on, continue-on-error, etc.)
  */
 
 // ============================================================================
-// TRIGGERS - What events trigger this workflow
+// TOP LEVEL - Workflow/Pipeline
 // ============================================================================
 
-export type TriggerEvent = 'push' | 'pull_request' | 'release' | 'schedule' | 'workflow_dispatch';
+export interface Workflow {
+  name?: string; // Workflow name
+  description?: string;
+  
+  // Trigger events - using `on` to match GitHub Actions YAML exactly
+  on?: WorkflowTrigger;
+  
+  // Environment variables available to all jobs
+  env?: Record<string, string>;
+  
+  // Jobs - array format for easier component handling
+  jobs: Job[];
+  
+  // Concurrency settings at workflow level
+  concurrency?: ConcurrencySettings;
+  
+  // Default settings for all jobs
+  defaults?: {
+    run?: {
+      shell?: string;
+      'working-directory'?: string;
+    };
+  };
+}
 
-/**
- * Represents a trigger input for manual workflow dispatches.
- * These become available as inputs when triggering the workflow manually.
- */
-export interface TriggerInput {
+// ============================================================================
+// TRIGGERS - What events start the workflow
+// ============================================================================
+
+export type WorkflowTrigger = 
+  | { push?: PushTriggerConfig }
+  | { pull_request?: PullRequestTriggerConfig }
+  | { schedule?: ScheduleTrigger[] }
+  | { workflow_dispatch?: WorkflowDispatchTrigger }
+  | { release?: ReleaseTriggerConfig }
+  | { workflow_call?: WorkflowCallConfig }
+  | { [key: string]: any }; // Allow other trigger types
+
+export interface PushTriggerConfig {
+  branches?: string[];
+  'branches-ignore'?: string[];
+  tags?: string[];
+  'tags-ignore'?: string[];
+  paths?: string[];
+  'paths-ignore'?: string[];
+  types?: string[];
+}
+
+export interface PullRequestTriggerConfig {
+  branches?: string[];
+  'branches-ignore'?: string[];
+  paths?: string[];
+  'paths-ignore'?: string[];
+  types?: string[];
+}
+
+export interface ScheduleTrigger {
+  cron: string; // e.g., '0 0 * * 0'
+}
+
+export interface ReleaseTriggerConfig {
+  types?: string[];
+}
+
+export interface WorkflowDispatchTrigger {
+  inputs?: Record<string, WorkflowDispatchInput>;
+}
+
+export interface WorkflowDispatchInput {
   description?: string;
   required?: boolean;
   default?: string;
-  type?: 'string' | 'choice';
-  options?: string[]; // Only used when type is 'choice'
+  type?: 'string' | 'choice' | 'environment';
+  options?: string[];
+  deprecationMessage?: string;
 }
 
-/**
- * Represents the trigger configuration for a workflow.
- * Only ONE trigger per workflow - this determines what events activate it.
- */
-export interface Trigger {
-  event: TriggerEvent;
-  
-  // For 'push' and 'pull_request' events
-  branches?: string[]; // e.g., ['main', 'develop']
-  branchesIgnore?: string[];
-  tags?: string[]; // only for 'push' event
-  tagsIgnore?: string[]; // only for 'push' event
-  paths?: string[]; // Run only if these paths change (monorepo support)
-  pathsIgnore?: string[];
-  
-  // For 'schedule' event
-  schedule?: string; // cron expression, e.g., '0 0 * * 0' for weekly
-  
-  // For 'workflow_dispatch' event (manual trigger)
-  inputs?: Record<string, TriggerInput>;
+export interface WorkflowCallConfig {
+  inputs?: Record<string, WorkflowCallInput>;
+  outputs?: Record<string, WorkflowCallOutput>;
+  secrets?: Record<string, WorkflowCallSecret>;
 }
 
-// ============================================================================
-// STEPS - Individual commands or actions within a job
-// ============================================================================
+export interface WorkflowCallInput {
+  description?: string;
+  required?: boolean;
+  default?: string;
+  type?: string;
+}
 
-export type StepType = 'action' | 'run' | 'composite';
+export interface WorkflowCallOutput {
+  description?: string;
+  value?: string;
+}
 
-/**
- * Represents a single step in a job.
- * Steps run sequentially - if one fails, subsequent steps don't run (unless continueOnError is true).
- */
-export interface PipelineStep {
-  id: string; // Unique identifier for this step
-  name?: string; // Display name, shown in GitHub Actions UI
-  type: StepType;
-  
-  // --- For type 'action': uses: owner/repo@ref ---
-  uses?: string; // e.g., 'actions/checkout@v4' or 'actions/setup-node@v4'
-  with?: Record<string, string>; // Inputs to pass to the action
-  
-  // --- For type 'run': inline shell commands ---
-  run?: string; // e.g., 'npm install' or 'python -m pytest'
-  shell?: 'bash' | 'pwsh' | 'sh' | 'cmd'; // Defaults to bash on Linux/Mac, cmd on Windows
-  
-  // --- Common to both 'action' and 'run' ---
-  env?: Record<string, string>; // Step-level environment variables
-  if?: string; // Conditional: 'success()', 'failure()', 'always()', 'cancelled()'
-  continueOnError?: boolean; // If true, workflow continues even if this step fails
-  workingDirectory?: string; // Override job's working directory for this step
-  timeout?: number; // Timeout in minutes for this step (overrides job timeout)
+export interface WorkflowCallSecret {
+  description?: string;
+  required?: boolean;
 }
 
 // ============================================================================
-// JOB CONFIGURATION - Container for steps and execution environment
+// JOBS - Top-level execution units
 // ============================================================================
 
-export type RunsOnValue = 'ubuntu-latest' | 'ubuntu-24.04' | 'macos-latest' | 'windows-latest' | string;
-
-/**
- * Permission settings for GITHUB_TOKEN in a job.
- * Defaults to 'read' - be explicit about what permissions are needed.
- */
-export interface JobPermissions {
-  contents?: 'read' | 'write' | 'none';
-  pull_requests?: 'read' | 'write' | 'none';
-  packages?: 'read' | 'write' | 'none';
-  statuses?: 'read' | 'write' | 'none';
-  actions?: 'read' | 'write' | 'none';
-  [key: string]: 'read' | 'write' | 'none' | undefined;
-}
-
-/**
- * Matrix strategy for running a job across multiple configurations.
- * Useful for testing against multiple Node versions, Python versions, OS combinations, etc.
- */
-export interface MatrixStrategy {
-  // Common matrices:
-  os?: string[]; // e.g., ['ubuntu-latest', 'windows-latest', 'macos-latest']
-  nodeVersion?: string[]; // e.g., ['18', '20', '21']
-  pythonVersion?: string[]; // e.g., ['3.9', '3.10', '3.11']
-  goVersion?: string[]; // e.g., ['1.21', '1.22']
-  
-  // Allow custom matrix dimensions
-  [key: string]: string[] | undefined | Record<string, string>[];
-}
-
-/**
- * Represents a single job in the workflow.
- * Jobs run in parallel by default, unless they have dependencies via 'needs'.
- * Each job runs on a specified runner and contains a sequence of steps.
- */
 export interface Job {
-  name: string; // Display name, used as unique identifier (shown in GitHub Actions UI)
+  name?: string; // Job display name
   
   // Execution environment
-  runsOn: RunsOnValue | RunsOnValue[]; // Runner(s) to use
-  timeout?: number; // Job timeout in minutes (default 360)
-  environment?: string; // Reference to GitHub environment (e.g., 'production', 'staging')
-  concurrency?: string; // Concurrency group to prevent parallel runs
+  'runs-on': string | string[]; // Runner: 'ubuntu-latest', etc.
+  'timeout-minutes'?: number;
+  environment?: string | EnvironmentConfig;
+  concurrency?: ConcurrencySettings;
   
-  // Permissions
-  permissions?: JobPermissions; // GITHUB_TOKEN permissions for this job
+  // Permissions for GITHUB_TOKEN
+  permissions?: Permissions | 'read-all' | 'write-all';
+  
+  // Conditional execution
+  if?: string; // e.g., 'success()' or 'always()'
+  
+  // Job dependencies
+  needs?: string | string[];
   
   // Matrix strategy for multiple configurations
-  strategy?: MatrixStrategy;
+  strategy?: {
+    matrix: Record<string, (string | number | boolean)[]>;
+    'fail-fast'?: boolean;
+    'max-parallel'?: number;
+  };
   
-  // Job dependencies - ensures job doesn't run until these complete
-  needs?: string[]; // Array of job names this job depends on
+  // Container configuration
+  container?: ContainerConfig | string;
+  services?: Record<string, ContainerConfig>;
   
-  // Steps in this job - run sequentially
-  steps: PipelineStep[];
-}
-
-// ============================================================================
-// FULL PIPELINE - Complete workflow definition
-// ============================================================================
-
-/**
- * Complete GitHub Actions workflow.
- * This is the top-level object that gets serialized to YAML.
- */
-export interface Pipeline {
-  name: string; // Workflow name (shown in GitHub UI)
-  description?: string; // Optional description
-  
-  // Workflow trigger - what events start this workflow
-  trigger: Trigger;
-  
-  // Workflow jobs - what actually runs
-  jobs: Job[];
-  
-  // Global environment variables (accessible to all jobs)
+  // Environment variables for this job
   env?: Record<string, string>;
   
-  // Secrets this workflow needs (just names - values stored in GitHub)
-  // Used as a checklist for users: "Make sure these secrets are configured in GitHub"
-  secrets?: string[]; // e.g., ['DOCKER_USERNAME', 'DOCKER_TOKEN']
+  // Default settings for this job
+  defaults?: {
+    run?: {
+      shell?: string;
+      'working-directory'?: string;
+    };
+  };
+  
+  // Steps to execute
+  steps: Step[];
+  
+  // Outputs from this job
+  outputs?: Record<string, string>;
+}
+
+export interface EnvironmentConfig {
+  name: string;
+  url?: string;
+}
+
+export interface ConcurrencySettings {
+  group: string;
+  'cancel-in-progress'?: boolean;
+}
+
+export interface Permissions {
+  [key: string]: 'read' | 'write' | 'none';
+}
+
+export interface ContainerConfig {
+  image: string;
+  credentials?: {
+    username?: string;
+    password?: string;
+  };
+  env?: Record<string, string>;
+  options?: string;
+  ports?: (string | number)[];
+  volumes?: string[];
 }
 
 // ============================================================================
-// REACT FLOW INTEGRATION - For the visual editor
+// STEPS - Individual actions or scripts within a job
 // ============================================================================
 
-/**
- * Node data for React Flow visualization.
- * This wraps Job data for the graph editor.
- */
+export interface Step {
+  id?: string; // Reference ID for outputs
+  name?: string; // Display name
+  
+  // Either 'uses' (action) or 'run' (script)
+  uses?: string; // e.g., 'actions/checkout@v4'
+  run?: string; // e.g., 'npm install'
+  shell?: string; // e.g., 'bash', 'pwsh'
+  
+  // Action inputs
+  with?: Record<string, string>;
+  
+  // Environment variables for this step
+  env?: Record<string, string>;
+  
+  // Conditional execution
+  if?: string;
+  
+  // Error handling
+  'continue-on-error'?: boolean | string;
+  
+  // Timeout override
+  'timeout-minutes'?: number;
+  
+  // Working directory override
+  'working-directory'?: string;
+}
+
+// ============================================================================
+// REACT FLOW / VISUAL EDITOR HELPERS
+// ============================================================================
+
 export interface JobNodeData {
-  label: string;
-  jobId: string;
+  jobName: string;
   stepCount: number;
+  'runs-on': string | string[];
 }
 
-/**
- * Represents what's being edited in the config panel.
- * Can be the trigger, a job, or a step.
- */
 export type EditingTarget =
-  | { type: 'trigger'; data: Trigger }
-  | { type: 'job'; jobId: string; data: Job }
-  | { type: 'step'; jobId: string; stepId: string; data: PipelineStep };
+  | { type: 'workflow'; data: Workflow }
+  | { type: 'job'; jobName: string; data: Job }
+  | { type: 'step'; jobName: string; stepIndex: number; data: Step };
