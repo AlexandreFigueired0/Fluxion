@@ -223,11 +223,11 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-lg">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-lg flex flex-col max-h-[400px]">
       {/* Header */}
       <button
         onClick={() => handleToggleExpand(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800 transition rounded-t-lg"
+        className="px-4 py-3 flex items-center justify-between hover:bg-zinc-800 transition flex-shrink-0"
       >
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-white">Workflow Triggers</h3>
@@ -243,9 +243,9 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
         />
       </button>
 
-      {/* Content */}
+      {/* Content - Scrollable when expanded */}
       {isExpanded && (
-        <div className="border-t border-zinc-800 px-4 py-4 space-y-4">
+        <div className="border-t border-zinc-800 px-4 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Event Type Selector */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">

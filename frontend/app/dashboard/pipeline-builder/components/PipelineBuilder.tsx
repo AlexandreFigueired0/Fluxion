@@ -309,7 +309,7 @@ function PipelineBuilderFlow({ pipelineId }: PipelineBuilderFlowProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
+    <div className="flex flex-col h-screen gap-4">
       {/* Pipeline Metadata Panel */}
       <div className="flex-shrink-0 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
         <div className="grid grid-cols-2 gap-4">
@@ -346,9 +346,9 @@ function PipelineBuilderFlow({ pipelineId }: PipelineBuilderFlowProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 gap-4 min-h-0">
+      <div className="flex gap-4 flex-1 min-h-0">
       {/* Canvas */}
-      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative overflow-hidden" ref={reactFlowWrapper} style={{ '--rf-watermark': 'none' } as any}>
+      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper} style={{ '--rf-watermark': 'none' } as any}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
