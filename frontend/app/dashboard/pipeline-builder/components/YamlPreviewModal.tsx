@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { X, Copy, Check, Download } from 'lucide-react';
-import { Pipeline } from '../types';
+import { Workflow } from '../types';
 import { pipelineToYaml, downloadPipelineYaml } from '../utils/yamlGenerator';
 
 interface YamlPreviewModalProps {
-  pipeline: Pipeline;
+  pipeline: Workflow;
   isOpen: boolean;
   onClose: () => void;
 }

@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
-import { PipelineStep, StepType } from '../types';
+import { Step } from '../types';
 
 interface StepEditorProps {
-  step: PipelineStep;
-  onUpdate: (step: PipelineStep) => void;
+  step: Step;
+  onUpdate: (step: Step) => void;
   onDelete: () => void;
   onClose: () => void;
 }
@@ -16,7 +16,7 @@ interface StepEditorProps {
  * Shows different configuration options based on step type (action or run).
  */
 export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProps) {
-  const [localStep, setLocalStep] = useState<PipelineStep>(step);
+  const [localStep, setLocalStep] = useState<Step>(step);
   const [newEnvKey, setNewEnvKey] = useState('');
   const [newEnvValue, setNewEnvValue] = useState('');
   const [newWithKey, setNewWithKey] = useState('');
@@ -26,13 +26,19 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
     setLocalStep(step);
   }, [step]);
 
-  const handleTypeChange = (type: StepType) => {
-    const updated = { ...localStep, type };
-    // Clear type-specific fields
+  // Determine step type from which field is present
+  const getStepType = (s: Step): 'action' | 'run' => {
+    return s.uses ? 'action' : 'run';
+  };
+
+  const handleTypeChange = (type: 'action' | 'run') => {
+    const updated: Step = { ...localStep };
     if (type === 'action') {
+      updated.uses = '';
       updated.run = undefined;
       updated.shell = undefined;
-    } else if (type === 'run') {
+    } else {
+      updated.run = '';
       updated.uses = undefined;
       updated.with = undefined;
     }
@@ -40,15 +46,15 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
     onUpdate(updated);
   };
 
-  const handleBasicFieldChange = (field: keyof PipelineStep, value: any) => {
-    const updated = { ...localStep, [field]: value };
+  const handleBasicFieldChange = (field: keyof Step, value: any) => {
+    const updated: Step = { ...localStep, [field]: value };
     setLocalStep(updated);
     onUpdate(updated);
   };
 
   const addEnvVar = () => {
     if (!newEnvKey.trim()) return;
-    const updated = {
+    const updated: Step = {
       ...localStep,
       env: { ...localStep.env, [newEnvKey]: newEnvValue },
     };
@@ -59,7 +65,7 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
   };
 
   const removeEnvVar = (key: string) => {
-    const updated: PipelineStep = {
+    const updated: Step = {
       ...localStep,
       env: Object.fromEntries(
         Object.entries(localStep.env || {}).filter(([k]) => k !== key)
@@ -71,7 +77,7 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
 
   const addWithInput = () => {
     if (!newWithKey.trim()) return;
-    const updated: PipelineStep = {
+    const updated: Step = {
       ...localStep,
       with: { ...localStep.with, [newWithKey]: newWithValue },
     };
@@ -82,7 +88,7 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
   };
 
   const removeWithInput = (key: string) => {
-    const updated: PipelineStep = {
+    const updated: Step = {
       ...localStep,
       with: Object.fromEntries(
         Object.entries(localStep.with || {}).filter(([k]) => k !== key)
@@ -91,6 +97,8 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
     setLocalStep(updated);
     onUpdate(updated);
   };
+
+  const currentType = getStepType(localStep);
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 h-full overflow-y-auto">
@@ -103,6 +111,19 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
       </div>
 
       <div className="space-y-4">
+        {/* Step ID */}
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1">Step ID</label>
+          <input
+            type="text"
+            value={localStep.id || ''}
+            onChange={(e) => handleBasicFieldChange('id', e.target.value)}
+            placeholder="Unique step identifier"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
+          />
+          <p className="text-xs text-zinc-500 mt-1">Optional - used to reference outputs from other steps</p>
+        </div>
+
         {/* Step Name */}
         <div>
           <label className="block text-sm font-medium text-zinc-300 mb-1">Step Name</label>
@@ -120,14 +141,14 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
         <div>
           <label className="block text-sm font-medium text-zinc-300 mb-2">Step Type</label>
           <div className="flex gap-2">
-            {(['action', 'run'] as StepType[]).map((type) => (
+            {(['action', 'run'] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => handleTypeChange(type)}
                 className={`
                   px-4 py-2 rounded text-sm font-medium transition
                   ${
-                    localStep.type === type
+                    currentType === type
                       ? 'bg-orange-600 text-white'
                       : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }
@@ -140,7 +161,7 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
         </div>
 
         {/* Action Type Configuration */}
-        {localStep.type === 'action' && (
+        {currentType === 'action' && (
           <>
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1">Action</label>
@@ -208,7 +229,7 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
         )}
 
         {/* Run Type Configuration */}
-        {localStep.type === 'run' && (
+        {currentType === 'run' && (
           <>
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1">Command</label>
@@ -244,8 +265,8 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
           <label className="block text-sm font-medium text-zinc-300 mb-1">Working Directory</label>
           <input
             type="text"
-            value={localStep.workingDirectory || ''}
-            onChange={(e) => handleBasicFieldChange('workingDirectory', e.target.value)}
+            value={localStep['working-directory'] || ''}
+            onChange={(e) => handleBasicFieldChange('working-directory', e.target.value)}
             placeholder="e.g., ./packages/frontend"
             className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm text-xs"
           />
@@ -321,8 +342,8 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
           <input
             type="checkbox"
             id="continue-on-error"
-            checked={localStep.continueOnError || false}
-            onChange={(e) => handleBasicFieldChange('continueOnError', e.target.checked)}
+            checked={(localStep['continue-on-error'] as boolean) || false}
+            onChange={(e) => handleBasicFieldChange('continue-on-error', e.target.checked)}
             className="rounded border-zinc-700"
           />
           <label htmlFor="continue-on-error" className="text-sm text-zinc-300">
@@ -335,8 +356,8 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
           <label className="block text-sm font-medium text-zinc-300 mb-1">Timeout (minutes)</label>
           <input
             type="number"
-            value={localStep.timeout || ''}
-            onChange={(e) => handleBasicFieldChange('timeout', e.target.value ? parseInt(e.target.value) : undefined)}
+            value={localStep['timeout-minutes'] || ''}
+            onChange={(e) => handleBasicFieldChange('timeout-minutes', e.target.value ? parseInt(e.target.value) : undefined)}
             placeholder="Leave empty to use job timeout"
             className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
             min="1"

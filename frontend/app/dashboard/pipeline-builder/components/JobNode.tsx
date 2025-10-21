@@ -21,7 +21,7 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
   const { job, isSelected } = data;
 
   // Determine if job has matrix strategy
-  const hasMatrix = job.strategy && Object.values(job.strategy).some((v) => v && v.length > 0);
+  const hasMatrix = job.strategy && job.strategy.matrix && Object.keys(job.strategy.matrix).length > 0;
 
   // Determine color based on job state
   const baseColor = selected || isSelected ? 'bg-orange-600 border-orange-500' : 'bg-zinc-700 border-zinc-600';
@@ -50,7 +50,7 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
             {job.name}
           </h3>
           <p className="text-white/70 text-base mt-1" style={{ lineHeight: '1.2' }}>
-            {job.runsOn}
+            {Array.isArray(job['runs-on']) ? job['runs-on'].join(', ') : job['runs-on']}
           </p>
         </div>
 
@@ -64,12 +64,12 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
               <Zap size={16} className="text-blue-300" />
             </div>
           )}
-          {job.timeout && (
+          {job['timeout-minutes'] && (
             <div
               className="bg-purple-500/30 rounded px-2 py-1"
-              title={`${job.timeout} min timeout`}
+              title={`${job['timeout-minutes']} min timeout`}
             >
-              <span className="text-sm text-purple-300 font-bold">{job.timeout}m</span>
+              <span className="text-sm text-purple-300 font-bold">{job['timeout-minutes']}m</span>
             </div>
           )}
         </div>
@@ -100,7 +100,7 @@ export function JobNode({ data, selected }: NodeProps<JobNodeData>) {
       {job.environment && (
         <div className="flex items-center gap-2 text-sm text-white/70 mb-2" style={{ lineHeight: '1.2' }}>
           <Settings size={16} />
-          <span className="font-bold">{job.environment}</span>
+          <span className="font-bold">{typeof job.environment === 'string' ? job.environment : job.environment.name}</span>
         </div>
       )}
 

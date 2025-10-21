@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
-import { Job, PipelineStep, MatrixStrategy } from '../types';
+import { Job, Step } from '../types';
 import { StepEditor } from './StepEditor';
 
 interface JobConfigPanelProps {
@@ -47,9 +47,9 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
   };
 
   const addStep = () => {
-    const newStep: PipelineStep = {
-      id: `step_${Date.now()}`,
-      type: 'action',
+    const stepId = `step_${Date.now()}`;
+    const newStep: Step = {
+      id: stepId,
       uses: 'actions/checkout@v4',
     };
     const updated = {
@@ -58,10 +58,11 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
     };
     setLocalJob(updated);
     onUpdate(updated);
-    setSelectedStepId(newStep.id);
+    setSelectedStepId(stepId);
   };
 
-  const updateStep = (stepId: string, updated: PipelineStep) => {
+  const updateStep = (stepId: string | undefined, updated: Step) => {
+    if (!stepId) return;
     const jobUpdate: Job = {
       ...localJob,
       steps: localJob.steps.map((s) => (s.id === stepId ? updated : s)),
@@ -70,7 +71,8 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
     onUpdate(jobUpdate);
   };
 
-  const deleteStep = (stepId: string) => {
+  const deleteStep = (stepId: string | undefined) => {
+    if (!stepId) return;
     const jobUpdate: Job = {
       ...localJob,
       steps: localJob.steps.filter((s) => s.id !== stepId),
@@ -103,6 +105,10 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
       />
     );
   }
+
+  const runsOnValue = Array.isArray(localJob['runs-on']) 
+    ? localJob['runs-on'][0] 
+    : localJob['runs-on'];
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 h-full overflow-y-auto">
@@ -138,7 +144,7 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
                 <label className="block text-xs font-medium text-zinc-300 mb-1">Job Name</label>
                 <input
                   type="text"
-                  value={localJob.name}
+                  value={localJob.name || ''}
                   onChange={(e) => handleJobChange('name', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
                 />
@@ -148,8 +154,8 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
               <div>
                 <label className="block text-xs font-medium text-zinc-300 mb-1">Runs On</label>
                 <select
-                  value={Array.isArray(localJob.runsOn) ? localJob.runsOn[0] : localJob.runsOn}
-                  onChange={(e) => handleJobChange('runsOn', e.target.value)}
+                  value={runsOnValue}
+                  onChange={(e) => handleJobChange('runs-on', e.target.value)}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
                 >
                   {COMMON_RUNNERS.map((runner) => (
@@ -168,9 +174,9 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
                 </label>
                 <input
                   type="number"
-                  value={localJob.timeout || ''}
+                  value={localJob['timeout-minutes'] || ''}
                   onChange={(e) =>
-                    handleJobChange('timeout', e.target.value ? parseInt(e.target.value) : undefined)
+                    handleJobChange('timeout-minutes', e.target.value ? parseInt(e.target.value) : undefined)
                   }
                   placeholder="Default: 360"
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
@@ -185,7 +191,7 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
                 </label>
                 <input
                   type="text"
-                  value={localJob.environment || ''}
+                  value={typeof localJob.environment === 'string' ? localJob.environment : ''}
                   onChange={(e) => handleJobChange('environment', e.target.value || undefined)}
                   placeholder="e.g., production, staging"
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
@@ -223,16 +229,20 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
               ) : (
                 localJob.steps.map((step, idx) => (
                   <button
-                    key={step.id}
-                    onClick={() => setSelectedStepId(step.id)}
+                    key={step.id || idx}
+                    onClick={() => {
+                      if (step.id) {
+                        setSelectedStepId(step.id);
+                      }
+                    }}
                     className="w-full text-left px-3 py-2 rounded bg-zinc-800 hover:bg-zinc-700 transition border border-zinc-700"
                   >
                     <p className="text-xs font-medium text-white">
                       {idx + 1}. {step.name || 'Unnamed Step'}
                     </p>
                     <p className="text-xs text-zinc-400 mt-1">
-                      {step.type === 'action'
-                        ? `Use: ${step.uses || 'N/A'}`
+                      {step.uses
+                        ? `Use: ${step.uses}`
                         : `Run: ${step.run ? step.run.split('\n')[0] : 'N/A'}`}
                     </p>
                   </button>
@@ -274,55 +284,58 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
 
               {/* Dynamic Matrix Fields */}
               {localJob.strategy &&
-                Object.entries(localJob.strategy)
-                  .filter(([key]) => !['exclude', 'include'].includes(key))
-                  .map(([key, values]) => (
-                    <div key={key}>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-medium text-zinc-300 capitalize">
-                          {key.replace(/([A-Z])/g, ' $1')}
-                        </label>
-                        <button
-                          onClick={() => {
-                            const updated = {
-                              ...localJob,
-                              strategy: {
-                                ...localJob.strategy,
-                                [key]: undefined,
-                              },
-                            };
-                            delete updated.strategy[key];
-                            setLocalJob(updated);
-                            onUpdate(updated);
-                          }}
-                          className="text-xs text-red-400 hover:text-red-300"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="e.g., ubuntu-latest, windows-latest, macos-latest (comma-separated)"
-                        defaultValue={values?.join(', ') || ''}
-                        onBlur={(e) => {
-                          const newValues = e.currentTarget.value
-                            .split(',')
-                            .map((v) => v.trim())
-                            .filter((v) => v);
+                localJob.strategy.matrix &&
+                Object.entries(localJob.strategy.matrix).map(([key, values]) => (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-medium text-zinc-300 capitalize">
+                        {key.replace(/([A-Z])/g, ' $1')}
+                      </label>
+                      <button
+                        onClick={() => {
                           const updated = {
                             ...localJob,
                             strategy: {
-                              ...(localJob.strategy || {}),
-                              [key]: newValues,
+                              ...localJob.strategy,
+                              matrix: Object.fromEntries(
+                                Object.entries(localJob.strategy?.matrix || {}).filter(([k]) => k !== key)
+                              ),
                             },
                           };
                           setLocalJob(updated);
                           onUpdate(updated);
                         }}
-                        className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm mb-2"
-                      />
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ))}
+                    <input
+                      type="text"
+                      placeholder="e.g., ubuntu-latest, windows-latest, macos-latest (comma-separated)"
+                      defaultValue={(Array.isArray(values) ? values : []).join(', ')}
+                      onBlur={(e) => {
+                        const newValues = e.currentTarget.value
+                          .split(',')
+                          .map((v) => v.trim())
+                          .filter((v) => v);
+                        const updated = {
+                          ...localJob,
+                          strategy: {
+                            ...localJob.strategy,
+                            matrix: {
+                              ...localJob.strategy?.matrix,
+                              [key]: newValues,
+                            },
+                          },
+                        };
+                        setLocalJob(updated);
+                        onUpdate(updated);
+                      }}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm mb-2"
+                    />
+                  </div>
+                ))}
 
               {/* Add New Matrix Dimension */}
               <div className="bg-zinc-950 border border-zinc-800 rounded p-3 space-y-2">
@@ -337,7 +350,10 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
                         ...localJob,
                         strategy: {
                           ...(localJob.strategy || {}),
-                          [key]: [],
+                          matrix: {
+                            ...(localJob.strategy?.matrix || {}),
+                            [key]: [],
+                          },
                         },
                       };
                       setLocalJob(updated);

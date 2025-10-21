@@ -2,48 +2,67 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
-import { Trigger, TriggerEvent } from '../types';
+import {
+  WorkflowTrigger,
+  PushTriggerConfig,
+  PullRequestTriggerConfig,
+  ScheduleTrigger,
+} from '../types';
 
 interface TriggerEditorProps {
-  trigger: Trigger;
-  onUpdate: (trigger: Trigger) => void;
+  trigger: WorkflowTrigger | undefined;
+  onUpdate: (trigger: WorkflowTrigger) => void;
   onExpandChange?: (isExpanded: boolean) => void;
 }
 
-const TRIGGER_EVENTS: { value: TriggerEvent; label: string; description: string }[] = [
+interface TriggerOption {
+  key: 'push' | 'pull_request' | 'schedule' | 'workflow_dispatch' | 'release';
+  label: string;
+  description: string;
+}
+
+const TRIGGER_OPTIONS: TriggerOption[] = [
   {
-    value: 'push',
+    key: 'push',
     label: 'Push to Branch',
     description: 'Run workflow when code is pushed',
   },
   {
-    value: 'pull_request',
+    key: 'pull_request',
     label: 'Pull Request',
     description: 'Run workflow when a pull request is opened or updated',
   },
   {
-    value: 'schedule',
+    key: 'schedule',
     label: 'Schedule',
     description: 'Run workflow on a schedule (cron)',
   },
   {
-    value: 'workflow_dispatch',
+    key: 'workflow_dispatch',
     label: 'Manual Trigger',
     description: 'Run workflow manually from GitHub UI',
   },
   {
-    value: 'release',
+    key: 'release',
     label: 'Release',
     description: 'Run workflow when a release is published',
   },
 ];
 
+/**
+ * TriggerEditor allows configuring workflow triggers using the GitHub Actions `on` field.
+ * Supports multiple event types: push, pull_request, schedule, workflow_dispatch, release, etc.
+ */
 export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [localTrigger, setLocalTrigger] = useState<Trigger>(trigger);
+  const [localTrigger, setLocalTrigger] = useState<WorkflowTrigger>(
+    trigger || { push: { branches: ['main'] } }
+  );
 
   useEffect(() => {
-    setLocalTrigger(trigger);
+    if (trigger) {
+      setLocalTrigger(trigger);
+    }
   }, [trigger]);
 
   const handleToggleExpand = (expanded: boolean) => {
@@ -51,88 +70,157 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
     onExpandChange?.(expanded);
   };
 
-  const handleEventChange = (event: TriggerEvent) => {
-    const updated = { ...localTrigger, event };
-    // Clear event-specific fields when switching events
-    if (event === 'push' || event === 'pull_request') {
-      updated.schedule = undefined;
-      updated.inputs = undefined;
-    } else if (event === 'schedule') {
-      updated.branches = undefined;
-      updated.tags = undefined;
-      updated.paths = undefined;
-      updated.inputs = undefined;
-    } else if (event === 'workflow_dispatch') {
-      updated.branches = undefined;
-      updated.tags = undefined;
-      updated.paths = undefined;
-      updated.schedule = undefined;
+  // Check if a trigger type is enabled
+  const isEventEnabled = (key: string): boolean => {
+    if (typeof localTrigger !== 'object') return false;
+    return key in localTrigger;
+  };
+
+  // Toggle an event type on/off
+  const toggleEventType = (key: 'push' | 'pull_request' | 'schedule' | 'workflow_dispatch' | 'release') => {
+    const updated: any = { ...localTrigger };
+    if (updated[key]) {
+      delete updated[key];
+    } else {
+      // Add default config for this event
+      if (key === 'push' || key === 'pull_request') {
+        updated[key] = { branches: ['main'] };
+      } else if (key === 'schedule') {
+        updated[key] = [{ cron: '0 0 * * 0' }];
+      } else {
+        updated[key] = true;
+      }
     }
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
-  const addBranch = () => {
-    const updated = {
-      ...localTrigger,
-      branches: [...(localTrigger.branches || []), ''],
-    };
+  // Update push trigger configuration
+  const updatePushConfig = (config: PushTriggerConfig) => {
+    const updated: any = { ...localTrigger, push: config };
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
-  const removeBranch = (index: number) => {
-    const updated = {
-      ...localTrigger,
-      branches: (localTrigger.branches || []).filter((_, i) => i !== index),
-    };
+  // Update pull_request trigger configuration
+  const updatePullRequestConfig = (config: PullRequestTriggerConfig) => {
+    const updated: any = { ...localTrigger, pull_request: config };
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
-  const updateBranch = (index: number, value: string) => {
-    const updated = {
-      ...localTrigger,
-      branches: (localTrigger.branches || []).map((b, i) => (i === index ? value : b)),
-    };
+  // Update schedule trigger configuration
+  const updateScheduleConfig = (schedules: ScheduleTrigger[]) => {
+    const updated: any = { ...localTrigger, schedule: schedules };
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
-  const addPath = () => {
-    const updated = {
-      ...localTrigger,
-      paths: [...(localTrigger.paths || []), ''],
-    };
-    setLocalTrigger(updated);
-    onUpdate(updated);
+  // Get trigger config for push event (safe access)
+  const getPushConfig = (): PushTriggerConfig | undefined => {
+    if (typeof localTrigger === 'object' && 'push' in localTrigger) {
+      return localTrigger.push as PushTriggerConfig;
+    }
+    return undefined;
   };
 
-  const removePath = (index: number) => {
-    const updated = {
-      ...localTrigger,
-      paths: (localTrigger.paths || []).filter((_, i) => i !== index),
-    };
-    setLocalTrigger(updated);
-    onUpdate(updated);
+  // Get trigger config for pull_request event (safe access)
+  const getPullRequestConfig = (): PullRequestTriggerConfig | undefined => {
+    if (typeof localTrigger === 'object' && 'pull_request' in localTrigger) {
+      return localTrigger.pull_request as PullRequestTriggerConfig;
+    }
+    return undefined;
   };
 
-  const updatePath = (index: number, value: string) => {
-    const updated = {
-      ...localTrigger,
-      paths: (localTrigger.paths || []).map((p, i) => (i === index ? value : p)),
-    };
-    setLocalTrigger(updated);
-    onUpdate(updated);
+  // Get trigger config for schedule event (safe access)
+  const getScheduleConfig = (): ScheduleTrigger[] | undefined => {
+    if (typeof localTrigger === 'object' && 'schedule' in localTrigger) {
+      return localTrigger.schedule as ScheduleTrigger[];
+    }
+    return undefined;
   };
 
-  const updateSchedule = (schedule: string) => {
-    const updated = { ...localTrigger, schedule };
-    setLocalTrigger(updated);
-    onUpdate(updated);
+  // Push-specific handlers
+  const addBranchToPush = () => {
+    const config = getPushConfig();
+    if (config) {
+      updatePushConfig({
+        ...config,
+        branches: [...(config.branches || []), ''],
+      });
+    }
   };
 
-  const currentEvent = TRIGGER_EVENTS.find((e) => e.value === localTrigger.event);
+  const removeBranchFromPush = (index: number) => {
+    const config = getPushConfig();
+    if (config) {
+      const branches = (config.branches || []).filter((_: string, i: number) => i !== index);
+      updatePushConfig({ ...config, branches });
+    }
+  };
+
+  const updateBranchInPush = (index: number, value: string) => {
+    const config = getPushConfig();
+    if (config) {
+      const branches = (config.branches || []).map((b: string, i: number) =>
+        i === index ? value : b
+      );
+      updatePushConfig({ ...config, branches });
+    }
+  };
+
+  const addPathToPush = () => {
+    const config = getPushConfig();
+    if (config) {
+      updatePushConfig({
+        ...config,
+        paths: [...(config.paths || []), ''],
+      });
+    }
+  };
+
+  const removePathFromPush = (index: number) => {
+    const config = getPushConfig();
+    if (config) {
+      const paths = (config.paths || []).filter((_: string, i: number) => i !== index);
+      updatePushConfig({ ...config, paths });
+    }
+  };
+
+  const updatePathInPush = (index: number, value: string) => {
+    const config = getPushConfig();
+    if (config) {
+      const paths = (config.paths || []).map((p: string, i: number) =>
+        i === index ? value : p
+      );
+      updatePushConfig({ ...config, paths });
+    }
+  };
+
+  // Schedule-specific handlers
+  const addCronSchedule = () => {
+    const schedules = getScheduleConfig() || [];
+    updateScheduleConfig([...schedules, { cron: '' }]);
+  };
+
+  const removeCronSchedule = (index: number) => {
+    const schedules = getScheduleConfig() || [];
+    updateScheduleConfig(schedules.filter((_: ScheduleTrigger, i: number) => i !== index));
+  };
+
+  const updateCronSchedule = (index: number, value: string) => {
+    const schedules = getScheduleConfig() || [];
+    updateScheduleConfig(
+      schedules.map((s: ScheduleTrigger, i: number) =>
+        i === index ? { cron: value } : s
+      )
+    );
+  };
+
+  const getEnabledCount = (): number => {
+    if (typeof localTrigger !== 'object') return 0;
+    return Object.keys(localTrigger).length;
+  };
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg">
@@ -142,9 +230,11 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-800 transition rounded-t-lg"
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-white">Workflow Trigger</h3>
-          {currentEvent && (
-            <span className="text-xs text-zinc-400 ml-2">{currentEvent.label}</span>
+          <h3 className="text-sm font-semibold text-white">Workflow Triggers</h3>
+          {getEnabledCount() > 0 && (
+            <span className="text-xs text-zinc-400 ml-2">
+              {getEnabledCount()} event{getEnabledCount() !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
         <ChevronDown
@@ -156,111 +246,174 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
       {/* Content */}
       {isExpanded && (
         <div className="border-t border-zinc-800 px-4 py-4 space-y-4">
-          {/* Event Selector */}
+          {/* Event Type Selector */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Trigger Event</label>
-            <select
-              value={localTrigger.event}
-              onChange={(e) => handleEventChange(e.target.value as TriggerEvent)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-            >
-              {TRIGGER_EVENTS.map((event) => (
-                <option key={event.value} value={event.value}>
-                  {event.label}
-                </option>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              Enable Trigger Events
+            </label>
+            <p className="text-xs text-zinc-500 mb-3">
+              Select which events should trigger this workflow
+            </p>
+            <div className="space-y-2">
+              {TRIGGER_OPTIONS.map((option) => (
+                <label
+                  key={option.key}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-zinc-800 p-2 rounded"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isEventEnabled(option.key)}
+                    onChange={() => toggleEventType(option.key)}
+                    className="w-4 h-4 rounded border-zinc-700"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">{option.label}</p>
+                    <p className="text-xs text-zinc-500">{option.description}</p>
+                  </div>
+                </label>
               ))}
-            </select>
-            <p className="text-xs text-zinc-500 mt-1">{currentEvent?.description}</p>
+            </div>
           </div>
 
-          {/* Push/Pull Request Specific */}
-          {(localTrigger.event === 'push' || localTrigger.event === 'pull_request') && (
-            <>
+          {/* Push Event Configuration */}
+          {getPushConfig() && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 space-y-3">
+              <h4 className="text-sm font-semibold text-white">Push Event</h4>
+
               {/* Branches */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                <label className="block text-xs font-medium text-zinc-300 mb-2">
                   Run on Branches
                 </label>
                 <div className="space-y-2">
-                  {(localTrigger.branches || []).map((branch, index) => (
+                  {(getPushConfig()?.branches || []).map((branch: string, index: number) => (
                     <div key={index} className="flex gap-2">
                       <input
                         type="text"
                         value={branch}
-                        onChange={(e) => updateBranch(index, e.target.value)}
+                        onChange={(e) => updateBranchInPush(index, e.target.value)}
                         placeholder="e.g., main, develop"
-                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs"
                       />
                       <button
-                        onClick={() => removeBranch(index)}
+                        onClick={() => removeBranchFromPush(index)}
                         className="text-zinc-400 hover:text-red-400 transition"
                       >
-                        <X size={18} />
+                        <X size={16} />
                       </button>
                     </div>
                   ))}
                   <button
-                    onClick={addBranch}
-                    className="text-sm text-orange-500 hover:text-orange-400 flex items-center gap-1 transition"
+                    onClick={addBranchToPush}
+                    className="text-xs text-orange-500 hover:text-orange-400 flex items-center gap-1 transition"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                     Add Branch
                   </button>
                 </div>
               </div>
 
-              {/* Paths (Monorepo Support) */}
+              {/* Paths */}
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                <label className="block text-xs font-medium text-zinc-300 mb-2">
                   Run on Path Changes (optional)
                 </label>
-                <p className="text-xs text-zinc-500 mb-2">
-                  Leave empty to run on all changes. Useful for monorepos.
-                </p>
+                <p className="text-xs text-zinc-500 mb-2">Useful for monorepos</p>
                 <div className="space-y-2">
-                  {(localTrigger.paths || []).map((path, index) => (
+                  {(getPushConfig()?.paths || []).map((path: string, index: number) => (
                     <div key={index} className="flex gap-2">
                       <input
                         type="text"
                         value={path}
-                        onChange={(e) => updatePath(index, e.target.value)}
+                        onChange={(e) => updatePathInPush(index, e.target.value)}
                         placeholder="e.g., src/**, lib/**, !src/docs/**"
-                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs"
                       />
                       <button
-                        onClick={() => removePath(index)}
+                        onClick={() => removePathFromPush(index)}
                         className="text-zinc-400 hover:text-red-400 transition"
                       >
-                        <X size={18} />
+                        <X size={16} />
                       </button>
                     </div>
                   ))}
                   <button
-                    onClick={addPath}
-                    className="text-sm text-orange-500 hover:text-orange-400 flex items-center gap-1 transition"
+                    onClick={addPathToPush}
+                    className="text-xs text-orange-500 hover:text-orange-400 flex items-center gap-1 transition"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                     Add Path Pattern
                   </button>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
-          {/* Schedule Specific */}
-          {localTrigger.event === 'schedule' && (
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Cron Schedule
-              </label>
-              <input
-                type="text"
-                value={localTrigger.schedule || ''}
-                onChange={(e) => updateSchedule(e.target.value)}
-                placeholder="e.g., 0 0 * * 0 (weekly on Sunday)"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-              />
-              <p className="text-xs text-zinc-500 mt-2">
+          {/* Pull Request Event Configuration */}
+          {getPullRequestConfig() && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 space-y-3">
+              <h4 className="text-sm font-semibold text-white">Pull Request Event</h4>
+
+              {/* Branches */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-2">
+                  Run on Branches
+                </label>
+                <div className="space-y-2">
+                  {(getPullRequestConfig()?.branches || []).map((branch: string, index: number) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={branch}
+                        onChange={(e) => updateBranchInPush(index, e.target.value)}
+                        placeholder="e.g., main, develop"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs"
+                      />
+                      <button
+                        onClick={() => removeBranchFromPush(index)}
+                        className="text-zinc-400 hover:text-red-400 transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Schedule Event Configuration */}
+          {getScheduleConfig() && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 space-y-3">
+              <h4 className="text-sm font-semibold text-white">Schedule Events</h4>
+
+              <div className="space-y-2">
+                {getScheduleConfig()!.map((schedule: ScheduleTrigger, index: number) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={schedule.cron}
+                      onChange={(e) => updateCronSchedule(index, e.target.value)}
+                      placeholder="e.g., 0 0 * * 0 (weekly on Sunday)"
+                      className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs font-mono"
+                    />
+                    <button
+                      onClick={() => removeCronSchedule(index)}
+                      className="text-zinc-400 hover:text-red-400 transition"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={addCronSchedule}
+                  className="text-xs text-orange-500 hover:text-orange-400 flex items-center gap-1 transition"
+                >
+                  <Plus size={14} />
+                  Add Schedule
+                </button>
+              </div>
+              <p className="text-xs text-zinc-500">
                 Cron syntax. Use{' '}
                 <a
                   href="https://crontab.guru"
@@ -275,16 +428,22 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
             </div>
           )}
 
-          {/* Workflow Dispatch Specific */}
-          {localTrigger.event === 'workflow_dispatch' && (
-            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 text-sm text-zinc-400">
-              <p className="font-medium text-zinc-300 mb-1">Workflow Dispatch</p>
-              <p>
-                This workflow can be triggered manually from GitHub. Users can provide inputs when
-                triggering it.
+          {/* Workflow Dispatch Info */}
+          {isEventEnabled('workflow_dispatch') && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 text-sm">
+              <p className="font-medium text-zinc-300">Manual Trigger</p>
+              <p className="text-xs text-zinc-400 mt-1">
+                This workflow can be triggered manually from GitHub.
               </p>
-              <p className="text-xs text-zinc-500 mt-2">
-                Workflow dispatch inputs configuration coming in Phase 2.
+            </div>
+          )}
+
+          {/* Release Info */}
+          {isEventEnabled('release') && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded p-3 text-sm">
+              <p className="font-medium text-zinc-300">Release Event</p>
+              <p className="text-xs text-zinc-400 mt-1">
+                This workflow runs when a release is published.
               </p>
             </div>
           )}

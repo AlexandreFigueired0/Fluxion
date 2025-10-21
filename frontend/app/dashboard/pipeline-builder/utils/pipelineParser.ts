@@ -1,24 +1,24 @@
-import { Pipeline } from '../types';
+import { Workflow } from '../types';
 
 /**
- * Convert backend PipelineResponse JSON to frontend Pipeline type
+ * Convert backend PipelineResponse JSON to frontend Workflow type
  */
-export function parsePipelineFromBackend(data: any): Pipeline {
-  // The config_yaml from backend is the raw Pipeline JSON
-  let pipelineData: Pipeline;
+export function parsePipelineFromBackend(data: any): Workflow {
+  // The config_yaml from backend is the raw Workflow JSON
+  let workflowData: Workflow;
 
   if (typeof data.config_yaml === 'string') {
     // If it's a string, parse it
-    pipelineData = JSON.parse(data.config_yaml);
+    workflowData = JSON.parse(data.config_yaml);
   } else {
     // If it's already an object (from JSON deserialization)
-    pipelineData = data.config_yaml;
+    workflowData = data.config_yaml;
   }
 
   // Validate it has required fields
-  if (!pipelineData.name || !pipelineData.trigger || !Array.isArray(pipelineData.jobs)) {
-    throw new Error('Invalid pipeline data structure');
+  if (!Array.isArray(workflowData.jobs)) {
+    throw new Error('Invalid workflow data structure: jobs must be an array');
   }
 
-  return pipelineData;
+  return workflowData;
 }

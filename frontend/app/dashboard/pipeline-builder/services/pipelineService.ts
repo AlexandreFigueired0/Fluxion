@@ -1,4 +1,4 @@
-import { Pipeline } from '../types';
+import { Workflow } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -25,7 +25,7 @@ class PipelineService {
   async createPipeline(
     userToken: string,
     userID: string,
-    pipeline: Pipeline
+    pipeline: Workflow
   ): Promise<PipelineResponse> {
     const response = await fetch(`${API_BASE_URL}/api/pipelines`, {
       method: 'POST',
@@ -108,7 +108,7 @@ class PipelineService {
   async updatePipeline(
     userToken: string,
     pipelineID: string,
-    pipeline: Pipeline
+    pipeline: Workflow
   ): Promise<PipelineResponse> {
     const response = await fetch(`${API_BASE_URL}/api/pipelines/${pipelineID}`, {
       method: 'PUT',

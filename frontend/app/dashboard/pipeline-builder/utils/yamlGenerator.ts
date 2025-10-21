@@ -1,32 +1,49 @@
-import { Pipeline, Trigger, Job, PipelineStep } from '../types';
+import { Workflow, WorkflowTrigger, Job, Step } from '../types';
 
 /**
- * Convert a Pipeline object to GitHub Actions YAML format
+ * Convert a Workflow object to GitHub Actions YAML format
  * This generates the complete .github/workflows/main.yml structure
  */
-export function pipelineToYaml(pipeline: Pipeline): string {
+export function pipelineToYaml(workflow: Workflow): string {
   const yaml: string[] = [];
 
   // Name
-  yaml.push(`name: ${pipeline.name || 'CI/CD Pipeline'}`);
+  yaml.push(`name: ${workflow.name || 'CI/CD Workflow'}`);
   yaml.push('');
 
   // Description (as comment if provided)
-  if (pipeline.description) {
-    yaml.push(`# ${pipeline.description}`);
+  if (workflow.description) {
+    yaml.push(`# ${workflow.description}`);
     yaml.push('');
   }
 
   // Trigger/On
   yaml.push('on:');
-  yaml.push(generateTriggerYaml(pipeline.trigger, 2));
+  if (workflow.on) {
+    yaml.push(generateTriggerYaml(workflow.on, 2));
+  } else {
+    yaml.push('  push:');
+    yaml.push('    branches: [main]');
+  }
   yaml.push('');
+
+  // Environment variables (if any)
+  if (workflow.env && Object.keys(workflow.env).length > 0) {
+    yaml.push('env:');
+    Object.entries(workflow.env).forEach(([key, value]) => {
+      yaml.push(`  ${key}: ${formatYamlValue(value)}`);
+    });
+    yaml.push('');
+  }
 
   // Jobs
   yaml.push('jobs:');
-  if (pipeline.jobs.length > 0) {
-    pipeline.jobs.forEach((job) => {
+  if (workflow.jobs.length > 0) {
+    workflow.jobs.forEach((job, idx) => {
       yaml.push(generateJobYaml(job, 2));
+      if (idx < workflow.jobs.length - 1) {
+        yaml.push('');
+      }
     });
   } else {
     yaml.push('  # No jobs configured');
@@ -37,89 +54,96 @@ export function pipelineToYaml(pipeline: Pipeline): string {
 
 /**
  * Generate YAML for trigger configuration
+ * Handles the union type WorkflowTrigger which can have multiple event types
  */
-function generateTriggerYaml(trigger: Trigger, indent: number): string {
+function generateTriggerYaml(trigger: WorkflowTrigger, indent: number): string {
   const lines: string[] = [];
   const ind = ' '.repeat(indent);
 
-  switch (trigger.event) {
-    case 'push':
-      lines.push(`${ind}push:`);
-      if (trigger.branches && trigger.branches.length > 0) {
+  // Handle union type - trigger can have push, pull_request, schedule, etc.
+  if ('push' in trigger && trigger.push) {
+    const config = trigger.push as any;
+    lines.push(`${ind}push:`);
+    if (typeof config === 'object') {
+      if (config.branches && config.branches.length > 0) {
         lines.push(`${ind}  branches:`);
-        trigger.branches.forEach((branch) => {
+        config.branches.forEach((branch: string) => {
           lines.push(`${ind}    - ${branch}`);
         });
       }
-      if (trigger.tags && trigger.tags.length > 0) {
+      if (config.tags && config.tags.length > 0) {
         lines.push(`${ind}  tags:`);
-        trigger.tags.forEach((tag) => {
+        config.tags.forEach((tag: string) => {
           lines.push(`${ind}    - ${tag}`);
         });
       }
-      if (trigger.paths && trigger.paths.length > 0) {
+      if (config.paths && config.paths.length > 0) {
         lines.push(`${ind}  paths:`);
-        trigger.paths.forEach((path) => {
+        config.paths.forEach((path: string) => {
           lines.push(`${ind}    - ${path}`);
         });
       }
-      break;
+    }
+  }
 
-    case 'pull_request':
-      lines.push(`${ind}pull_request:`);
-      if (trigger.branches && trigger.branches.length > 0) {
+  if ('pull_request' in trigger && trigger.pull_request) {
+    const config = trigger.pull_request as any;
+    lines.push(`${ind}pull_request:`);
+    if (typeof config === 'object') {
+      if (config.branches && config.branches.length > 0) {
         lines.push(`${ind}  branches:`);
-        trigger.branches.forEach((branch) => {
+        config.branches.forEach((branch: string) => {
           lines.push(`${ind}    - ${branch}`);
         });
       }
-      if (trigger.paths && trigger.paths.length > 0) {
+      if (config.paths && config.paths.length > 0) {
         lines.push(`${ind}  paths:`);
-        trigger.paths.forEach((path) => {
+        config.paths.forEach((path: string) => {
           lines.push(`${ind}    - ${path}`);
         });
       }
-      break;
+    }
+  }
 
-    case 'schedule':
-      lines.push(`${ind}schedule:`);
-      if (trigger.schedule) {
-        lines.push(`${ind}  - cron: '${trigger.schedule}'`);
-      }
-      break;
+  if ('schedule' in trigger && trigger.schedule && Array.isArray(trigger.schedule)) {
+    lines.push(`${ind}schedule:`);
+    trigger.schedule.forEach((schedule) => {
+      lines.push(`${ind}  - cron: '${schedule.cron}'`);
+    });
+  }
 
-    case 'workflow_dispatch':
-      lines.push(`${ind}workflow_dispatch:`);
-      if (trigger.inputs && Object.keys(trigger.inputs).length > 0) {
-        lines.push(`${ind}  inputs:`);
-        Object.entries(trigger.inputs).forEach(([name, input]) => {
-          lines.push(`${ind}    ${name}:`);
-          if (input.description) {
-            lines.push(`${ind}      description: '${input.description}'`);
-          }
-          if (input.required !== undefined) {
-            lines.push(`${ind}      required: ${input.required}`);
-          }
-          if (input.default) {
-            lines.push(`${ind}      default: '${input.default}'`);
-          }
-          if (input.type) {
-            lines.push(`${ind}      type: ${input.type}`);
-          }
-          if (input.options && input.options.length > 0) {
-            lines.push(`${ind}      options:`);
-            input.options.forEach((opt) => {
-              lines.push(`${ind}        - ${opt}`);
-            });
-          }
-        });
-      }
-      break;
+  if ('workflow_dispatch' in trigger && trigger.workflow_dispatch) {
+    lines.push(`${ind}workflow_dispatch:`);
+    const config = trigger.workflow_dispatch as any;
+    if (typeof config === 'object' && config.inputs && Object.keys(config.inputs).length > 0) {
+      lines.push(`${ind}  inputs:`);
+      Object.entries(config.inputs).forEach(([name, input]: [string, any]) => {
+        lines.push(`${ind}    ${name}:`);
+        if (input.description) {
+          lines.push(`${ind}      description: '${input.description}'`);
+        }
+        if (input.required !== undefined) {
+          lines.push(`${ind}      required: ${input.required}`);
+        }
+        if (input.default) {
+          lines.push(`${ind}      default: '${input.default}'`);
+        }
+        if (input.type) {
+          lines.push(`${ind}      type: ${input.type}`);
+        }
+        if (input.options && input.options.length > 0) {
+          lines.push(`${ind}      options:`);
+          input.options.forEach((opt: string) => {
+            lines.push(`${ind}        - ${opt}`);
+          });
+        }
+      });
+    }
+  }
 
-    case 'release':
-      lines.push(`${ind}release:`);
-      lines.push(`${ind}  types: [created, published, edited]`);
-      break;
+  if ('release' in trigger && trigger.release) {
+    lines.push(`${ind}release:`);
+    lines.push(`${ind}  types: [created, published, edited]`);
   }
 
   return lines.join('\n');
@@ -129,7 +153,8 @@ function generateTriggerYaml(trigger: Trigger, indent: number): string {
  * Generate a YAML-safe job key from the job name
  * Converts "Build App" -> "build-app", "Deploy (Prod)" -> "deploy-prod"
  */
-function generateJobKey(jobName: string): string {
+function generateJobKey(jobName: string | undefined): string {
+  if (!jobName) return 'job';
   return jobName
     .toLowerCase()
     .replace(/[^\w\s-]/g, '') // Remove special chars
@@ -149,50 +174,72 @@ function generateJobYaml(job: Job, indent: number): string {
 
   lines.push(`${ind}${jobKey}:`);
 
-  // runs-on
-  if (Array.isArray(job.runsOn)) {
-    lines.push(`${jobInd}runs-on: [${job.runsOn.map((r) => `'${r}'`).join(', ')}]`);
+  // runs-on (required)
+  if (Array.isArray(job['runs-on'])) {
+    lines.push(`${jobInd}runs-on: [${job['runs-on'].map((r) => `'${r}'`).join(', ')}]`);
   } else {
-    lines.push(`${jobInd}runs-on: ${job.runsOn}`);
+    lines.push(`${jobInd}runs-on: ${job['runs-on']}`);
   }
 
   // timeout-minutes
-  if (job.timeout) {
-    lines.push(`${jobInd}timeout-minutes: ${job.timeout}`);
+  if (job['timeout-minutes']) {
+    lines.push(`${jobInd}timeout-minutes: ${job['timeout-minutes']}`);
   }
 
   // environment
   if (job.environment) {
-    lines.push(`${jobInd}environment: ${job.environment}`);
+    if (typeof job.environment === 'string') {
+      lines.push(`${jobInd}environment: ${job.environment}`);
+    } else {
+      lines.push(`${jobInd}environment:`);
+      lines.push(`${jobInd}  name: ${job.environment.name}`);
+      if (job.environment.url) {
+        lines.push(`${jobInd}  url: ${job.environment.url}`);
+      }
+    }
   }
 
   // concurrency
   if (job.concurrency) {
-    lines.push(`${jobInd}concurrency: ${job.concurrency}`);
+    lines.push(`${jobInd}concurrency:`);
+    lines.push(`${jobInd}  group: ${job.concurrency.group}`);
+    if (job.concurrency['cancel-in-progress'] !== undefined) {
+      lines.push(`${jobInd}  cancel-in-progress: ${job.concurrency['cancel-in-progress']}`);
+    }
   }
 
   // permissions
-  if (job.permissions && Object.keys(job.permissions).length > 0) {
-    lines.push(`${jobInd}permissions:`);
-    Object.entries(job.permissions).forEach(([perm, value]) => {
-      if (value) {
-        lines.push(`${jobInd}  ${perm}: ${value}`);
-      }
-    });
+  if (job.permissions) {
+    if (typeof job.permissions === 'string') {
+      lines.push(`${jobInd}permissions: ${job.permissions}`);
+    } else {
+      lines.push(`${jobInd}permissions:`);
+      Object.entries(job.permissions).forEach(([perm, value]) => {
+        if (value) {
+          lines.push(`${jobInd}  ${perm}: ${value}`);
+        }
+      });
+    }
   }
 
   // strategy (matrix)
-  if (job.strategy && Object.keys(job.strategy).length > 0) {
+  if (job.strategy && job.strategy.matrix && Object.keys(job.strategy.matrix).length > 0) {
     lines.push(`${jobInd}strategy:`);
+    if (job.strategy['fail-fast'] !== undefined) {
+      lines.push(`${jobInd}  fail-fast: ${job.strategy['fail-fast']}`);
+    }
+    if (job.strategy['max-parallel'] !== undefined) {
+      lines.push(`${jobInd}  max-parallel: ${job.strategy['max-parallel']}`);
+    }
     lines.push(`${jobInd}  matrix:`);
-    Object.entries(job.strategy).forEach(([key, values]) => {
+    Object.entries(job.strategy.matrix).forEach(([key, values]) => {
       if (Array.isArray(values) && values.length > 0) {
         if (values.length === 1) {
-          lines.push(`${jobInd}    ${key}: ${values[0]}`);
+          lines.push(`${jobInd}    ${key}: ${formatYamlValue(String(values[0]))}`);
         } else {
           lines.push(`${jobInd}    ${key}:`);
           values.forEach((value) => {
-            lines.push(`${jobInd}      - ${value}`);
+            lines.push(`${jobInd}      - ${formatYamlValue(String(value))}`);
           });
         }
       }
@@ -200,13 +247,27 @@ function generateJobYaml(job: Job, indent: number): string {
   }
 
   // needs (dependencies) - convert job names to job keys
-  if (job.needs && job.needs.length > 0) {
-    const needsKeys = job.needs.map((jobName) => generateJobKey(jobName));
+  if (job.needs) {
+    const needsArray = Array.isArray(job.needs) ? job.needs : [job.needs];
+    const needsKeys = needsArray.map((jobName) => generateJobKey(jobName));
     if (needsKeys.length === 1) {
       lines.push(`${jobInd}needs: ${needsKeys[0]}`);
-    } else {
+    } else if (needsKeys.length > 1) {
       lines.push(`${jobInd}needs: [${needsKeys.join(', ')}]`);
     }
+  }
+
+  // env (job-level environment variables)
+  if (job.env && Object.keys(job.env).length > 0) {
+    lines.push(`${jobInd}env:`);
+    Object.entries(job.env).forEach(([key, value]) => {
+      lines.push(`${jobInd}  ${key}: ${formatYamlValue(value)}`);
+    });
+  }
+
+  // if (conditional)
+  if (job.if) {
+    lines.push(`${jobInd}if: ${job.if}`);
   }
 
   // steps
@@ -214,47 +275,46 @@ function generateJobYaml(job: Job, indent: number): string {
     lines.push(`${jobInd}steps:`);
     job.steps.forEach((step) => {
       lines.push(generateStepYaml(step, indent + 4));
-      lines.push(''); // Blank line between steps
     });
   }
 
-  lines.push('');
   return lines.join('\n');
 }
 
 /**
  * Generate YAML for a single step
+ * Determines if step is action or script based on presence of 'uses' or 'run'
  */
-function generateStepYaml(step: PipelineStep, indent: number): string {
+function generateStepYaml(step: Step, indent: number): string {
   const lines: string[] = [];
   const ind = ' '.repeat(indent);
-  const stepInd = ' '.repeat(indent + 2);
 
   lines.push(`${ind}- name: ${step.name || 'Step'}`);
 
-  if (step.type === 'action') {
-    if (step.uses) {
-      lines.push(`${ind}  uses: ${step.uses}`);
-    }
+  if (step.uses) {
+    // This is an action step
+    lines.push(`${ind}  uses: ${step.uses}`);
+
     if (step.with && Object.keys(step.with).length > 0) {
       lines.push(`${ind}  with:`);
       Object.entries(step.with).forEach(([key, value]) => {
         lines.push(`${ind}    ${key}: ${formatYamlValue(value)}`);
       });
     }
-  } else if (step.type === 'run') {
-    if (step.run) {
-      lines.push(`${ind}  run: ${formatYamlValue(step.run)}`);
-    }
+  } else if (step.run) {
+    // This is a run/script step
+    lines.push(`${ind}  run: ${formatYamlValue(step.run)}`);
+
     if (step.shell) {
       lines.push(`${ind}  shell: ${step.shell}`);
     }
-    if (step.workingDirectory) {
-      lines.push(`${ind}  working-directory: ${step.workingDirectory}`);
+
+    if (step['working-directory']) {
+      lines.push(`${ind}  working-directory: ${step['working-directory']}`);
     }
   }
 
-  // env
+  // env (step-level environment variables)
   if (step.env && Object.keys(step.env).length > 0) {
     lines.push(`${ind}  env:`);
     Object.entries(step.env).forEach(([key, value]) => {
@@ -268,13 +328,16 @@ function generateStepYaml(step: PipelineStep, indent: number): string {
   }
 
   // continue-on-error
-  if (step.continueOnError) {
-    lines.push(`${ind}  continue-on-error: true`);
+  if (step['continue-on-error']) {
+    const value = typeof step['continue-on-error'] === 'boolean' 
+      ? step['continue-on-error'] 
+      : step['continue-on-error'];
+    lines.push(`${ind}  continue-on-error: ${value}`);
   }
 
   // timeout-minutes
-  if (step.timeout) {
-    lines.push(`${ind}  timeout-minutes: ${step.timeout}`);
+  if (step['timeout-minutes']) {
+    lines.push(`${ind}  timeout-minutes: ${step['timeout-minutes']}`);
   }
 
   return lines.join('\n');
@@ -300,16 +363,16 @@ function formatYamlValue(value: string): string {
 }
 
 /**
- * Download pipeline as YAML file
+ * Download workflow as YAML file
  * Creates a .github/workflows/main.yml file for the user to download
  */
-export function downloadPipelineYaml(pipeline: Pipeline): void {
-  const yaml = pipelineToYaml(pipeline);
+export function downloadPipelineYaml(workflow: Workflow): void {
+  const yaml = pipelineToYaml(workflow);
   const blob = new Blob([yaml], { type: 'text/yaml' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${pipeline.name.toLowerCase().replace(/\s+/g, '-') || 'workflow'}.yml`;
+  link.download = `${workflow.name?.toLowerCase().replace(/\s+/g, '-') || 'workflow'}.yml`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -317,9 +380,9 @@ export function downloadPipelineYaml(pipeline: Pipeline): void {
 }
 
 /**
- * Copy pipeline YAML to clipboard
+ * Copy workflow YAML to clipboard
  */
-export function copyPipelineYamlToClipboard(pipeline: Pipeline): Promise<void> {
-  const yaml = pipelineToYaml(pipeline);
+export function copyPipelineYamlToClipboard(workflow: Workflow): Promise<void> {
+  const yaml = pipelineToYaml(workflow);
   return navigator.clipboard.writeText(yaml);
 }

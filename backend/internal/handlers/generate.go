@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fluxion-be/internal"
+	"fluxion-be/internal/utils"
 	"fmt"
 	"log"
 	"os"
@@ -44,6 +45,18 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "Failed to generate pipeline config: " + err.Error()})
 		return
 	}
+
+	// Parse the generated YAML to Pipeline JSON
+	if result.PipelineConfig != "" {
+		pipelineJSON, err := utils.ParseYAMLToPipelineJSON(result.PipelineConfig)
+		if err != nil {
+			log.Printf("Warning: Failed to parse generated YAML to pipeline JSON: %v", err)
+			// Don't fail - still return the result with YAML even if parsing failed
+		} else {
+			result.PipelineJSON = pipelineJSON
+		}
+	}
+
 	log.Printf("Successfully generated pipeline config for prompt=%q", req.Prompt)
 	c.JSON(200, result)
 }
