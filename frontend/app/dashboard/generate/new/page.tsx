@@ -93,9 +93,9 @@ export default function GenerateNewPage() {
             >
               {submitting ? 'Generating...' : 'Generate Workflow'}
             </button>
-            <Link href="/dashboard/generate/templates" className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition text-white cursor-pointer">
+            {/* <Link href="/dashboard/generate/templates" className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition text-white cursor-pointer">
               Use Template
-            </Link>
+            </Link> */}
           </div>
           <p className="text-zinc-400 mt-4">For better results, consider using the CLI, which has an option to gather project context. <Link href="/docs/cli" className="text-orange-500 underline">See how</Link></p>
           {result && (
@@ -104,22 +104,30 @@ export default function GenerateNewPage() {
               <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-lg font-bold">Generated Workflow Config</h2>
-                  <button
-                    onClick={handleCopyConfig}
-                    className="flex items-center gap-2 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition text-sm text-white"
-                  >
-                    {copied ? (
-                      <>
-                        <Check size={16} className="text-green-500" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={16} />
-                        Copy
-                      </>
-                    )}
-                  </button>
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/dashboard/pipeline-builder/new?config=${encodeURIComponent(result.pipeline_config || JSON.stringify(result))}`}
+                      className="flex items-center gap-2 px-3 py-1 bg-orange-600 hover:bg-orange-700 border border-orange-600 rounded transition text-sm text-white"
+                    >
+                      Open in Editor
+                    </Link>
+                    <button
+                      onClick={handleCopyConfig}
+                      className="flex items-center gap-2 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded transition text-sm text-white"
+                    >
+                      {copied ? (
+                        <>
+                          <Check size={16} className="text-green-500" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={16} />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <pre className="whitespace-pre-wrap break-words text-zinc-100 text-sm">
                   {result.pipeline_config || JSON.stringify(result, null, 2)}

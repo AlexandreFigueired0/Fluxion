@@ -8,9 +8,22 @@ import {
 } from '../../components';
 import { Workflow } from 'lucide-react';
 import { PipelineBuilder } from '../components/PipelineBuilder';
+import { useSearchParams } from 'next/navigation';
 
 export default function NewPipelinePage() {
   const { loading, isLoading } = useDashboardData();
+  const searchParams = useSearchParams();
+  const configParam = searchParams.get('config');
+
+  // Parse the config if provided
+  let initialConfig = null;
+  if (configParam) {
+    try {
+      initialConfig = JSON.parse(decodeURIComponent(configParam));
+    } catch (e) {
+      console.error('Failed to parse config parameter:', e);
+    }
+  }
 
   if (loading || isLoading) {
     return <LoadingState />;
@@ -24,12 +37,16 @@ export default function NewPipelinePage() {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Workflow className="text-orange-500" size={32} />
-            <h1 className="text-4xl font-black">New Pipeline</h1>
+            <h1 className="text-4xl font-black">{initialConfig ? 'Import Workflow' : 'New Pipeline'}</h1>
           </div>
-          <p className="text-zinc-400">Create your CI/CD pipeline visually. Drag, connect, and configure.</p>
+          <p className="text-zinc-400">
+            {initialConfig
+              ? 'Fine-tune your AI-generated workflow before deploying.'
+              : 'Create your CI/CD pipeline visually. Drag, connect, and configure.'}
+          </p>
         </div>
 
-        <PipelineBuilder />
+        <PipelineBuilder initialWorkflow={initialConfig} />
       </div>
     </DashboardLayout>
   );

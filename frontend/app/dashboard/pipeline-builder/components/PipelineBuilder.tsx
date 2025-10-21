@@ -39,13 +39,14 @@ const edgeTypes = {
 
 interface PipelineBuilderFlowProps {
   pipelineId?: string;
+  initialWorkflow?: Workflow;
 }
 
-function PipelineBuilderFlow({ pipelineId }: PipelineBuilderFlowProps) {
+function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlowProps) {
   const { data: session } = useSession();
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [pipeline, setPipeline] = useState<Workflow>(createDefaultPipeline());
+  const [pipeline, setPipeline] = useState<Workflow>(initialWorkflow || createDefaultPipeline());
   const [selectedJobName, setSelectedJobName] = useState<string | null>(pipeline.jobs[0]?.name || null);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -451,10 +452,10 @@ function PipelineBuilderFlow({ pipelineId }: PipelineBuilderFlowProps) {
   );
 }
 
-export function PipelineBuilder({ pipelineId }: PipelineBuilderFlowProps) {
+export function PipelineBuilder({ pipelineId, initialWorkflow }: PipelineBuilderFlowProps) {
   return (
     <ReactFlowProvider>
-      <PipelineBuilderFlow pipelineId={pipelineId} />
+      <PipelineBuilderFlow pipelineId={pipelineId} initialWorkflow={initialWorkflow} />
     </ReactFlowProvider>
   );
 }
