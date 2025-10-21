@@ -9,14 +9,14 @@ import (
 )
 
 // CreatePipeline creates a new pipeline in the database.
-func CreatePipeline(userID, name, description string, configYAML json.RawMessage, db *supa.Client) (*models.Pipeline, error) {
+func CreatePipeline(userID, name, description string, pipelineJSON json.RawMessage, db *supa.Client) (*models.Pipeline, error) {
 	newPipeline := map[string]interface{}{
-		"user_id":     userID,
-		"name":        name,
-		"description": description,
-		"config_yaml": configYAML,
-		"created_at":  time.Now(),
-		"updated_at":  time.Now(),
+		"user_id":       userID,
+		"name":          name,
+		"description":   description,
+		"pipeline_json": pipelineJSON,
+		"created_at":    time.Now(),
+		"updated_at":    time.Now(),
 	}
 
 	var pipeline models.Pipeline
@@ -44,12 +44,12 @@ func DeletePipelineByID(pipelineID string, db *supa.Client) error {
 }
 
 // UpdatePipeline updates an existing pipeline's details.
-func UpdatePipeline(pipelineID, name, description string, configYAML json.RawMessage, db *supa.Client) (*models.Pipeline, error) {
+func UpdatePipeline(pipelineID, name, description string, pipelineJSON json.RawMessage, db *supa.Client) (*models.Pipeline, error) {
 	updatedPipeline := map[string]interface{}{
-		"name":        name,
-		"description": description,
-		"config_yaml": configYAML,
-		"updated_at":  time.Now(),
+		"name":          name,
+		"description":   description,
+		"pipeline_json": pipelineJSON,
+		"updated_at":    time.Now(),
 	}
 
 	var pipeline models.Pipeline

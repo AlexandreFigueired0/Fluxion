@@ -4,6 +4,7 @@ import { Workflow, Job } from '../types';
 type WorkflowCandidate = Partial<Workflow> & Record<string, any>;
 type WorkflowCandidateWithExtras = WorkflowCandidate & {
   config_yaml?: unknown;
+  pipeline_json?: unknown;
   config?: unknown;
   workflow?: unknown;
 };
@@ -23,7 +24,11 @@ export function parsePipelineFromBackend(data: unknown): Workflow {
   };
 
   const configSource =
-    response.config_yaml ?? response.config ?? response.workflow ?? response;
+    response.pipeline_json ??
+    response.config_yaml ??
+    response.config ??
+    response.workflow ??
+    response;
 
   const workflow = normalizeWorkflow(configSource);
 
@@ -71,6 +76,7 @@ function normalizeWorkflow(input: unknown): Workflow {
 
   const {
     jobs: rawJobs,
+    pipeline_json: _ignoredPipelineJSON,
     config_yaml: _ignoredConfigYaml,
     config: _ignoredConfig,
     workflow: _ignoredWorkflow,

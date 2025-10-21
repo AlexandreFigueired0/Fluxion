@@ -12,7 +12,7 @@ interface PipelineResponse {
   user_id: string;
   name: string;
   description: string;
-  config_yaml: PipelineConfig;
+  pipeline_json: PipelineConfig;
   created_at: string;
   updated_at: string;
 }
@@ -39,7 +39,7 @@ class PipelineService {
         user_id: userID,
         name: pipeline.name,
         description: pipeline.description || '',
-        config_yaml: pipeline,  // Send the full Pipeline object as JSON
+        pipeline_json: pipeline,  // Send the full Pipeline object as JSON
       }),
     });
 
@@ -121,7 +121,7 @@ class PipelineService {
       body: JSON.stringify({
         name: pipeline.name,
         description: pipeline.description || '',
-        config_yaml: pipeline,  // Send the full Pipeline object as JSON
+        pipeline_json: pipeline,  // Send the full Pipeline object as JSON
       }),
     });
 

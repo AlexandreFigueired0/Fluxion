@@ -25,7 +25,7 @@ func (h *PipelineHandler) CreatePipeline(c *gin.Context) {
 		pipelineDTO.UserID,
 		pipelineDTO.Name,
 		pipelineDTO.Description,
-		pipelineDTO.ConfigYAML,
+		pipelineDTO.PipelineJSON,
 		h.DB,
 	)
 	if err != nil {
@@ -34,13 +34,13 @@ func (h *PipelineHandler) CreatePipeline(c *gin.Context) {
 	}
 
 	createdPipelineDTO := dto.PipelineDTO{
-		ID:          pipeline.ID,
-		UserID:      pipeline.UserID,
-		Name:        pipeline.Name,
-		Description: pipeline.Description,
-		ConfigYAML:  pipeline.ConfigYAML,
-		CreatedAt:   pipeline.CreatedAt,
-		UpdatedAt:   pipeline.UpdatedAt,
+		ID:           pipeline.ID,
+		UserID:       pipeline.UserID,
+		Name:         pipeline.Name,
+		Description:  pipeline.Description,
+		PipelineJSON: pipeline.PipelineJSON,
+		CreatedAt:    pipeline.CreatedAt,
+		UpdatedAt:    pipeline.UpdatedAt,
 	}
 
 	c.JSON(http.StatusCreated, createdPipelineDTO)
@@ -57,13 +57,13 @@ func (h *PipelineHandler) GetPipeline(c *gin.Context) {
 	}
 
 	pipelineDTO := dto.PipelineDTO{
-		ID:          pipeline.ID,
-		UserID:      pipeline.UserID,
-		Name:        pipeline.Name,
-		Description: pipeline.Description,
-		ConfigYAML:  pipeline.ConfigYAML,
-		CreatedAt:   pipeline.CreatedAt,
-		UpdatedAt:   pipeline.UpdatedAt,
+		ID:           pipeline.ID,
+		UserID:       pipeline.UserID,
+		Name:         pipeline.Name,
+		Description:  pipeline.Description,
+		PipelineJSON: pipeline.PipelineJSON,
+		CreatedAt:    pipeline.CreatedAt,
+		UpdatedAt:    pipeline.UpdatedAt,
 	}
 
 	c.JSON(http.StatusOK, pipelineDTO)
@@ -94,7 +94,7 @@ func (h *PipelineHandler) UpdatePipeline(c *gin.Context) {
 		pipelineID,
 		pipelineDTO.Name,
 		pipelineDTO.Description,
-		pipelineDTO.ConfigYAML,
+		pipelineDTO.PipelineJSON,
 		h.DB,
 	)
 	if err != nil {
@@ -103,13 +103,13 @@ func (h *PipelineHandler) UpdatePipeline(c *gin.Context) {
 	}
 
 	createdPipelineDTO := dto.PipelineDTO{
-		ID:          pipeline.ID,
-		UserID:      pipeline.UserID,
-		Name:        pipeline.Name,
-		Description: pipeline.Description,
-		ConfigYAML:  pipeline.ConfigYAML,
-		CreatedAt:   pipeline.CreatedAt,
-		UpdatedAt:   pipeline.UpdatedAt,
+		ID:           pipeline.ID,
+		UserID:       pipeline.UserID,
+		Name:         pipeline.Name,
+		Description:  pipeline.Description,
+		PipelineJSON: pipeline.PipelineJSON,
+		CreatedAt:    pipeline.CreatedAt,
+		UpdatedAt:    pipeline.UpdatedAt,
 	}
 
 	c.JSON(http.StatusOK, createdPipelineDTO)
@@ -128,13 +128,13 @@ func (h *PipelineHandler) ListUserPipelines(c *gin.Context) {
 	var pipelineDTOs []dto.PipelineDTO
 	for _, pipeline := range pipelines {
 		pipelineDTOs = append(pipelineDTOs, dto.PipelineDTO{
-			ID:          pipeline.ID,
-			UserID:      pipeline.UserID,
-			Name:        pipeline.Name,
-			Description: pipeline.Description,
-			ConfigYAML:  pipeline.ConfigYAML,
-			CreatedAt:   pipeline.CreatedAt,
-			UpdatedAt:   pipeline.UpdatedAt,
+			ID:           pipeline.ID,
+			UserID:       pipeline.UserID,
+			Name:         pipeline.Name,
+			Description:  pipeline.Description,
+			PipelineJSON: pipeline.PipelineJSON,
+			CreatedAt:    pipeline.CreatedAt,
+			UpdatedAt:    pipeline.UpdatedAt,
 		})
 	}
 
