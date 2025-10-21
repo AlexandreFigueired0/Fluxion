@@ -5,12 +5,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 /**
  * Backend response structure for a pipeline
  */
+type PipelineConfig = Workflow | Record<string, unknown> | string | null;
+
 interface PipelineResponse {
   id: string;
   user_id: string;
   name: string;
   description: string;
-  config_yaml: string;
+  config_yaml: PipelineConfig;
   created_at: string;
   updated_at: string;
 }

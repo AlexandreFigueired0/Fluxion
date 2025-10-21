@@ -1,10 +1,5 @@
-  // Helper to convert jobs array to object keyed by job name
-  const jobsAsObject = useCallback((jobs: Job[]) => {
-    return Object.fromEntries(
-      jobs.map(({ name, ...rest }) => [name, rest])
-    );
-  }, []);
 'use client';
+
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ReactFlow, {
@@ -24,7 +19,7 @@ import 'reactflow/dist/style.css';
 import './pipelineBuilder.css';
 
 import { Workflow, Job, WorkflowTrigger } from '../types';
-import { createDefaultPipeline, generateId } from '../utils/pipelineUtils';
+import { createDefaultPipeline } from '../utils/pipelineUtils';
 import { JobNode } from './JobNode';
 import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
@@ -89,7 +84,9 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
         const loadedPipeline = parsePipelineFromBackend(response);
 
         setPipeline(loadedPipeline);
-        setSelectedJobName(loadedPipeline.jobs[0]?.name || null);
+        // Get first job name from jobs object
+        const firstJobName = Object.keys(loadedPipeline.jobs)[0] || null;
+        setSelectedJobName(firstJobName);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to load pipeline';
         setLoadError(errorMessage);
@@ -104,23 +101,24 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
 
     // Compute nodes and edges from pipeline (memoized to prevent constant re-renders)
   const { nodes: computedNodes, edges: computedEdges } = useMemo(() => {
-    const newNodes = pipeline.jobs.map((job, idx) => ({
-      id: getJobKey(job.name || `unnamed-${idx}`),
+    const jobsArray = Object.entries(pipeline.jobs);
+    const newNodes = jobsArray.map(([jobName, jobData], idx) => ({
+      id: getJobKey(jobName),
       type: 'jobNode',
       position: { x: idx * 420, y: 100 }, // Increased spacing for larger cards
       data: {
-        job,
-        isSelected: job.name === selectedJobName,
+        job: { name: jobName, ...jobData },
+        isSelected: jobName === selectedJobName,
       },
     }));
 
     // Create edges from job dependencies
-    const newEdges = pipeline.jobs
-      .flatMap((job) => {
-        const needsArray = Array.isArray(job.needs) ? job.needs : (job.needs ? [job.needs] : []);
-        return needsArray.map((dependencyName) => {
+    const newEdges = jobsArray
+      .flatMap(([jobName, jobData]) => {
+        const needsArray = Array.isArray(jobData.needs) ? jobData.needs : (jobData.needs ? [jobData.needs] : []);
+        return needsArray.map((dependencyName: string) => {
           const dependencyKey = getJobKey(dependencyName);
-          const jobKey = getJobKey(job.name || '');
+          const jobKey = getJobKey(jobName);
           return {
             id: `${dependencyKey}-${jobKey}`,
             source: dependencyKey,
@@ -153,19 +151,26 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
     (connection: Connection) => {
       // Validate connection and update job dependencies
       if (connection.source && connection.target) {
-        const targetJobName = pipeline.jobs.find((j) => getJobKey(j.name || '') === connection.target)?.name;
-        const sourceJobName = pipeline.jobs.find((j) => getJobKey(j.name || '') === connection.source)?.name;
+        // Find job names by matching keys
+        const targetJobName = Object.keys(pipeline.jobs).find(
+          (jobName) => getJobKey(jobName) === connection.target
+        );
+        const sourceJobName = Object.keys(pipeline.jobs).find(
+          (jobName) => getJobKey(jobName) === connection.source
+        );
         
         if (targetJobName && sourceJobName) {
-          const targetJob = pipeline.jobs.find((j) => j.name === targetJobName);
-          if (targetJob) {
-            const needsArray = Array.isArray(targetJob.needs) ? targetJob.needs : (targetJob.needs ? [targetJob.needs] : []);
+          const targetJobData = pipeline.jobs[targetJobName];
+          if (targetJobData) {
+            const needsArray = Array.isArray(targetJobData.needs) 
+              ? targetJobData.needs 
+              : (targetJobData.needs ? [targetJobData.needs] : []);
             if (!needsArray.includes(sourceJobName)) {
               const updatedJob = {
-                ...targetJob,
+                ...targetJobData,
                 needs: [...needsArray, sourceJobName],
               };
-              updateJob(targetJobName, updatedJob);
+              updateJob(targetJobName, updatedJob as Job);
             }
           }
         }
@@ -181,66 +186,81 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
   }, []);
 
   const handleJobClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    const jobName = pipeline.jobs.find((j) => getJobKey(j.name || '') === node.id)?.name;
+    const jobName = Object.keys(pipeline.jobs).find((name) => getJobKey(name) === node.id);
     if (jobName) {
       setSelectedJobName(jobName);
     }
-  }, [pipeline, getJobKey]);
+  }, [pipeline.jobs, getJobKey]);
 
   const handleAddJob = () => {
-    const newJob: Job = {
-      name: `Job ${pipeline.jobs.length + 1}`,
-      'runs-on': 'ubuntu-latest',
-      steps: [],
-    };
-
+    const newJobName = `Job ${Object.keys(pipeline.jobs).length + 1}`;
+    
     setPipeline({
       ...pipeline,
-      jobs: [...pipeline.jobs, newJob],
+      jobs: {
+        ...pipeline.jobs,
+        [newJobName]: {
+          'runs-on': 'ubuntu-latest',
+          steps: [],
+        },
+      },
     });
-    if (newJob.name) {
-      setSelectedJobName(newJob.name);
-    }
+    setSelectedJobName(newJobName);
   };
 
-  const updateJob = (jobName: string, updatedJob: Job) => {
+  const updateJob = (oldJobName: string, updatedJob: Job) => {
     setPipeline((prev) => {
-      const renamed = jobName !== updatedJob.name;
-
-      const jobs: Job[] = prev.jobs.map((job) => {
-        if (job.name === jobName) {
-          return updatedJob;
-        }
-
-        if (renamed && updatedJob.name) {
-          const needsArray = Array.isArray(job.needs) ? job.needs : (job.needs ? [job.needs] : []);
-          if (needsArray.includes(jobName)) {
-            const updatedNeeds = needsArray.map((need) => (need === jobName ? updatedJob.name : need)) as string[];
-            return {
-              ...job,
+      const newJobName = updatedJob.name || oldJobName;
+      const renamed = oldJobName !== newJobName;
+      
+      // Build new jobs object
+      let newJobs: Record<string, Omit<Job, 'name'>> = {};
+      
+      Object.entries(prev.jobs).forEach(([jobName, jobData]) => {
+        if (jobName === oldJobName) {
+          // Replace with updated job (without name field)
+          const { name, ...jobDataWithoutName } = updatedJob;
+          newJobs[newJobName] = jobDataWithoutName;
+        } else if (renamed) {
+          // Update dependencies if job was renamed
+          const needsArray = Array.isArray(jobData.needs) 
+            ? jobData.needs 
+            : (jobData.needs ? [jobData.needs] : []);
+          
+          if (needsArray.includes(oldJobName)) {
+            const updatedNeeds = needsArray.map((need: string) => 
+              need === oldJobName ? newJobName : need
+            ) as string[];
+            newJobs[jobName] = {
+              ...jobData,
               needs: updatedNeeds.length === 1 ? updatedNeeds[0] : updatedNeeds,
             };
+          } else {
+            newJobs[jobName] = jobData;
           }
+        } else {
+          newJobs[jobName] = jobData;
         }
-
-        return job;
       });
 
       return {
         ...prev,
-        jobs,
+        jobs: newJobs,
       };
     });
 
-    if (selectedJobName === jobName && updatedJob.name) {
-      setSelectedJobName(updatedJob.name);
+    if (selectedJobName === oldJobName) {
+      setSelectedJobName(updatedJob.name || oldJobName);
     }
   };
 
   const deleteJob = (jobName: string) => {
+    const newJobs = { ...pipeline.jobs };
+    delete newJobs[jobName];
+    
     setPipeline({
       ...pipeline,
-      jobs: pipeline.jobs.filter((job) => job.name !== jobName),
+      jobs: newJobs,
     });
     setSelectedJobName(null);
   };
@@ -278,17 +298,12 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       const userToken = session.user.id;
       const userID = session.user.id;
 
-      // Transform jobs array to object before sending
-      const pipelineToSend = {
-        ...pipeline,
-        jobs: jobsAsObject(pipeline.jobs),
-      };
       if (pipelineId) {
         // Update existing pipeline
-        await pipelineService.updatePipeline(userToken, pipelineId, pipelineToSend);
+        await pipelineService.updatePipeline(userToken, pipelineId, pipeline);
       } else {
         // Create new pipeline
-        await pipelineService.createPipeline(userToken, userID, pipelineToSend);
+        await pipelineService.createPipeline(userToken, userID, pipeline);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save pipeline';
@@ -299,7 +314,8 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
     }
   };
 
-  const selectedJob = pipeline.jobs.find((j) => j.name === selectedJobName);
+  const selectedJobData = selectedJobName ? pipeline.jobs[selectedJobName] : null;
+  const selectedJob: Job | null = selectedJobData ? { name: selectedJobName || '', ...selectedJobData } : null;
 
   if (isLoading) {
     return (
@@ -412,7 +428,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
         <div>
           <h3 className="text-sm font-semibold text-white">{pipeline.name}</h3>
           <p className="text-xs text-zinc-400">
-            {pipeline.jobs.length} job{pipeline.jobs.length !== 1 ? 's' : ''}
+            {Object.keys(pipeline.jobs).length} job{Object.keys(pipeline.jobs).length !== 1 ? 's' : ''}
           </p>
           {saveError && (
             <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
@@ -454,10 +470,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
 
       {/* YAML Preview Modal */}
       <YamlPreviewModal 
-        pipeline={{
-          ...pipeline,
-          jobs: jobsAsObject(pipeline.jobs),
-        }}
+        pipeline={pipeline}
         isOpen={showYamlPreview} 
         onClose={() => setShowYamlPreview(false)}
       />

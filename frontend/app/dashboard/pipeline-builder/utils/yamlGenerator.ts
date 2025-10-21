@@ -36,12 +36,14 @@ export function pipelineToYaml(workflow: Workflow): string {
     yaml.push('');
   }
 
-  // Jobs
+  // Jobs - iterate over object entries
   yaml.push('jobs:');
-  if (workflow.jobs.length > 0) {
-    workflow.jobs.forEach((job, idx) => {
-      yaml.push(generateJobYaml(job, 2));
-      if (idx < workflow.jobs.length - 1) {
+  const jobsEntries = Object.entries(workflow.jobs);
+  if (jobsEntries.length > 0) {
+    jobsEntries.forEach(([jobName, jobData], idx) => {
+      const jobWithName: Job = { name: jobName, ...jobData };
+      yaml.push(generateJobYaml(jobWithName, 2));
+      if (idx < jobsEntries.length - 1) {
         yaml.push('');
       }
     });
@@ -387,3 +389,4 @@ export function copyPipelineYamlToClipboard(workflow: Workflow): Promise<void> {
   const yaml = pipelineToYaml(workflow);
   return navigator.clipboard.writeText(yaml);
 }
+

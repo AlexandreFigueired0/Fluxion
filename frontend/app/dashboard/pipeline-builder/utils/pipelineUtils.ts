@@ -23,11 +23,10 @@ export function createCheckoutStep(): Step {
 }
 
 /**
- * Create a default job
+ * Create a default job (without name - name is key in jobs object)
  */
-export function createDefaultJob(name: string = 'Build'): Job {
+export function createDefaultJob(): Omit<Job, 'name'> {
   return {
-    name,
     'runs-on': 'ubuntu-latest',
     steps: [createCheckoutStep()],
   };
@@ -41,7 +40,9 @@ export function createDefaultPipeline(name: string = 'New Workflow'): Workflow {
     name,
     description: '',
     on: createDefaultTrigger(),
-    jobs: [createDefaultJob('Build')],
+    jobs: {
+      'build': createDefaultJob(),
+    },
   };
 }
 

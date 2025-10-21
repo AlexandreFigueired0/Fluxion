@@ -21,8 +21,8 @@ export interface Workflow {
   // Environment variables available to all jobs
   env?: Record<string, string>;
   
-  // Jobs - array format for easier component handling
-  jobs: Job[];
+  // Jobs - object format keyed by job name, values omit the name field
+  jobs: Record<string, Omit<Job, 'name'>>;
   
   // Concurrency settings at workflow level
   concurrency?: ConcurrencySettings;

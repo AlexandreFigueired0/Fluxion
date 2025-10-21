@@ -6,9 +6,11 @@ import {
   DashboardNav,
   LoadingState,
 } from '../../components';
-import { Workflow } from 'lucide-react';
+import { Workflow as WorkflowIcon } from 'lucide-react';
 import { PipelineBuilder } from '../components/PipelineBuilder';
 import { useSearchParams } from 'next/navigation';
+import { workflowFromJson, workflowFromString } from '../utils/pipelineParser';
+import type { Workflow as WorkflowType } from '../types';
 
 export default function NewPipelinePage() {
   const { loading, isLoading } = useDashboardData();
@@ -16,10 +18,15 @@ export default function NewPipelinePage() {
   const configParam = searchParams.get('config');
 
   // Parse the config if provided
-  let initialConfig = null;
+  let initialConfig: WorkflowType | undefined;
   if (configParam) {
     try {
-      initialConfig = JSON.parse(decodeURIComponent(configParam));
+      const decoded = decodeURIComponent(configParam);
+      try {
+        initialConfig = workflowFromJson(decoded);
+      } catch (jsonError) {
+        initialConfig = workflowFromString(decoded);
+      }
     } catch (e) {
       console.error('Failed to parse config parameter:', e);
     }
@@ -36,7 +43,7 @@ export default function NewPipelinePage() {
       <div className="max-w-[1800px] mx-auto px-8 py-8">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <Workflow className="text-orange-500" size={32} />
+            <WorkflowIcon className="text-orange-500" size={32} />
             <h1 className="text-4xl font-black">{initialConfig ? 'Import Workflow' : 'New Pipeline'}</h1>
           </div>
           <p className="text-zinc-400">
