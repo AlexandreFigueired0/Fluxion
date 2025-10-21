@@ -106,7 +106,10 @@ export default function GenerateNewPage() {
                   <h2 className="text-lg font-bold">Generated Workflow Config</h2>
                   <div className="flex gap-2">
                     <Link
-                      href={`/dashboard/pipeline-builder/new?config=${encodeURIComponent(result.pipeline_config || JSON.stringify(result))}`}
+                      href={{
+                        pathname: `/dashboard/pipeline-builder/new`,
+                        query: { config: JSON.stringify(result.pipeline_json) },
+                      }}
                       className="flex items-center gap-2 px-3 py-1 bg-orange-600 hover:bg-orange-700 border border-orange-600 rounded transition text-sm text-white"
                     >
                       Open in Editor

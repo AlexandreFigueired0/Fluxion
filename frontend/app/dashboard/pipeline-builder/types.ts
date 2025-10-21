@@ -34,6 +34,8 @@ export interface Workflow {
       'working-directory'?: string;
     };
   };
+
+  [key: string]: any; // Allow additional custom fields
 }
 
 // ============================================================================

@@ -1,3 +1,9 @@
+  // Helper to convert jobs array to object keyed by job name
+  const jobsAsObject = useCallback((jobs: Job[]) => {
+    return Object.fromEntries(
+      jobs.map(({ name, ...rest }) => [name, rest])
+    );
+  }, []);
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
@@ -44,10 +50,9 @@ interface PipelineBuilderFlowProps {
 
 function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlowProps) {
   const { data: session } = useSession();
-  
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [pipeline, setPipeline] = useState<Workflow>(initialWorkflow || createDefaultPipeline());
-  const [selectedJobName, setSelectedJobName] = useState<string | null>(pipeline.jobs[0]?.name || null);
+  const [selectedJobName, setSelectedJobName] = useState<string | null>("");
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
@@ -273,12 +278,17 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       const userToken = session.user.id;
       const userID = session.user.id;
 
+      // Transform jobs array to object before sending
+      const pipelineToSend = {
+        ...pipeline,
+        jobs: jobsAsObject(pipeline.jobs),
+      };
       if (pipelineId) {
         // Update existing pipeline
-        await pipelineService.updatePipeline(userToken, pipelineId, pipeline);
+        await pipelineService.updatePipeline(userToken, pipelineId, pipelineToSend);
       } else {
         // Create new pipeline
-        await pipelineService.createPipeline(userToken, userID, pipeline);
+        await pipelineService.createPipeline(userToken, userID, pipelineToSend);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save pipeline';
@@ -444,7 +454,10 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
 
       {/* YAML Preview Modal */}
       <YamlPreviewModal 
-        pipeline={pipeline} 
+        pipeline={{
+          ...pipeline,
+          jobs: jobsAsObject(pipeline.jobs),
+        }}
         isOpen={showYamlPreview} 
         onClose={() => setShowYamlPreview(false)}
       />
