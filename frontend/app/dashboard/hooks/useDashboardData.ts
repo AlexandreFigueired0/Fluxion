@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { getToken } from 'next-auth/jwt';
 
 interface UserData {
   credits: number;
@@ -34,7 +35,12 @@ export function useDashboardData() {
 
   const fetchUserData = async (userId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.user.accessToken}`,
+        },
+      });
       if (!response.ok) throw new Error('Failed to fetch user data');
       
       const data: UserData = await response.json();
