@@ -20,11 +20,14 @@ import (
 	supa "github.com/supabase-community/supabase-go"
 )
 
+const (
+	inputRate  = 1.25 // $1.25 per 1M tokens
+	outputRate = 10.0 // $10.00 per 1M tokens
+)
+
 type GenerateHandler struct {
 	DB *supa.Client
 }
-
-const generateCreditCost = 1
 
 func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	claims, exists := c.Get("user")
@@ -42,8 +45,8 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if user.Credits < generateCreditCost {
-		log.Printf("User %s attempted generate without enough credits", userID)
+	if user.Credits <= 0 {
+		log.Printf("User %s attempted generate without credits", userID)
 		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
 		return
 	}
@@ -55,14 +58,14 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 	log.Printf("Received generate request: user_id=%s, prompt=%q, context=%+v", userID, req.Prompt, req.ProjectContext)
-	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
+	result, cost, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
 	if err != nil {
 		log.Printf("Failed to generate pipeline config: %v", err)
 		c.JSON(500, gin.H{"error": "Failed to generate pipeline config: " + err.Error()})
 		return
 	}
 
-	if _, err := db.UpdateUserCredits(user.ID, user.Credits-generateCreditCost, h.DB); err != nil {
+	if _, err := db.UpdateUserCredits(user.ID, user.Credits-cost, h.DB); err != nil {
 		log.Printf("Failed to deduct credits for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
 		return
@@ -83,7 +86,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
+func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, float64, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),
@@ -123,7 +126,7 @@ Generate a workflow that is specifically tailored to this project type, uses the
 	resp, err := client.Chat.Completions.New(
 		context.Background(),
 		openai.ChatCompletionNewParams{
-			Model: openai.ChatModelGPT4o,
+			Model: "gpt-5-codex",
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(internal.GenerateSystemPrompt),
 				openai.UserMessage(userPrompt),
@@ -137,16 +140,28 @@ Generate a workflow that is specifically tailored to this project type, uses the
 	)
 
 	if err != nil {
-		return types.GenerateResult{}, fmt.Errorf("OpenAI API error: %w", err)
+		return types.GenerateResult{}, 0, fmt.Errorf("OpenAI API error: %w", err)
 	}
+
+	// Calculate the cost
+	usage := resp.Usage
+	inputTokens := usage.PromptTokens
+	outputTokens := usage.CompletionTokens
+	cost := EstimateCost(inputTokens, outputTokens,
+		inputRate, outputRate)
 
 	// Parse the response
 	var result types.GenerateResult
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return types.GenerateResult{}, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
+		return types.GenerateResult{}, 0, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
 			err, resp.Choices[0].Message.Content)
 	}
 
-	return result, nil
+	return result, cost, nil
 
+}
+
+func EstimateCost(inputTokens, outputTokens int64, inputRate, outputRate float64) float64 {
+	return (float64(inputTokens)/1000_000.0)*inputRate +
+		(float64(outputTokens)/1000_000.0)*outputRate
 }
