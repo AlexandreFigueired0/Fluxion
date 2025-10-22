@@ -8,6 +8,7 @@ import (
 	"fluxion-be/internal/utils"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 
@@ -126,7 +127,7 @@ Generate a workflow that is specifically tailored to this project type, uses the
 	resp, err := client.Chat.Completions.New(
 		context.Background(),
 		openai.ChatCompletionNewParams{
-			Model: "gpt-5-codex",
+			Model: "gpt-5",
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(internal.GenerateSystemPrompt),
 				openai.UserMessage(userPrompt),
@@ -162,6 +163,7 @@ Generate a workflow that is specifically tailored to this project type, uses the
 }
 
 func EstimateCost(inputTokens, outputTokens int64, inputRate, outputRate float64) float64 {
-	return (float64(inputTokens)/1000_000.0)*inputRate +
+	cost := (float64(inputTokens)/1000_000.0)*inputRate +
 		(float64(outputTokens)/1000_000.0)*outputRate
+	return math.Round(cost*100) / 100
 }
