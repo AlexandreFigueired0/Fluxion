@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -20,7 +19,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		log.Printf("Auth token: %s", tokenString)
 
 		// Verify and parse token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -29,8 +27,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 			return []byte(os.Getenv("NEXTAUTH_SECRET")), nil
 		})
-
-		log.Printf("Parsed token: %v, err: %v", token, err)
 
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})

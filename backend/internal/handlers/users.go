@@ -3,7 +3,6 @@ package handlers
 import (
 	db "fluxion-be/internal/db"
 	"fluxion-be/internal/dto"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,22 +16,20 @@ type UserHandler struct {
 
 // GetUserByID retrieves a user by their ID.
 func (h *UserHandler) GetUserByID(c *gin.Context) {
-	id := c.Param("id")
+	userId := c.Param("id")
 
-	// Auth user
 	claims, exists := c.Get("user")
-	log.Printf("User claims: %v", claims)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 	userClaims := claims.(jwt.MapClaims)
-	if userClaims["id"] != id {
+	if userClaims["id"] != userId {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot access other user's data"})
 		return
 	}
 
-	user, err := db.GetUserByID(id, h.DB)
+	user, err := db.GetUserByID(userId, h.DB)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return

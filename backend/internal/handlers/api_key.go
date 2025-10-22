@@ -9,6 +9,7 @@ import (
 	"fluxion-be/internal/dto"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	supa "github.com/supabase-community/supabase-go"
 )
 
@@ -26,8 +27,20 @@ type RevokeAPIKeyRequest struct {
 
 // GetAPIKeyByUserID retrieves the API key for a given user ID.
 func (h *APIKeyHandler) GetAPIKeyByUserID(c *gin.Context) {
-	userID := c.Param("id")
-	apiKey, err := db.GetAPIKeyByUserID(userID, h.DB)
+	userId := c.Param("id")
+
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userClaims := claims.(jwt.MapClaims)
+	if userClaims["id"] != userId {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot access other user's data"})
+		return
+	}
+
+	apiKey, err := db.GetAPIKeyByUserID(userId, h.DB)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "API key not found"})
 		return
@@ -45,15 +58,27 @@ func (h *APIKeyHandler) GetAPIKeyByUserID(c *gin.Context) {
 
 // CreateAPIKey creates a new API key for a given user ID.
 func (h *APIKeyHandler) CreateAPIKey(c *gin.Context) {
-	userID := c.Param("id")
+	userId := c.Param("id")
+
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userClaims := claims.(jwt.MapClaims)
+	if userClaims["id"] != userId {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot access other user's data"})
+		return
+	}
+
 	var req CreateAPIKeyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
-	apiKey, unhashedKey, err := db.CreateAPIKey(userID, req.Name, h.DB)
+	apiKey, unhashedKey, err := db.CreateAPIKey(userId, req.Name, h.DB)
 	if err != nil {
-		log.Printf("Error creating API key for user %s: %v", userID, err)
+		log.Printf("Error creating API key for user %s: %v", userId, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create API key"})
 		return
 	}
@@ -71,20 +96,32 @@ func (h *APIKeyHandler) CreateAPIKey(c *gin.Context) {
 
 // DeleteAPIKey revokes the API key for a given user ID.
 func (h *APIKeyHandler) DeleteAPIKey(c *gin.Context) {
-	userID := c.Param("id")
+	userId := c.Param("id")
+
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userClaims := claims.(jwt.MapClaims)
+	if userClaims["id"] != userId {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot access other user's data"})
+		return
+	}
+
 	var req RevokeAPIKeyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	err := db.RevokeAPIKey(userID, req.Name, h.DB)
+	err := db.RevokeAPIKey(userId, req.Name, h.DB)
 	if err != nil {
 		if errors.Is(err, db.ErrAPIKeyNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "API key not found"})
 			return
 		}
-		log.Printf("Error revoking API key for user %s: %v", userID, err)
+		log.Printf("Error revoking API key for user %s: %v", userId, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke API key"})
 		return
 	}

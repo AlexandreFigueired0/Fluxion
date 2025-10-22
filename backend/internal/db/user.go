@@ -75,3 +75,19 @@ func GetUserByID(id string, db *supa.Client) (*models.User, error) {
 	}
 	return &users[0], nil
 }
+
+// UpdateUserCredits sets a user's credit balance to the provided value.
+func UpdateUserCredits(id string, credits int, db *supa.Client) (*models.User, error) {
+	updatedFields := map[string]interface{}{
+		"credits":    credits,
+		"updated_at": time.Now(),
+	}
+
+	var user models.User
+	_, err := db.From("users").Update(updatedFields, "", "").Eq("id", id).Single().ExecuteTo(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

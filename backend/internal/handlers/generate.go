@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fluxion-be/internal"
+	db "fluxion-be/internal/db"
 	"fluxion-be/internal/utils"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	types "fluxion-shared/types"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	supa "github.com/supabase-community/supabase-go"
@@ -21,16 +24,29 @@ type GenerateHandler struct {
 	DB *supa.Client
 }
 
+const generateCreditCost = 1
+
 func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
-	// Read Authorization header
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
-		log.Printf("Missing or invalid Authorization header")
-		c.JSON(401, gin.H{"error": "Missing or invalid Authorization header"})
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	token := authHeader[7:]
-	// TODO: Validate token, check user credits, etc.
+	userClaims := claims.(jwt.MapClaims)
+	userID := fmt.Sprintf("%v", userClaims["id"])
+
+	user, err := db.GetUserByID(userID, h.DB)
+	if err != nil {
+		log.Printf("Failed to load user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load user"})
+		return
+	}
+
+	if user.Credits < generateCreditCost {
+		log.Printf("User %s attempted generate without enough credits", userID)
+		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
+		return
+	}
 
 	var req types.GenerateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -38,11 +54,17 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "Invalid request payload" + err.Error()})
 		return
 	}
-	log.Printf("Received generate request: user_token=%s, prompt=%q, context=%+v", token, req.Prompt, req.ProjectContext)
+	log.Printf("Received generate request: user_id=%s, prompt=%q, context=%+v", userID, req.Prompt, req.ProjectContext)
 	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
 	if err != nil {
 		log.Printf("Failed to generate pipeline config: %v", err)
 		c.JSON(500, gin.H{"error": "Failed to generate pipeline config: " + err.Error()})
+		return
+	}
+
+	if _, err := db.UpdateUserCredits(user.ID, user.Credits-generateCreditCost, h.DB); err != nil {
+		log.Printf("Failed to deduct credits for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
 		return
 	}
 
