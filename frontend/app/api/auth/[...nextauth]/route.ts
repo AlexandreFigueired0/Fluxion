@@ -81,6 +81,10 @@ const handler = NextAuth({
       if (user) {
         token.id = user.id
       }
+      if (account) {
+        // Copy the provider's access token if available
+        token.accessToken = account.access_token
+      }
       return token
     },
     async session({ session, token }) {
