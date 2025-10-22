@@ -23,7 +23,7 @@ export default function GenerateNewPage() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/generate`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/commands/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,8 +40,8 @@ export default function GenerateNewPage() {
       }
       const data = await res.json();
       setResult(data);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError((e as Error).message);
     } finally {
       setSubmitting(false);
     }

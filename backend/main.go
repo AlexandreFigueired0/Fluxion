@@ -33,12 +33,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create database connection: %v", err)
 	}
-	generateHandler := &handlers.GenerateHandler{DB: db_conn}
-	debugHandler := &handlers.DebugHandler{DB: db_conn}
-
-	commands := r.Group("/api")
-	commands.POST("/generate", generateHandler.GeneratePipelineConfig)
-	commands.POST("/debug", debugHandler.DebugPipelineConfig)
 
 	authHandler := &handlers.AuthHandler{DB: db_conn}
 	auth := r.Group("/api/auth")
@@ -46,10 +40,20 @@ func main() {
 	auth.POST("/login", authHandler.HandleLogin)   // Email/password login
 	auth.POST("/oauth", authHandler.HandleOAuth)   // Google/GitHub OAuth
 
+	// Protected routes
+	protected := r.Group("/api")
+	protected.Use(middleware.AuthMiddleware())
+
+	commands := protected.Group("/commands")
+	generateHandler := &handlers.GenerateHandler{DB: db_conn}
+	debugHandler := &handlers.DebugHandler{DB: db_conn}
+	commands.POST("/generate", generateHandler.GeneratePipelineConfig)
+	commands.POST("/debug", debugHandler.DebugPipelineConfig)
+
 	// User routes
 	userHandler := &handlers.UserHandler{DB: db_conn}
-	userRoutes := r.Group("/api/users")
-	userRoutes.Use(middleware.AuthMiddleware())
+	userRoutes := protected.Group("/users")
+	userRoutes.GET("/:id", userHandler.GetUserByID)
 
 	// API Key routes - must be defined before the catch-all :id route
 	apiKeyHandler := &handlers.APIKeyHandler{DB: db_conn}
@@ -57,12 +61,9 @@ func main() {
 	userRoutes.POST("/:id/apikey", apiKeyHandler.CreateAPIKey)
 	userRoutes.DELETE("/:id/apikey", apiKeyHandler.DeleteAPIKey)
 
-	// User by ID route
-	userRoutes.GET("/:id", userHandler.GetUserByID)
-
 	// Pipeline routes
 	pipelineHandler := &handlers.PipelineHandler{DB: db_conn}
-	pipelineRoutes := r.Group("/api/pipelines")
+	pipelineRoutes := protected.Group("/pipelines")
 	pipelineRoutes.GET("/user/:user_id", pipelineHandler.ListUserPipelines)
 	pipelineRoutes.POST("", pipelineHandler.CreatePipeline)
 	pipelineRoutes.GET("/:id", pipelineHandler.GetPipeline)
