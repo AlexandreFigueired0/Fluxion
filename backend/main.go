@@ -3,6 +3,7 @@ package main
 import (
 	"fluxion-be/internal/db"
 	"fluxion-be/internal/handlers"
+	"fluxion-be/internal/middleware"
 	"log"
 	"os"
 	"time"
@@ -48,6 +49,7 @@ func main() {
 	// User routes
 	userHandler := &handlers.UserHandler{DB: db_conn}
 	userRoutes := r.Group("/api/users")
+	userRoutes.Use(middleware.AuthMiddleware())
 
 	// API Key routes - must be defined before the catch-all :id route
 	apiKeyHandler := &handlers.APIKeyHandler{DB: db_conn}

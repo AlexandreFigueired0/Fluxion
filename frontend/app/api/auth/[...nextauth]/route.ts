@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
+import jwt from "jsonwebtoken";
 
 const handler = NextAuth({
   providers: [
@@ -81,18 +82,27 @@ const handler = NextAuth({
       if (user) {
         token.id = user.id
       }
-      if (account) {
-        // Copy the provider's access token if available
-        token.accessToken = account.access_token
-      }
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.accessToken = token.accessToken as string
-      }
-      return session
+      // Create a custom JWT token for the backend
+      const backendToken = jwt.sign(
+        {
+          id: token.id,
+          email: token.email,
+          name: token.name,
+        },
+        process.env.NEXTAUTH_SECRET!,
+        { algorithm: "HS256" }
+      );
+
+      // Add to session
+      session.user.id = token.id as string;
+      session.user.email = token.email as string;
+      session.user.name = token.name as string;
+      session.accessToken = backendToken;
+      
+      return session;
     }
   },
   pages: {

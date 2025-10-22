@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 import { Workflow, Job } from '../types';
 
-type WorkflowCandidate = Partial<Workflow> & Record<string, any>;
+type WorkflowCandidate = Partial<Workflow> & Record<string, unknown>;
 type WorkflowCandidateWithExtras = WorkflowCandidate & {
   config_yaml?: unknown;
   pipeline_json?: unknown;
@@ -171,7 +171,7 @@ function normalizeJobs(rawJobs: unknown): Record<string, Omit<Job, 'name'>> {
         return acc;
       }
 
-      const jobObject = jobEntry as Record<string, any>;
+      const jobObject = jobEntry as Record<string, unknown>;
       const jobName =
         typeof jobObject.name === 'string' && jobObject.name.trim()
           ? jobObject.name.trim()
@@ -184,14 +184,14 @@ function normalizeJobs(rawJobs: unknown): Record<string, Omit<Job, 'name'>> {
   }
 
   if (isPlainObject(rawJobs)) {
-    return Object.entries(rawJobs as Record<string, any>).reduce<
+    return Object.entries(rawJobs as Record<string, unknown>).reduce<
       Record<string, Omit<Job, 'name'>>
     >((acc, [jobName, jobValue]) => {
       if (!isPlainObject(jobValue)) {
         return acc;
       }
 
-      const { name: _ignored, ...jobData } = jobValue as Record<string, any>;
+      const { name: _ignored, ...jobData } = jobValue as Record<string, unknown>;
       acc[jobName] = normalizeJob(jobData);
       return acc;
     }, {});
@@ -200,7 +200,7 @@ function normalizeJobs(rawJobs: unknown): Record<string, Omit<Job, 'name'>> {
   return {};
 }
 
-function normalizeJob(jobData: Record<string, any>): Omit<Job, 'name'> {
+function normalizeJob(jobData: Record<string, unknown>): Omit<Job, 'name'> {
   const steps = Array.isArray(jobData.steps)
     ? jobData.steps.map((step) => (isPlainObject(step) ? { ...step } : step))
     : [];

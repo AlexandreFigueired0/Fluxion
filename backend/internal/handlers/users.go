@@ -3,6 +3,7 @@ package handlers
 import (
 	db "fluxion-be/internal/db"
 	"fluxion-be/internal/dto"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 
 	// Auth user
 	claims, exists := c.Get("user")
+	log.Printf("User claims: %v", claims)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
