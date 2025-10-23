@@ -4,6 +4,7 @@ import Hero from './components/sections/Hero';
 import TerminalDemo from './components/sections/TerminalDemo';
 import ProblemSolution from './components/sections/ProblemSolution';
 import Use from './components/sections/Use';
+import WorkflowTransition from './components/sections/WorkflowTransition';
 import CTA from './components/sections/CTA';
 
 export default function Home() {
@@ -19,12 +20,8 @@ export default function Home() {
         
         <Hero />
         
-        {/* Terminal Demo Section */}
-        <div className="max-w-7xl mx-auto px-8 pb-24">
-          <TerminalDemo />
-        </div>
-        
         <ProblemSolution />
+        <WorkflowTransition />
         <Use />
         <CTA />
         <Footer />

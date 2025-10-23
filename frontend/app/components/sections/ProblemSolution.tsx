@@ -2,17 +2,17 @@ import React from 'react'
 
 const ProblemSolution = () => {
   const problems = [
-    "Error messages that tell you nothing useful",
+    "Large unreadable YAML files",
     "Hours wasted debugging YAML indentation",
-    "Deprecated actions breaking your builds",
-    "Permission errors with no clear solution"
+    "Cryptic error messages with no guidance",
+    "Workflows that never complete successfully"
   ];
 
   const solutions = [
-    "Instant diagnosis of what went wrong",
-    "Exact code changes to fix it",
+    "Generates workflows that actually work",
     "Detects your language, framework, dependencies",
-    "Generates workflows that actually work"
+    "Easy workflow building with visual editor",
+    "Better communication of workflow behavior"
   ];
 
   return (
@@ -20,7 +20,7 @@ const ProblemSolution = () => {
       <div className="grid md:grid-cols-2 gap-12">
         <div className="space-y-6">
           <h3 className="text-sm font-bold text-orange-500 uppercase tracking-wider">The Problem</h3>
-          <h2 className="text-4xl font-black">GitHub Actions errors are cryptic as hell</h2>
+          <h2 className="text-4xl font-black">GitHub Actions YAML hell</h2>
           <div className="space-y-4 text-zinc-400">
             {problems.map((problem) => (
               <div key={problem} className="flex gap-3">
