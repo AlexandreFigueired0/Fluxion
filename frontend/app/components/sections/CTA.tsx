@@ -53,7 +53,7 @@ const CTA = () => {
                   <Sparkles size={18} className="text-orange-500" />
                   <span className="text-zinc-300 font-semibold">Free credits included</span>
                 </div>
-                <p className="text-sm text-zinc-500">Enough for dozens of workflows</p>
+                <p className="text-sm text-zinc-500">Enough for several of workflows</p>
               </div>
 
               <div className="space-y-2">
