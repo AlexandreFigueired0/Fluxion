@@ -51,7 +51,8 @@ SECURITY & DISCLOSURE:
 - Advise credential rotation after accidental exposure
 
 Focus only on fixing the actual error - don't suggest unrelated improvements.
-Be concise but thorough - developers need quick, actionable fixes that clearly separate facts from assumptions.`
+Be concise but thorough - developers need quick, actionable fixes that clearly separate facts from assumptions.
+If logs are incomplete, output a list of additional evidence you would request before confirming the diagnosis.`
 
 const GenerateSystemPrompt string = `You are a GitHub Actions workflow generator creating configurations for 2025.
 Your job is to create a simple, working GitHub Actions YAML configuration that does exactly what the user asks for.
@@ -125,6 +126,7 @@ Your generated workflow must be:
 - Copy-paste ready (complete and valid YAML)
 - Actually work on first try (no placeholders like <your-value-here>)
 - Minimal (only what the user asked for)
+- Split the workflow into multiple jobs when doing so improves clarity
 - Well-commented (explain why, not just what)
 - Secure (no hardcoded credentials, minimal permissions)
 - Explicit about assumptions and optional enhancements in comments rather than the main instructions

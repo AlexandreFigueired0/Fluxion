@@ -1,59 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
-import ApiKeyCard from '../components/ApiKeyCard';
 import {
   DashboardLayout,
   DashboardNav,
   LoadingState,
 } from '../components';
-import { Settings as SettingsIcon, Key, Bell, User, CreditCard } from 'lucide-react';
+import { Settings as SettingsIcon,  User, CreditCard } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { userName, email, credits, loading, isLoading, userId, apiKeyName, apiKeyPrefix, refetchApiKey } = useDashboardData();
-  const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isRevoking, setIsRevoking] = useState(false);
-
-  const handleRevokeApiKey = async (name: string) => {
-    if (!userId) return;
-    setIsRevoking(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error('Failed to revoke API key');
-      setJustCreatedKey(null);
-      await refetchApiKey();
-    } catch (err) {
-      console.error('Error revoking API key:', err);
-    } finally {
-      setIsRevoking(false);
-    }
-  };
-
-  const handleGenerateApiKey = async (name: string) => {
-    if (!userId) return;
-    setIsGenerating(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error('Failed to generate API key');
-      const data = await res.json();
-      setJustCreatedKey(data.key);
-      await refetchApiKey();
-    } catch (err) {
-      console.error('Error generating API key:', err);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const { userName, email, credits, loading, isLoading } = useDashboardData();
 
   if (loading || isLoading) {
     return <LoadingState />;
@@ -100,17 +56,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-
-          {/* API Keys */}
-          <ApiKeyCard
-            apiKeyName={apiKeyName}
-            apiKeyPrefix={apiKeyPrefix}
-            justCreatedKey={justCreatedKey}
-            isGenerating={isGenerating}
-            isRevoking={isRevoking}
-            onRevoke={handleRevokeApiKey}
-            onGenerate={handleGenerateApiKey}
-          />
 
           {/* Billing */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">

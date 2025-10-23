@@ -25,6 +25,11 @@ const (
 	outputRate = 10.0 // $10.00 per 1M tokens
 )
 
+const (
+	freePlanMultiplier = 2.0
+	paidPlanMultiplier = 1.5
+)
+
 type GenerateHandler struct {
 	DB *supa.Client
 }
@@ -162,6 +167,6 @@ Generate a workflow that is specifically tailored to this project type, uses the
 }
 
 func EstimateCost(inputTokens, outputTokens int64, inputRate, outputRate float64) float64 {
-	return (float64(inputTokens)/1000_000.0)*inputRate +
-		(float64(outputTokens)/1000_000.0)*outputRate
+	return ((float64(inputTokens)/1000_000.0)*inputRate +
+		(float64(outputTokens)/1000_000.0)*outputRate) * freePlanMultiplier
 }
