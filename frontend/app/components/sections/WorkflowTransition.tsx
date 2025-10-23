@@ -8,8 +8,7 @@ const WorkflowTransition = () => {
 
   const steps = [
     { id: 0, label: 'Generate YAML', icon: Sparkles, emoji: '⚡', description: 'Fluxion generates your initial workflow configuration' },
-    { id: 1, label: 'Visual Editor', icon: Workflow, emoji: '🎨', description: 'Open and edit visually with drag-and-drop blocks' },
-    { id: 2, label: 'Export YAML', icon: Code2, emoji: '✨', description: 'Get your enhanced, production-ready YAML' }
+    { id: 1, label: 'Visual Editor', icon: Workflow, emoji: '🎨', description: 'Edit visually with drag-and-drop blocks and export back to yaml when ready' }
   ];
 
   const sampleYaml = `name: CI Pipeline
@@ -31,34 +30,6 @@ jobs:
     { name: 'test', color: 'from-orange-500 to-orange-600', steps: 4 },
     { name: 'deploy', color: 'from-green-500 to-green-600', steps: 2 }
   ];
-
-  const generatedYaml = `name: Enhanced CI Pipeline
-on: 
-  push:
-    branches: [main]
-  pull_request:
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      - run: npm ci
-      - run: npm build
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      - run: npm ci
-      - run: npm test
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm run deploy`;
 
   return (
     <section className="max-w-7xl mx-auto px-6 py-24 border-t border-zinc-800/50">
@@ -183,9 +154,9 @@ jobs:
                 <span className="text-sm font-mono text-zinc-300">Pipeline Builder</span>
               </div>
               <div className="flex gap-2">
-                <button className="text-xs text-zinc-400 font-medium px-3 py-1.5 bg-zinc-800/50 hover:bg-zinc-800 rounded transition-colors flex items-center gap-1">
+                <button className="text-xs text-white font-medium px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 rounded transition-colors flex items-center gap-1.5 shadow-lg">
                   <Code2 size={14} />
-                  Export
+                  Export YAML
                 </button>
               </div>
             </div>
@@ -264,37 +235,6 @@ jobs:
             </div>
           </div>
         </div>
-
-        {/* Step 2: Export YAML */}
-        <div
-          className={`absolute inset-0 transition-all duration-500 ${
-            step === 2 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'
-          }`}
-        >
-          <div className="max-w-2xl mx-auto">
-            <div className="mb-8 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full mb-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm text-green-400 font-medium">Ready to Export</span>
-              </div>
-              <p className="text-zinc-400">Your enhanced workflow is ready to use in production</p>
-            </div>
-            <div className="bg-zinc-900/50 border border-green-500/20 rounded-xl overflow-hidden backdrop-blur-sm">
-              <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Code2 size={16} className="text-green-500" />
-                  <span className="text-sm font-mono text-zinc-300">enhanced-workflow.yml</span>
-                </div>
-                <button className="text-xs text-white font-medium px-3 py-1.5 bg-green-500 hover:bg-green-600 rounded transition-colors">
-                  Copy to Clipboard
-                </button>
-              </div>
-              <div className="p-6 font-mono text-sm text-green-400/90 leading-relaxed max-h-80 overflow-y-auto">
-                <pre className="whitespace-pre-wrap">{generatedYaml}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Step Description */}
@@ -320,15 +260,15 @@ jobs:
         </button>
 
         <button
-          onClick={() => setStep(Math.min(2, step + 1))}
-          disabled={step === 2}
+          onClick={() => setStep(Math.min(1, step + 1))}
+          disabled={step === 1}
           className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            step === 2 
+            step === 1 
               ? 'bg-zinc-800/30 text-zinc-600 cursor-not-allowed' 
               : 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20'
           }`}
         >
-          {step === 2 ? 'Complete' : 'Next →'}
+          {step === 1 ? 'Complete' : 'Next →'}
         </button>
       </div>
 
@@ -336,16 +276,16 @@ jobs:
       <div className="bg-gradient-to-r from-orange-500/5 to-orange-600/5 border border-orange-500/10 rounded-2xl p-8 backdrop-blur-sm">
         <div className="grid md:grid-cols-3 gap-8 text-center">
           <div className="space-y-2">
-            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">5x</div>
-            <div className="text-sm text-zinc-400 font-medium">Faster workflow editing</div>
+            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">3x</div>
+            <div className="text-sm text-zinc-400 font-medium">Faster workflow creation</div>
           </div>
           <div className="space-y-2">
-            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">Zero</div>
-            <div className="text-sm text-zinc-400 font-medium">Syntax errors guaranteed</div>
+            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">Visual</div>
+            <div className="text-sm text-zinc-400 font-medium">No YAML syntax needed</div>
           </div>
           <div className="space-y-2">
-            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">100%</div>
-            <div className="text-sm text-zinc-400 font-medium">Best practices applied</div>
+            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">AI</div>
+            <div className="text-sm text-zinc-400 font-medium">Powered generation</div>
           </div>
         </div>
       </div>
