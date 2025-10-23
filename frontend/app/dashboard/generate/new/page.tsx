@@ -99,7 +99,7 @@ export default function GenerateNewPage() {
               Use Template
             </Link> */}
           </div>
-          <p className="text-zinc-400 mt-4">For better results, consider using the CLI, which has an option to gather project context. <Link href="/docs/cli" className="text-orange-500 underline">See how</Link></p>
+          <p className="text-zinc-400 mt-4">For better results, consider adding project context. <Link href="/docs/cli" className="text-orange-500 underline">See how</Link></p>
           {result && (
             <div className="mt-8 flex flex-col gap-6">
               {/* Config Box */}
