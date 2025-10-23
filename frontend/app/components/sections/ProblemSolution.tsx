@@ -9,9 +9,9 @@ const ProblemSolution = () => {
   ];
 
   const solutions = [
-    "Generates workflows that actually work",
-    "Detects your language, framework, dependencies",
+    "Faster workflow generation",
     "Easy workflow building with visual editor",
+    "Detects your language, framework, dependencies",
     "Better communication of workflow behavior"
   ];
 

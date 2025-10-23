@@ -1,7 +1,6 @@
 import Nav  from './components/layout/Nav';
 import Footer from './components/layout/Footer';
 import Hero from './components/sections/Hero';
-import TerminalDemo from './components/sections/TerminalDemo';
 import ProblemSolution from './components/sections/ProblemSolution';
 import Use from './components/sections/Use';
 import WorkflowTransition from './components/sections/WorkflowTransition';

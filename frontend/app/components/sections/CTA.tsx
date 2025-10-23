@@ -6,29 +6,18 @@ import Button from '../ui/Button';
 
 const CTA = () => {
   return (
-    <div className="max-w-7xl mx-auto px-8 py-24 border-t border-zinc-800">
+    <div className="max-w-7xl mx-auto px-8 py-12 border-t border-zinc-800">
       <div className="relative">
-        {/* Background gradient effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-orange-600/5 to-orange-500/10 rounded-3xl blur-3xl" />
         
-        <div className="relative bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border border-zinc-800 rounded-2xl p-12 md:p-16 backdrop-blur-sm overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
-          
+        <div className="relative bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border border-zinc-800 p-12 md:p-16 backdrop-blur-sm overflow-hidden">
           <div className="relative z-10 max-w-4xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-full mb-6">
-              <Sparkles size={14} className="text-orange-500" />
-              <span className="text-sm text-orange-400 font-medium">Ready to ship faster?</span>
-            </div>
 
             {/* Headline */}
             <h2 className="text-4xl md:text-6xl font-black mb-6">
               <span className="bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
-                Stop fighting YAML.
+                Stop fighting YAML
                 <br />
-                Start shipping code.
+                Start deploying
               </span>
             </h2>
 
@@ -47,11 +36,6 @@ const CTA = () => {
                   <ArrowRight size={20} />
                 </Link>
               </Button>
-              
-              <button className="px-6 py-3 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-600 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2">
-                View Live Demo
-                <ArrowRight size={18} className="text-zinc-400" />
-              </button>
             </div>
 
             {/* Benefits grid */}
@@ -67,7 +51,7 @@ const CTA = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-center gap-2">
                   <Sparkles size={18} className="text-orange-500" />
-                  <span className="text-zinc-300 font-semibold">50 free credits included</span>
+                  <span className="text-zinc-300 font-semibold">Free credits included</span>
                 </div>
                 <p className="text-sm text-zinc-500">Enough for dozens of workflows</p>
               </div>
@@ -81,12 +65,6 @@ const CTA = () => {
               </div>
             </div>
 
-            {/* Social proof hint */}
-            <div className="mt-10 pt-8 border-t border-zinc-800/50">
-              <p className="text-sm text-zinc-500">
-                Trusted by developers at startups and enterprises worldwide
-              </p>
-            </div>
           </div>
         </div>
       </div>

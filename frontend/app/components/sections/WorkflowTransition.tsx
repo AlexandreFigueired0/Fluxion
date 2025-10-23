@@ -32,15 +32,11 @@ jobs:
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-24 border-t border-zinc-800/50">
+    <section className="max-w-7xl mx-auto px-6 py-12 border-t border-zinc-800/50">
       {/* Header */}
-      <div className="text-center mb-20">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-zinc-800/50 rounded-full mb-6 backdrop-blur-sm">
-          <Workflow size={16} className="text-orange-500" />
-          <span className="text-sm text-zinc-400 font-medium">Visual Pipeline Builder</span>
-        </div>
+      <div className="text-center mb-7">
         <h2 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-          Edit Workflows Visually
+          Generate & Edit Workflows Visually
         </h2>
         <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
           Transform YAML into intuitive visual blocks. Edit, rearrange, and export—all without touching code.
@@ -270,24 +266,6 @@ jobs:
         >
           {step === 1 ? 'Complete' : 'Next →'}
         </button>
-      </div>
-
-      {/* Stats */}
-      <div className="bg-gradient-to-r from-orange-500/5 to-orange-600/5 border border-orange-500/10 rounded-2xl p-8 backdrop-blur-sm">
-        <div className="grid md:grid-cols-3 gap-8 text-center">
-          <div className="space-y-2">
-            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">3x</div>
-            <div className="text-sm text-zinc-400 font-medium">Faster workflow creation</div>
-          </div>
-          <div className="space-y-2">
-            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">Visual</div>
-            <div className="text-sm text-zinc-400 font-medium">No YAML syntax needed</div>
-          </div>
-          <div className="space-y-2">
-            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">AI</div>
-            <div className="text-sm text-zinc-400 font-medium">Powered generation</div>
-          </div>
-        </div>
       </div>
 
       {/* CSS Animations */}
