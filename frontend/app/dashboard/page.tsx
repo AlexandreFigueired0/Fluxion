@@ -26,9 +26,9 @@ export default function DashboardPage() {
         <DashboardHeader userName={userName} />
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
           <CreditsCard credits={credits} />
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+          <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
                 <Zap className="text-blue-500" size={20} />
@@ -36,7 +36,7 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-zinc-100">Getting Started</h3>
-              <p className="text-sm text-zinc-400">Start building your first CI/CD pipeline with our visual pipeline builder.</p>
+              <p className="text-sm text-zinc-400">Start building your first CI/CD pipeline with our generate and visual pipeline builder features.</p>
             </div>
           </div>
         </div>
