@@ -30,13 +30,13 @@ export default function CreditsCard({ credits }: CreditsCardProps) {
           <div className="text-zinc-400 text-base font-medium">credits</div>
         </div>
         
-        {isLowCredits && credits > 0 && (
+        {isLowCredits && roundedCredits > 0 && (
           <div className="text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1">
             Running low
           </div>
         )}
         
-        {credits === 0 && (
+        {roundedCredits <= 0 && (
           <div className="mt-3 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded px-2 py-1">
             No credits remaining
           </div>

@@ -11,7 +11,6 @@ import ReactFlow, {
   useEdgesState,
   ReactFlowProvider,
   BackgroundVariant,
-  Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -25,7 +24,7 @@ import { TriggerEditor } from './TriggerEditor';
 import { JobConfigPanel } from './JobConfigPanel';
 import { YamlPreviewModal } from './YamlPreviewModal';
 import { CustomEdge } from './CustomEdge';
-import { Save, Download, Plus, Maximize2, Copy, Check, AlertCircle, Loader } from 'lucide-react';
+import { Save, Download, Plus, Maximize2, AlertCircle, Loader } from 'lucide-react';
 import pipelineService from '../services/pipelineService';
 import { useSession } from 'next-auth/react';
 import { parsePipelineFromBackend } from '../utils/pipelineParser';
@@ -214,7 +213,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       const renamed = oldJobName !== newJobName;
       
       // Build new jobs object
-      let newJobs: Record<string, Omit<Job, 'name'>> = {};
+      const newJobs: Record<string, Omit<Job, 'name'>> = {};
       
       Object.entries(prev.jobs).forEach(([jobName, jobData]) => {
         if (jobName === oldJobName) {

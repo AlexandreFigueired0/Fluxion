@@ -14,9 +14,8 @@ import {
 import { useSession } from 'next-auth/react';
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { credits, userName, loading, isLoading, userId, apiKeyName, apiKeyPrefix, refetchApiKey } = useDashboardData();
-  const [apiKey, setApiKey] = useState<string | null>(null);
   const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
@@ -85,18 +84,8 @@ export default function DashboardPage() {
         {/* Stats Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           <CreditsCard credits={credits} />
-          <ApiKeyCard 
-            apiKeyName={apiKeyName}
-            apiKeyPrefix={apiKeyPrefix}
-            justCreatedKey={justCreatedKey}
-            isGenerating={isGenerating}
-            isRevoking={isRevoking}
-            onRevoke={handleRevokeApiKey}
-            onGenerate={handleGenerateApiKey}
-          />
         </div>
 
-        <QuickStart apiKey={apiKeyPrefix} />
 
       </div>
     </DashboardLayout>
