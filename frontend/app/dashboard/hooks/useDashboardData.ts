@@ -16,8 +16,6 @@ export function useDashboardData() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
-  const [apiKeyName, setApiKeyName] = useState('');
-  const [apiKeyPrefix, setApiKeyPrefix] = useState('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -28,7 +26,6 @@ export function useDashboardData() {
     if (status === 'authenticated' && session?.user?.id) {
       setUserId(session.user.id);
       fetchUserData(session.user.id);
-      fetchApiKey(session.user.id);
     }
   }, [status, session, router]);
 
@@ -54,43 +51,13 @@ export function useDashboardData() {
     }
   };
 
-  const fetchApiKey = async (userId: string) => {
-    if (!userId) return;
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.accessToken}`,
-        },
-      });
-      if (response.status === 404 || response.status === 204) {
-        setApiKeyName('');
-        setApiKeyPrefix('');
-        return;
-      }
-
-      if (!response.ok) throw new Error('Failed to fetch API key: ' + response.statusText);
-
-      const data = await response.json();
-      setApiKeyName(data.name ?? '');
-      setApiKeyPrefix(data.key_prefix ?? '');
-    } catch (error) {
-      console.error('Error fetching API key:', error);
-      setApiKeyName('');
-      setApiKeyPrefix('');
-    }
-  }
-
   return {
     userId,
     email,
-    apiKeyName,
-    apiKeyPrefix,
     credits,
     userName,
     loading,
     isAuthenticated: status === 'authenticated',
     isLoading: status === 'loading',
-  refetchApiKey: () => fetchApiKey(userId),
   };
 }
