@@ -57,7 +57,12 @@ export function useDashboardData() {
   const fetchApiKey = async (userId: string) => {
     if (!userId) return;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}/apikey`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.accessToken}`,
+        },
+      });
       if (response.status === 404 || response.status === 204) {
         setApiKeyName('');
         setApiKeyPrefix('');

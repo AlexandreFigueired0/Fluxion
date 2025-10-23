@@ -7,6 +7,8 @@ interface CreditsCardProps {
 
 export default function CreditsCard({ credits }: CreditsCardProps) {
   const isLowCredits = credits < 10;
+  // credits rounded to 2 decimal places
+  const roundedCredits = Math.round(credits * 100) / 100;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
@@ -24,7 +26,7 @@ export default function CreditsCard({ credits }: CreditsCardProps) {
       
       <div className="flex flex-col items-center justify-center flex-1">
         <div className="flex items-baseline gap-2 mt-6">
-          <div className="text-5xl font-black">{credits}</div>
+          <div className="text-5xl font-black">{roundedCredits}</div>
           <div className="text-zinc-400 text-base font-medium">credits</div>
         </div>
         

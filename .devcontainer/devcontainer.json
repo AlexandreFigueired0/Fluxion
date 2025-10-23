@@ -14,7 +14,9 @@
 		"--name",
 		"fluxion-devcontainer",
 		"--network",
-		"fluxion_net"
+		"fluxion_net",
+		"-p",
+		"8080:8080"
 	],
 	"customizations": {
 		"vscode": {

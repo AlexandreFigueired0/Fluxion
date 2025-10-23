@@ -9,6 +9,7 @@ import {
 } from '../../components';
 import { Sparkles, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function GenerateNewPage() {
   const { loading, isLoading, userId, apiKeyName, apiKeyPrefix } = useDashboardData();
@@ -17,6 +18,7 @@ export default function GenerateNewPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { data: session, status } = useSession();
 
   const handleGenerate = async () => {
     setSubmitting(true);
@@ -27,7 +29,7 @@ export default function GenerateNewPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userId}`,
+          'Authorization': `Bearer ${session?.accessToken}`,
         },
         body: JSON.stringify({
           prompt: description,

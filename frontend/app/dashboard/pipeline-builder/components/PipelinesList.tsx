@@ -40,7 +40,7 @@ export function PipelinesList() {
       setIsLoading(true);
       setError(null);
 
-      const userToken = session.user.id;
+      const userToken = session.accessToken!;
       const userID = session.user.id;
 
       const response = await pipelineService.listPipelines(userToken, userID);
@@ -56,7 +56,7 @@ export function PipelinesList() {
 
   // Filter and sort pipelines
   const filteredAndSortedPipelines = useMemo(() => {
-    let filtered = pipelines.filter(
+    const filtered = pipelines.filter(
       (p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase())

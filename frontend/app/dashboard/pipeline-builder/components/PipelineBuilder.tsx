@@ -79,7 +79,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
         setIsLoading(true);
         setLoadError(null);
 
-        const userToken = session.user.id;
+        const userToken = session.accessToken!;
         const response = await pipelineService.getPipeline(userToken, pipelineId);
         const loadedPipeline = parsePipelineFromBackend(response);
 
@@ -295,7 +295,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       setIsSaving(true);
       setSaveError(null);
 
-      const userToken = session.user.id;
+      const userToken = session.accessToken!;
       const userID = session.user.id;
 
       if (pipelineId) {

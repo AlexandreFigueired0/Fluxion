@@ -11,8 +11,10 @@ import {
   QuickStart,
   LoadingState,
 } from './components';
+import { useSession } from 'next-auth/react';
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const { credits, userName, loading, isLoading, userId, apiKeyName, apiKeyPrefix, refetchApiKey } = useDashboardData();
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export default function DashboardPage() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.accessToken}`,
         },
         body: JSON.stringify({ name }),
       });
