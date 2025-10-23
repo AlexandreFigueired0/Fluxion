@@ -9,12 +9,6 @@ const Hero = () => {
     <div className="max-w-7xl mx-auto px-8 pt-16 pb-24 relative">
       
       <div className="max-w-4xl mx-auto text-center relative z-10">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-full mb-8 backdrop-blur-sm">
-          <Sparkles size={14} className="text-orange-500" />
-          <span className="text-sm text-orange-400 font-medium">AI-Powered CI/CD Automation</span>
-        </div>
-        
         {/* Main headline */}
         <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">
           <span className="bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent">
@@ -32,7 +26,7 @@ const Hero = () => {
         
         {/* Subheadline */}
         <p className="text-xl text-zinc-400 mb-8 leading-relaxed max-w-3xl mx-auto">
-          Generate production-ready workflows in minutes using AI. 
+          Generate production-ready workflows in minutes using our <span className="text-orange-400 font-semibold">AI-Powered CI/CD Automation</span> features. 
           Debug failures instantly with intelligent explanations. 
           Edit visually without touching YAML.
         </p>
