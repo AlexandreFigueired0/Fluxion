@@ -7,21 +7,24 @@ const WorkflowTransition = () => {
   const [step, setStep] = useState(0);
 
   const steps = [
-    { id: 0, label: 'YAML Input', icon: Code2, emoji: '📝', description: 'Import your existing YAML workflow' },
-    { id: 1, label: 'Parse', icon: Sparkles, emoji: '⚙️', description: 'Fluxion intelligently parses your configuration' },
-    { id: 2, label: 'Visual Edit', icon: Workflow, emoji: '🎨', description: 'Edit visually with drag-and-drop blocks' },
-    { id: 3, label: 'YAML Output', icon: Code2, emoji: '✨', description: 'Export enhanced YAML with best practices' }
+    { id: 0, label: 'Generate YAML', icon: Sparkles, emoji: '⚡', description: 'Fluxion generates your initial workflow configuration' },
+    { id: 1, label: 'Visual Editor', icon: Workflow, emoji: '🎨', description: 'Open and edit visually with drag-and-drop blocks' },
+    { id: 2, label: 'Export YAML', icon: Code2, emoji: '✨', description: 'Get your enhanced, production-ready YAML' }
   ];
 
   const sampleYaml = `name: CI Pipeline
-on: [push, pull_request]
+on: 
+  push:
+    branches: [main]
+  pull_request:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run tests
-        run: npm test`;
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm build`;
 
   const jobs = [
     { name: 'build', color: 'from-blue-500 to-blue-600', steps: 3 },
@@ -107,116 +110,184 @@ jobs:
 
       {/* Main Content Area */}
       <div className="relative min-h-[400px] mb-12">
-        {/* Step 0: YAML Input */}
+        {/* Step 0: Generate YAML */}
         <div
           className={`absolute inset-0 transition-all duration-500 ${
             step === 0 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'
           }`}
         >
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden backdrop-blur-sm">
-              <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Code2 size={16} className="text-orange-500" />
-                  <span className="text-sm font-mono text-zinc-300">workflow.yml</span>
+          <div className="grid md:grid-cols-2 gap-6 items-center h-full">
+            {/* User Prompt Input */}
+            <div className="space-y-4">
+              <div className="text-sm text-zinc-400 font-medium mb-3">User Input</div>
+              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden backdrop-blur-sm">
+                <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center gap-2">
+                  <Sparkles size={16} className="text-orange-500" />
+                  <span className="text-sm font-mono text-zinc-300">Generate Workflow</span>
                 </div>
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="text-xs text-zinc-400 mb-2 block">Describe your workflow</label>
+                    <div className="bg-zinc-950/50 rounded-lg p-4 border border-zinc-800/50 min-h-[120px]">
+                      <p className="text-zinc-300 text-sm leading-relaxed">
+                        &ldquo;Create a CI/CD pipeline for my Node.js app. 
+                        Build, run tests, and deploy to production on main branch.&rdquo;
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="p-6 font-mono text-sm text-zinc-300 leading-relaxed">
-                <pre className="whitespace-pre-wrap">{sampleYaml}</pre>
+            </div>
+
+            {/* Arrow/Flow Indicator */}
+            <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2 shadow-xl">
+                <Sparkles size={16} className="text-orange-500 animate-pulse" />
+                <ArrowRight size={20} className="text-orange-500" />
+              </div>
+            </div>
+
+            {/* Generated YAML Output */}
+            <div className="space-y-4">
+              <div className="text-sm text-zinc-400 font-medium mb-3">Generated Output</div>
+              <div className="bg-zinc-900/50 border border-orange-500/20 rounded-xl overflow-hidden backdrop-blur-sm">
+                <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Code2 size={16} className="text-orange-500" />
+                    <span className="text-sm font-mono text-zinc-300">workflow.yml</span>
+                  </div>
+                  <span className="text-xs text-orange-500 font-medium px-2 py-1 bg-orange-500/10 rounded flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                    Generated
+                  </span>
+                </div>
+                <div className="p-4 font-mono text-xs text-zinc-300 leading-relaxed max-h-64 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap">{sampleYaml}</pre>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Step 1: Parsing Animation */}
+        {/* Step 1: Visual Editor */}
         <div
           className={`absolute inset-0 transition-all duration-500 ${
             step === 1 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'
           }`}
         >
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="relative">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center animate-pulse">
-                  <Sparkles size={40} className="text-white" />
-                </div>
-                <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-orange-500/20 animate-ping" />
+          <div className="h-full flex flex-col">
+            {/* Pipeline Builder Header */}
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-t-xl px-4 py-3 flex items-center justify-between backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <Workflow size={16} className="text-orange-500" />
+                <span className="text-sm font-mono text-zinc-300">Pipeline Builder</span>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Analyzing Structure</h3>
-              <p className="text-zinc-400">Parsing jobs, steps, and dependencies...</p>
+              <div className="flex gap-2">
+                <button className="text-xs text-zinc-400 font-medium px-3 py-1.5 bg-zinc-800/50 hover:bg-zinc-800 rounded transition-colors flex items-center gap-1">
+                  <Code2 size={14} />
+                  Export
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Step 2: Visual Builder */}
-        <div
-          className={`absolute inset-0 transition-all duration-500 ${
-            step === 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
-          }`}
-        >
-          <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl overflow-hidden backdrop-blur-sm">
-            <div className="bg-zinc-800/30 px-4 py-3 border-b border-zinc-700/50 flex items-center gap-2">
-              <Workflow size={16} className="text-orange-500" />
-              <span className="text-sm font-mono text-zinc-300">Visual Builder</span>
-            </div>
-            <div className="p-12 min-h-[320px] bg-gradient-to-br from-zinc-950/50 to-zinc-900/50 flex flex-col justify-center items-center">
-              {/* Job Nodes */}
-              <div className="flex gap-6 justify-center items-center flex-wrap mb-8">
-                {jobs.map((job, index) => (
-                  <React.Fragment key={job.name}>
-                    <div
-                      className={`group bg-gradient-to-br ${job.color} rounded-xl px-8 py-6 text-white font-semibold shadow-xl transform transition-all duration-300 hover:scale-105 cursor-move border border-white/10`}
-                      style={{
-                        animation: step === 2 ? `fadeInUp 0.5s ease-out ${index * 0.15}s both` : 'none'
-                      }}
-                    >
-                      <div className="text-base font-bold mb-1">{job.name.charAt(0).toUpperCase() + job.name.slice(1)}</div>
-                      <div className="text-xs opacity-75">{job.steps} steps</div>
-                    </div>
-                    {index < jobs.length - 1 && (
-                      <ArrowRight 
-                        size={24} 
-                        className="text-zinc-600 transition-all duration-300" 
+            {/* Canvas Area */}
+            <div className="flex-1 bg-zinc-950/80 border-x border-b border-zinc-800/50 rounded-b-xl backdrop-blur-sm relative overflow-hidden">
+              {/* Dot Grid Background */}
+              <div 
+                className="absolute inset-0" 
+                style={{
+                  backgroundImage: 'radial-gradient(circle, #52525b 1px, transparent 1px)',
+                  backgroundSize: '20px 20px',
+                  opacity: 0.3
+                }}
+              />
+
+              {/* Job Nodes Container */}
+              <div className="relative h-full flex items-center justify-center p-8">
+                <div className="flex gap-8 items-center">
+                  {jobs.map((job, index) => (
+                    <React.Fragment key={job.name}>
+                      {/* Job Card - Styled like actual PipelineBuilder */}
+                      <div
+                        className="bg-zinc-700 border-2 border-zinc-600 rounded-lg px-5 py-4 min-w-[240px] shadow-xl transform transition-all duration-300 hover:scale-105 cursor-pointer relative"
                         style={{
-                          animation: step === 2 ? `fadeIn 0.4s ease-out ${0.5 + index * 0.15}s both` : 'none'
+                          animation: step === 1 ? `fadeInUp 0.5s ease-out ${index * 0.15}s both` : 'none'
                         }}
-                      />
-                    )}
-                  </React.Fragment>
-                ))}
+                      >
+                        {/* Connection Handles */}
+                        {index > 0 && (
+                          <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-zinc-900 rounded-full" />
+                        )}
+                        {index < jobs.length - 1 && (
+                          <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-zinc-900 rounded-full" />
+                        )}
+
+                        {/* Job Header */}
+                        <h3 className="text-white font-bold text-base mb-1">
+                          {job.name.charAt(0).toUpperCase() + job.name.slice(1)}
+                        </h3>
+                        <p className="text-white/70 text-sm mb-3">ubuntu-latest</p>
+
+                        {/* Steps Preview */}
+                        <div className="bg-white/10 rounded px-3 py-2">
+                          <p className="text-white/80 text-sm font-semibold">
+                            {job.steps} step{job.steps !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Connection Line */}
+                      {index < jobs.length - 1 && (
+                        <div 
+                          className="flex items-center"
+                          style={{
+                            animation: step === 1 ? `fadeIn 0.4s ease-out ${0.5 + index * 0.15}s both` : 'none'
+                          }}
+                        >
+                          <div className="w-12 h-0.5 bg-zinc-600" />
+                          <ArrowRight size={16} className="text-zinc-600 -ml-2" />
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
 
-              {/* Interactive Hint */}
-              <div className="text-center text-sm text-zinc-500 space-y-1">
-                <div className="flex items-center justify-center gap-4 flex-wrap">
-                  <span>🖱️ Drag to reorder</span>
+              {/* Floating Hint */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 border border-zinc-800 rounded-lg px-4 py-2 backdrop-blur-sm">
+                <div className="flex items-center gap-4 text-xs text-zinc-400">
+                  <span>🖱️ Drag & drop</span>
                   <span>✏️ Click to edit</span>
-                  <span>🗑️ Delete to remove</span>
+                  <span>➕ Add jobs</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Step 3: YAML Output */}
+        {/* Step 2: Export YAML */}
         <div
           className={`absolute inset-0 transition-all duration-500 ${
-            step === 3 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'
+            step === 2 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'
           }`}
         >
           <div className="max-w-2xl mx-auto">
+            <div className="mb-8 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full mb-4">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-sm text-green-400 font-medium">Ready to Export</span>
+              </div>
+              <p className="text-zinc-400">Your enhanced workflow is ready to use in production</p>
+            </div>
             <div className="bg-zinc-900/50 border border-green-500/20 rounded-xl overflow-hidden backdrop-blur-sm">
               <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Code2 size={16} className="text-green-500" />
                   <span className="text-sm font-mono text-zinc-300">enhanced-workflow.yml</span>
                 </div>
-                <span className="text-xs text-green-500 font-medium px-2 py-1 bg-green-500/10 rounded">Ready to export</span>
+                <button className="text-xs text-white font-medium px-3 py-1.5 bg-green-500 hover:bg-green-600 rounded transition-colors">
+                  Copy to Clipboard
+                </button>
               </div>
               <div className="p-6 font-mono text-sm text-green-400/90 leading-relaxed max-h-80 overflow-y-auto">
                 <pre className="whitespace-pre-wrap">{generatedYaml}</pre>
@@ -249,15 +320,15 @@ jobs:
         </button>
 
         <button
-          onClick={() => setStep(Math.min(3, step + 1))}
-          disabled={step === 3}
+          onClick={() => setStep(Math.min(2, step + 1))}
+          disabled={step === 2}
           className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            step === 3 
+            step === 2 
               ? 'bg-zinc-800/30 text-zinc-600 cursor-not-allowed' 
               : 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20'
           }`}
         >
-          {step === 3 ? 'Complete' : 'Next →'}
+          {step === 2 ? 'Complete' : 'Next →'}
         </button>
       </div>
 
