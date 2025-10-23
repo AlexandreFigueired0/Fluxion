@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, Workflow, Code2, Play } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, Workflow, Code2, Sparkles } from 'lucide-react';
 
 const WorkflowTransition = () => {
   const [step, setStep] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(true);
 
-  // Sample YAML for demonstration
+  const steps = [
+    { id: 0, label: 'YAML Input', icon: Code2, emoji: '📝', description: 'Import your existing YAML workflow' },
+    { id: 1, label: 'Parse', icon: Sparkles, emoji: '⚙️', description: 'Fluxion intelligently parses your configuration' },
+    { id: 2, label: 'Visual Edit', icon: Workflow, emoji: '🎨', description: 'Edit visually with drag-and-drop blocks' },
+    { id: 3, label: 'YAML Output', icon: Code2, emoji: '✨', description: 'Export enhanced YAML with best practices' }
+  ];
+
   const sampleYaml = `name: CI Pipeline
 on: [push, pull_request]
 jobs:
@@ -52,207 +57,251 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm run deploy`;
 
-  useEffect(() => {
-    if (!isAnimating) return;
-    const timer = setTimeout(() => {
-      setStep((prev) => (prev + 1) % 4);
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [step, isAnimating]);
-
   return (
-    <div className="max-w-7xl mx-auto px-8 py-24 border-t border-zinc-800">
-      <div className="text-center mb-16">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-full mb-6">
+    <section className="max-w-7xl mx-auto px-6 py-24 border-t border-zinc-800/50">
+      {/* Header */}
+      <div className="text-center mb-20">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900/50 border border-zinc-800/50 rounded-full mb-6 backdrop-blur-sm">
           <Workflow size={16} className="text-orange-500" />
-          <span className="text-sm text-zinc-400">New Feature</span>
+          <span className="text-sm text-zinc-400 font-medium">Visual Pipeline Builder</span>
         </div>
-        <h2 className="text-4xl font-black mb-4">Visual Workflow Builder</h2>
-        <p className="text-zinc-400 text-lg">From YAML to visual blocks and back—edit with confidence</p>
+        <h2 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+          Edit Workflows Visually
+        </h2>
+        <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+          Transform YAML into intuitive visual blocks. Edit, rearrange, and export—all without touching code.
+        </p>
       </div>
 
-      {/* Interactive Demo Container */}
-      <div className="relative">
-        {/* Step Indicators */}
-        <div className="flex justify-between items-center mb-8">
-          {['YAML Input', 'Parse', 'Visual Edit', 'YAML Output'].map((label, index) => (
-            <div key={label} className="flex items-center flex-1">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-500 ${
-                  step >= index
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-zinc-800 text-zinc-500'
+      {/* Step Progress */}
+      <div className="flex justify-between items-center mb-12 max-w-3xl mx-auto">
+        {steps.map((s, index) => (
+          <React.Fragment key={s.id}>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => setStep(s.id)}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold transition-all duration-300 ${
+                  step >= s.id
+                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110'
+                    : 'bg-zinc-800/50 text-zinc-500 hover:bg-zinc-800'
                 }`}
               >
                 {index + 1}
-              </div>
-              <div
-                className={`flex-1 h-1 mx-2 transition-all duration-500 ${
-                  step > index ? 'bg-orange-500' : 'bg-zinc-800'
-                }`}
-              />
+              </button>
+              <span className={`text-xs font-medium transition-colors hidden sm:block ${
+                step >= s.id ? 'text-orange-500' : 'text-zinc-600'
+              }`}>
+                {s.label}
+              </span>
             </div>
-          ))}
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-              step >= 3 ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-500'
-            }`}
-          >
-            4
+            {index < steps.length - 1 && (
+              <div className="flex-1 h-0.5 mx-3 transition-all duration-500">
+                <div className={`h-full transition-all duration-500 ${
+                  step > s.id ? 'bg-orange-500' : 'bg-zinc-800/50'
+                }`} />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Main Content Area */}
+      <div className="relative min-h-[400px] mb-12">
+        {/* Step 0: YAML Input */}
+        <div
+          className={`absolute inset-0 transition-all duration-500 ${
+            step === 0 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'
+          }`}
+        >
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden backdrop-blur-sm">
+              <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Code2 size={16} className="text-orange-500" />
+                  <span className="text-sm font-mono text-zinc-300">workflow.yml</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                </div>
+              </div>
+              <div className="p-6 font-mono text-sm text-zinc-300 leading-relaxed">
+                <pre className="whitespace-pre-wrap">{sampleYaml}</pre>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Main Demo Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-          {/* YAML Input Panel */}
-          <div
-            className={`transition-all duration-500 ${
-              step === 0 ? 'lg:col-span-2 opacity-100 scale-100' : 'lg:col-span-1 opacity-60 scale-95'
-            }`}
-          >
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-              <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center gap-2">
-                <Code2 size={16} className="text-orange-500" />
-                <span className="text-sm font-mono text-zinc-300">workflow.yml</span>
+        {/* Step 1: Parsing Animation */}
+        <div
+          className={`absolute inset-0 transition-all duration-500 ${
+            step === 1 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'
+          }`}
+        >
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="relative">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center animate-pulse">
+                  <Sparkles size={40} className="text-white" />
+                </div>
+                <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-orange-500/20 animate-ping" />
               </div>
-              <div className="p-4 font-mono text-xs text-zinc-300 max-h-64 overflow-y-auto">
-                <pre>{sampleYaml}</pre>
-              </div>
+              <h3 className="text-2xl font-bold mb-2">Analyzing Structure</h3>
+              <p className="text-zinc-400">Parsing jobs, steps, and dependencies...</p>
             </div>
           </div>
+        </div>
 
-          {/* Parsing Animation */}
-          {step >= 1 && (
-            <div className="hidden lg:flex items-center justify-center opacity-100 animate-pulse">
-              <div className="text-center">
-                <Play size={24} className="text-orange-500 mx-auto mb-2 animate-bounce" />
-                <span className="text-xs text-zinc-400">Parsing...</span>
-              </div>
+        {/* Step 2: Visual Builder */}
+        <div
+          className={`absolute inset-0 transition-all duration-500 ${
+            step === 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
+          }`}
+        >
+          <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl overflow-hidden backdrop-blur-sm">
+            <div className="bg-zinc-800/30 px-4 py-3 border-b border-zinc-700/50 flex items-center gap-2">
+              <Workflow size={16} className="text-orange-500" />
+              <span className="text-sm font-mono text-zinc-300">Visual Builder</span>
             </div>
-          )}
-
-          {/* Visual Block Editor */}
-          <div
-            className={`lg:col-span-2 transition-all duration-500 ${
-              step >= 2 ? 'opacity-100 scale-100' : 'opacity-0 scale-95 hidden'
-            }`}
-          >
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-              <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center gap-2">
-                <Workflow size={16} className="text-orange-500" />
-                <span className="text-sm font-mono text-zinc-300">Visual Builder</span>
-              </div>
-              <div className="p-8 h-64 bg-gradient-to-br from-zinc-950 to-zinc-900 flex flex-col justify-center items-center gap-8">
-                {/* Job Nodes */}
-                <div className="flex gap-4 justify-center w-full flex-wrap items-center">
-                  {jobs.map((job, index) => (
-                    <React.Fragment key={job.name}>
-                      <div
-                        className={`bg-gradient-to-br ${job.color} rounded-lg px-8 py-5 text-white font-semibold text-sm shadow-lg transform transition-all duration-300 hover:scale-110 cursor-grab active:cursor-grabbing border border-opacity-50 ${
-                          step === 2 ? 'animate-slideIn' : ''
-                        }`}
-                        style={{ 
-                          animationDelay: `${index * 200}ms`,
-                          boxShadow: step === 2 ? `0 0 20px rgba(255, 107, 53, 0.3)` : 'none'
+            <div className="p-12 min-h-[320px] bg-gradient-to-br from-zinc-950/50 to-zinc-900/50 flex flex-col justify-center items-center">
+              {/* Job Nodes */}
+              <div className="flex gap-6 justify-center items-center flex-wrap mb-8">
+                {jobs.map((job, index) => (
+                  <React.Fragment key={job.name}>
+                    <div
+                      className={`group bg-gradient-to-br ${job.color} rounded-xl px-8 py-6 text-white font-semibold shadow-xl transform transition-all duration-300 hover:scale-105 cursor-move border border-white/10`}
+                      style={{
+                        animation: step === 2 ? `fadeInUp 0.5s ease-out ${index * 0.15}s both` : 'none'
+                      }}
+                    >
+                      <div className="text-base font-bold mb-1">{job.name.charAt(0).toUpperCase() + job.name.slice(1)}</div>
+                      <div className="text-xs opacity-75">{job.steps} steps</div>
+                    </div>
+                    {index < jobs.length - 1 && (
+                      <ArrowRight 
+                        size={24} 
+                        className="text-zinc-600 transition-all duration-300" 
+                        style={{
+                          animation: step === 2 ? `fadeIn 0.4s ease-out ${0.5 + index * 0.15}s both` : 'none'
                         }}
-                      >
-                        <div className="mb-2 font-bold">{job.name.charAt(0).toUpperCase() + job.name.slice(1)}</div>
-                        <div className="text-xs opacity-80">{job.steps} steps</div>
-                      </div>
-                      {index < jobs.length - 1 && (
-                        <div className={`flex items-center text-zinc-600 transition-all duration-300 ${
-                          step === 2 ? 'opacity-100 animate-flowRight' : 'opacity-0'
-                        }`} style={{ animationDelay: `${400 + index * 200}ms` }}>
-                          <ChevronRight size={28} className="font-bold" />
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-
-                {/* Drag Hint */}
-                <div className="text-center text-xs text-zinc-500 mt-4 animate-pulse">
-                  ✨ Drag to reorder • Click to edit • Delete to remove
-                </div>
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
-            </div>
-          </div>
 
-          {/* YAML Output Panel */}
-          <div
-            className={`transition-all duration-500 ${
-              step >= 3 ? 'lg:col-span-2 opacity-100 scale-100' : 'lg:col-span-1 opacity-0 scale-95 hidden'
-            }`}
-          >
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-              <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center gap-2">
-                <Code2 size={16} className="text-green-500" />
-                <span className="text-sm font-mono text-zinc-300">Enhanced Workflow</span>
-              </div>
-              <div className="p-4 font-mono text-xs text-zinc-300 max-h-64 overflow-y-auto">
-                <pre className="text-green-400">{generatedYaml}</pre>
+              {/* Interactive Hint */}
+              <div className="text-center text-sm text-zinc-500 space-y-1">
+                <div className="flex items-center justify-center gap-4 flex-wrap">
+                  <span>🖱️ Drag to reorder</span>
+                  <span>✏️ Click to edit</span>
+                  <span>🗑️ Delete to remove</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Control Buttons */}
-        <div className="flex justify-center gap-4 items-center">
-          <button
-            onClick={() => {
-              setStep(Math.max(0, step - 1));
-              setIsAnimating(false);
-            }}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-sm transition"
-          >
-            ← Previous
-          </button>
-
-          <button
-            onClick={() => setIsAnimating(!isAnimating)}
-            className="px-6 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg text-sm text-white font-semibold transition"
-          >
-            {isAnimating ? '⏸ Pause' : '▶ Play'}
-          </button>
-
-          <button
-            onClick={() => {
-              setStep(Math.min(3, step + 1));
-              setIsAnimating(false);
-            }}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-sm transition"
-          >
-            Next →
-          </button>
-        </div>
-
-        {/* Step Description */}
-        <div className="mt-8 text-center text-sm text-zinc-400">
-          {step === 0 && '📝 Import your existing YAML workflow'}
-          {step === 1 && '⚙️ Fluxion intelligently parses your configuration'}
-          {step === 2 && '🎨 Edit visually with drag-and-drop blocks'}
-          {step === 3 && '✨ Export enhanced YAML with best practices'}
+        {/* Step 3: YAML Output */}
+        <div
+          className={`absolute inset-0 transition-all duration-500 ${
+            step === 3 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'
+          }`}
+        >
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-zinc-900/50 border border-green-500/20 rounded-xl overflow-hidden backdrop-blur-sm">
+              <div className="bg-zinc-800/50 px-4 py-3 border-b border-zinc-700/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Code2 size={16} className="text-green-500" />
+                  <span className="text-sm font-mono text-zinc-300">enhanced-workflow.yml</span>
+                </div>
+                <span className="text-xs text-green-500 font-medium px-2 py-1 bg-green-500/10 rounded">Ready to export</span>
+              </div>
+              <div className="p-6 font-mono text-sm text-green-400/90 leading-relaxed max-h-80 overflow-y-auto">
+                <pre className="whitespace-pre-wrap">{generatedYaml}</pre>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Benefit Callout */}
-      <div className="mt-16 bg-gradient-to-r from-orange-950/20 to-orange-950/10 border border-orange-900/30 rounded-lg p-8">
+      {/* Step Description */}
+      <div className="text-center mb-12">
+        <p className="text-base text-zinc-400 font-medium">
+          <span className="text-2xl mr-2">{steps[step].emoji}</span>
+          {steps[step].description}
+        </p>
+      </div>
+
+      {/* Navigation Controls */}
+      <div className="flex justify-center gap-3 mb-16">
+        <button
+          onClick={() => setStep(Math.max(0, step - 1))}
+          disabled={step === 0}
+          className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            step === 0 
+              ? 'bg-zinc-800/30 text-zinc-600 cursor-not-allowed' 
+              : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700'
+          }`}
+        >
+          ← Previous
+        </button>
+
+        <button
+          onClick={() => setStep(Math.min(3, step + 1))}
+          disabled={step === 3}
+          className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            step === 3 
+              ? 'bg-zinc-800/30 text-zinc-600 cursor-not-allowed' 
+              : 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20'
+          }`}
+        >
+          {step === 3 ? 'Complete' : 'Next →'}
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="bg-gradient-to-r from-orange-500/5 to-orange-600/5 border border-orange-500/10 rounded-2xl p-8 backdrop-blur-sm">
         <div className="grid md:grid-cols-3 gap-8 text-center">
-          <div>
-            <div className="text-3xl font-black text-orange-500 mb-2">5x</div>
-            <div className="text-sm text-zinc-400">Faster workflow editing</div>
+          <div className="space-y-2">
+            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">5x</div>
+            <div className="text-sm text-zinc-400 font-medium">Faster workflow editing</div>
           </div>
-          <div>
-            <div className="text-3xl font-black text-orange-500 mb-2">0%</div>
-            <div className="text-sm text-zinc-400">Syntax errors after export</div>
+          <div className="space-y-2">
+            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">Zero</div>
+            <div className="text-sm text-zinc-400 font-medium">Syntax errors guaranteed</div>
           </div>
-          <div>
-            <div className="text-3xl font-black text-orange-500 mb-2">100%</div>
-            <div className="text-sm text-zinc-400">Best practices applied</div>
+          <div className="space-y-2">
+            <div className="text-4xl font-black bg-gradient-to-br from-orange-400 to-orange-600 bg-clip-text text-transparent">100%</div>
+            <div className="text-sm text-zinc-400 font-medium">Best practices applied</div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </section>
   );
 };
 
