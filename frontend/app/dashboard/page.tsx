@@ -8,7 +8,7 @@ import {
   CreditsCard,
   LoadingState,
 } from './components';
-import { Workflow, Zap, BookOpen, ArrowRight } from 'lucide-react';
+import { Workflow, Zap, ArrowRight, Sparkles, Bug } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -59,45 +59,41 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        {/* Features Grid */}
+        {/* AI Features Section */}
         <div className="mb-12">
-          <h3 className="text-xl font-bold mb-6 text-zinc-100">Features</h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Visual Builder */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition">
-              <div className="w-10 h-10 bg-orange-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Workflow className="text-orange-500" size={20} />
+          <h3 className="text-xl font-bold mb-6 text-zinc-100">AI-Powered Features</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* AI Generate */}
+            <Link href="/dashboard/generate/new">
+              <div className="bg-gradient-to-br from-emerald-900/20 via-emerald-900/10 to-transparent border border-emerald-500/30 rounded-lg p-6 hover:border-emerald-500/50 transition cursor-pointer h-full">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-emerald-600/20 rounded-lg flex items-center justify-center">
+                    <Sparkles className="text-emerald-500" size={20} />
+                  </div>
+                  <h4 className="font-semibold text-zinc-100">Generate Workflow</h4>
+                </div>
+                <p className="text-sm text-zinc-400 mb-4">Describe your workflow in plain English and let AI generate the complete CI/CD configuration for you.</p>
+                <div className="flex items-center gap-1 text-emerald-500 text-sm font-medium">
+                  Start generating <ArrowRight size={14} />
+                </div>
               </div>
-              <h4 className="font-semibold text-zinc-100 mb-2">Visual Pipeline Builder</h4>
-              <p className="text-sm text-zinc-400 mb-4">Drag-and-drop interface to design complex CI/CD workflows without writing YAML.</p>
-              <Link href="/dashboard/pipeline-builder" className="text-orange-500 text-sm font-medium hover:text-orange-400 transition flex items-center gap-1">
-                Explore <ArrowRight size={14} />
-              </Link>
-            </div>
+            </Link>
 
-            {/* Documentation */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition">
-              <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
-                <BookOpen className="text-blue-500" size={20} />
+            {/* AI Debug */}
+            <Link href="/dashboard/debug/session">
+              <div className="bg-gradient-to-br from-cyan-900/20 via-cyan-900/10 to-transparent border border-cyan-500/30 rounded-lg p-6 hover:border-cyan-500/50 transition cursor-pointer h-full">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-cyan-600/20 rounded-lg flex items-center justify-center">
+                    <Bug className="text-cyan-500" size={20} />
+                  </div>
+                  <h4 className="font-semibold text-zinc-100">Debug Workflow</h4>
+                </div>
+                <p className="text-sm text-zinc-400 mb-4">Upload your workflow configuration and get AI-powered insights to fix issues and optimize performance.</p>
+                <div className="flex items-center gap-1 text-cyan-500 text-sm font-medium">
+                  Start debugging <ArrowRight size={14} />
+                </div>
               </div>
-              <h4 className="font-semibold text-zinc-100 mb-2">Documentation</h4>
-              <p className="text-sm text-zinc-400 mb-4">Learn how to use Fluxion with comprehensive guides and examples.</p>
-              <Link href="/docs" className="text-blue-500 text-sm font-medium hover:text-blue-400 transition flex items-center gap-1">
-                Read docs <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            {/* API Reference */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition">
-              <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="text-purple-500" size={20} />
-              </div>
-              <h4 className="font-semibold text-zinc-100 mb-2">API Integration</h4>
-              <p className="text-sm text-zinc-400 mb-4">Integrate Fluxion with your existing tools and workflows.</p>
-              <Link href="/docs" className="text-purple-500 text-sm font-medium hover:text-purple-400 transition flex items-center gap-1">
-                Learn more <ArrowRight size={14} />
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -107,15 +103,19 @@ export default function DashboardPage() {
           <ul className="space-y-3 text-sm text-zinc-400">
             <li className="flex items-start gap-3">
               <span className="text-orange-500 font-bold mt-1">•</span>
-              <span>Start by creating a new pipeline in the Pipeline Builder to visualize your CI/CD workflow.</span>
+              <span>Start by creating a pipeline configuration with our Generate feature</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-orange-500 font-bold mt-1">•</span>
-              <span>Use templates to quickly set up common CI/CD patterns for your project type.</span>
+              <span>Open the generated workflow in the visual editor to make adjustments.</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="text-orange-500 font-bold mt-1">•</span>
-              <span>Export your pipelines as GitHub Actions workflows directly to your repository.</span>
+              <span>Test your pipelines thoroughly before deploying to production.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-orange-500 font-bold mt-1">•</span>
+              <span>Debug your workflows using the built-in Debug feature.</span>
             </li>
           </ul>
         </div>
