@@ -8,6 +8,7 @@ import (
 	"fluxion-be/internal/utils"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 
@@ -71,7 +72,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	}
 
 	if _, err := db.UpdateUserCredits(user.ID, user.Credits-cost, h.DB); err != nil {
-		log.Printf("Failed to deduct credits for user %s: %v", userID, err)
+		log.Printf("Failed to update credits for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
 		return
 	}
@@ -91,7 +92,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, float64, error) {
+func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, int, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),
@@ -166,7 +167,12 @@ Generate a workflow that is specifically tailored to this project type, uses the
 
 }
 
-func EstimateCost(inputTokens, outputTokens int64, inputRate, outputRate float64) float64 {
-	return ((float64(inputTokens)/1000_000.0)*inputRate +
-		(float64(outputTokens)/1000_000.0)*outputRate) * freePlanMultiplier
+func EstimateCost(inputTokens, outputTokens int64, inputRate, outputRate float64) int {
+	requestDollarCost := (float64(inputTokens)/1000_000.0)*inputRate + (float64(outputTokens)/1000_000.0)*outputRate
+	dollarCostWithMultiplier := requestDollarCost * freePlanMultiplier
+	// $1 = 10 credits
+	convertDollarToCredits := dollarCostWithMultiplier * 10.0
+	roundedUpCredits := math.Ceil(convertDollarToCredits)
+	return int(roundedUpCredits)
+
 }

@@ -82,7 +82,7 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 		return
 	}
 
-	log.Printf("✅ User created: %s (ID: %s) with %f credits", user.Email, user.ID, user.Credits)
+	log.Printf("✅ User created: %s (ID: %s) with %d credits", user.Email, user.ID, user.Credits)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User created successfully",
@@ -166,7 +166,7 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 			return
 		}
 
-		log.Printf("✅ Created new %s user: %s (ID: %s) with %f credits",
+		log.Printf("✅ Created new %s user: %s (ID: %s) with %d credits",
 			req.Provider, user.Email, user.ID, user.Credits)
 	default:
 		log.Println("❌ Database error:", err)
