@@ -4,6 +4,7 @@ import Hero from './components/sections/Hero';
 import ProblemSolution from './components/sections/ProblemSolution';
 import Use from './components/sections/Use';
 import WorkflowTransition from './components/sections/WorkflowTransition';
+import Pricing from './components/sections/Pricing';
 import CTA from './components/sections/CTA';
 
 export default function Home() {
@@ -22,6 +23,7 @@ export default function Home() {
         <ProblemSolution />
         <WorkflowTransition />
         <Use />
+        <Pricing />
         <CTA />
         <Footer />
       </div>

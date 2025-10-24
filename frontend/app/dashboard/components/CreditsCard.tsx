@@ -17,7 +17,7 @@ export default function CreditsCard({ credits }: CreditsCardProps) {
           <CreditCard className="text-orange-500" size={20} />
         </div>
         <Link 
-          href="/pricing" 
+          href="/billing" 
           className="text-sm text-orange-500 hover:text-orange-400 transition font-semibold cursor-pointer border border-orange-500/20 px-3 py-1 rounded-lg"
         >
           Buy more
