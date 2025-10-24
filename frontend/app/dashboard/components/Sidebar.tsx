@@ -9,6 +9,7 @@ import {
   Sparkles, 
   Bug, 
   Settings,
+  CreditCard,
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
@@ -203,6 +204,19 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
             <div className="py-3">
               <div className="border-t border-zinc-800" />
             </div>
+
+            {/* Billing */}
+            <Link
+              href="/dashboard/billing"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                isActive('/dashboard/billing')
+                  ? 'bg-orange-600 text-white'
+                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+              }`}
+            >
+              <CreditCard size={20} />
+              <span className="font-medium">Billing</span>
+            </Link>
 
             {/* Settings */}
             <Link
