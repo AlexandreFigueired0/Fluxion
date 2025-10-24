@@ -1,4 +1,3 @@
-go work sync            # ensures module replacements are up to date
 # Fluxion 🚀
 
 Fluxion is an AI copilot for GitHub Actions. It pairs a context-aware CLI, a credit-managed Go backend, and a Next.js dashboard so that teams can generate and debug workflows that match their real project setup.
