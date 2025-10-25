@@ -142,13 +142,13 @@ Generate a workflow that is specifically tailored to this project type, uses the
 	)
 
 	if err != nil {
-		return types.GenerateResult{}, 0, fmt.Errorf("OpenAI API error: %w", err)
+		return types.GenerateResult{}, fmt.Errorf("OpenAI API error: %w", err)
 	}
 
 	// Parse the response
 	var result types.GenerateResult
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
-		return types.GenerateResult{}, 0, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
+		return types.GenerateResult{}, fmt.Errorf("failed to parse OpenAI response: %w\nRaw content: %s",
 			err, resp.Choices[0].Message.Content)
 	}
 
