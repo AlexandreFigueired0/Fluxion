@@ -6,9 +6,7 @@ interface CreditsCardProps {
 }
 
 export default function CreditsCard({ credits }: CreditsCardProps) {
-  const isLowCredits = credits < 10;
-  // credits rounded to 2 decimal places
-  const roundedCredits = Math.round(credits * 100) / 100;
+  const isLowCredits = credits < 5;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
@@ -25,18 +23,18 @@ export default function CreditsCard({ credits }: CreditsCardProps) {
       </div>
       
       <div className="flex flex-col items-center justify-center flex-1">
-        <div className="flex items-baseline gap-2 mt-6">
-          <div className="text-5xl font-black">{roundedCredits}</div>
+        <div className="flex items-baseline gap-2 ">
+          <div className="text-5xl font-black">{credits}</div>
           <div className="text-zinc-400 text-base font-medium">credits</div>
         </div>
-        
-        {isLowCredits && roundedCredits > 0 && (
+
+        {isLowCredits && credits > 0 && (
           <div className="text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1">
             Running low
           </div>
         )}
-        
-        {roundedCredits <= 0 && (
+
+        {credits <= 0 && (
           <div className="mt-3 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded px-2 py-1">
             No credits remaining
           </div>
