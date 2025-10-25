@@ -216,7 +216,7 @@ const BillingPage = () => {
                 >
                   {pack.popular && (
                     <div className="absolute -top-3 right-4 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                      Best Value
+                      Most Popular
                     </div>
                   )}
                   
