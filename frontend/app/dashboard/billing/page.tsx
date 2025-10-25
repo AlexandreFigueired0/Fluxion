@@ -39,7 +39,11 @@ const BillingPage = () => {
       price: 15,
       credits: 25,
       icon: Zap,
-      features: ['25 credits/month', 'Save up to 25 workflows', 'Better pricing (2.5× markup)', 'Rollover up to 50 credits', 'Email support']
+      features: [
+        '25 credits/month ',
+        'Save up to 10 workflows',
+        'Email support'
+      ]
     },
     {
       id: 'pro',
@@ -48,15 +52,25 @@ const BillingPage = () => {
       credits: 75,
       icon: Crown,
       popular: true,
-      features: ['75 credits/month', 'Save unlimited workflows', 'Best pricing (2.2× markup)', 'Unlimited rollover', 'Version history (30 days)', 'Priority queue', 'Priority support']
+      features: [
+        '75 credits/month ',
+        'Everything in Indie',
+        'Save up to 50 workflows',
+        'Priority email support'
+      ]
     },
     {
-      id: 'team',
-      name: 'Team',
+      id: 'ultra',
+      name: 'Ultra',
       price: 149,
       credits: 250,
       icon: Users,
-      features: ['250 credits/month (shared)', 'Unlimited workflow storage', 'Volume pricing (2.0× markup)', 'Unlimited rollover', 'Version history (90 days)', 'Team workspaces', 'API access', '24/7 support']
+      features: [
+        '250 credits/month',
+        'Everything in Pro',
+        'Save up to 100 workflows',
+        'Highest priority support'
+      ]
     }
   ];
 
@@ -244,8 +258,13 @@ const BillingPage = () => {
               <div className="flex items-start gap-3">
                 <CreditCard size={20} className="text-zinc-500 mt-0.5" />
                 <div>
-                  <h3 className="font-medium mb-1">Need more?</h3>
-                  <p className="text-sm text-zinc-400">Contact us for custom credit packages or enterprise volume discounts</p>
+                  <h3 className="font-medium mb-1">About Credit Packs</h3>
+                  <p className="text-sm text-zinc-400 mb-2">
+                    💡 <strong>Purchased credits never expire</strong> - they&apos;re yours forever
+                  </p>
+                  <p className="text-sm text-zinc-400">
+                    Subscription credits reset monthly. Need more? Contact us for custom packages or enterprise volume discounts.
+                  </p>
                 </div>
               </div>
             </div>
@@ -304,7 +323,7 @@ const BillingPage = () => {
                   <p className="text-xs text-zinc-500">Context-aware debugging</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-orange-500">2</p>
+                  <p className="text-lg font-bold text-orange-500">3</p>
                   <p className="text-xs text-zinc-500">credits</p>
                 </div>
               </div>
