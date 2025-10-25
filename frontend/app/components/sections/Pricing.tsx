@@ -174,7 +174,7 @@ const Pricing = () => {
           </div>
           <div>
             <p className="mb-2">♻️ <strong className="text-white">Subscription credits reset monthly</strong></p>
-            <p>Use them or lose them - encourages consistent usage</p>
+            <p>Make sure to use your credits before they reset</p>
           </div>
           <div>
             <p className="mb-2">💳 <strong className="text-white">Buy extra credits anytime</strong></p>
