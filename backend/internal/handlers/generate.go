@@ -8,7 +8,6 @@ import (
 	"fluxion-be/internal/utils"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"os"
 
@@ -21,10 +20,7 @@ import (
 	supa "github.com/supabase-community/supabase-go"
 )
 
-const (
-	inputRate  = 1.25 // $1.25 per 1M tokens
-	outputRate = 10.0 // $10.00 per 1M tokens
-)
+const GENERATE_CREDIT_COST = 2
 
 const (
 	freePlanMultiplier = 2.0
@@ -51,7 +47,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if user.Credits <= 0 {
+	if user.Credits < GENERATE_CREDIT_COST {
 		log.Printf("User %s attempted generate without credits", userID)
 		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
 		return
@@ -64,14 +60,14 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 	log.Printf("Received generate request: user_id=%s, prompt=%q, context=%+v", userID, req.Prompt, req.ProjectContext)
-	result, cost, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
+	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
 	if err != nil {
 		log.Printf("Failed to generate pipeline config: %v", err)
 		c.JSON(500, gin.H{"error": "Failed to generate pipeline config: " + err.Error()})
 		return
 	}
 
-	if _, err := db.UpdateUserCredits(user.ID, user.Credits-cost, h.DB); err != nil {
+	if _, err := db.UpdateUserCredits(user.ID, user.Credits-GENERATE_CREDIT_COST, h.DB); err != nil {
 		log.Printf("Failed to update credits for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
 		return
@@ -92,7 +88,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, int, error) {
+func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
 	openAiApiKey := os.Getenv("OPENAI_API_KEY")
 	client := openai.NewClient(
 		option.WithAPIKey(openAiApiKey),
@@ -149,13 +145,6 @@ Generate a workflow that is specifically tailored to this project type, uses the
 		return types.GenerateResult{}, 0, fmt.Errorf("OpenAI API error: %w", err)
 	}
 
-	// Calculate the cost
-	usage := resp.Usage
-	inputTokens := usage.PromptTokens
-	outputTokens := usage.CompletionTokens
-	cost := EstimateCost(inputTokens, outputTokens,
-		inputRate, outputRate)
-
 	// Parse the response
 	var result types.GenerateResult
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
@@ -163,16 +152,6 @@ Generate a workflow that is specifically tailored to this project type, uses the
 			err, resp.Choices[0].Message.Content)
 	}
 
-	return result, cost, nil
-
-}
-
-func EstimateCost(inputTokens, outputTokens int64, inputRate, outputRate float64) int {
-	requestDollarCost := (float64(inputTokens)/1000_000.0)*inputRate + (float64(outputTokens)/1000_000.0)*outputRate
-	dollarCostWithMultiplier := requestDollarCost * freePlanMultiplier
-	// $1 = 10 credits
-	convertDollarToCredits := dollarCostWithMultiplier * 10.0
-	roundedUpCredits := math.Ceil(convertDollarToCredits)
-	return int(roundedUpCredits)
+	return result, nil
 
 }

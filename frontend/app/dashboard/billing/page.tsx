@@ -29,7 +29,7 @@ const BillingPage = () => {
   }
 
   // Mock data - replace with real data later
-  const currentCredits = 42.5;
+  const currentCredits = 127.5;
   const currentPlan = 'free'; // 'free', 'indie', 'pro', 'team'
 
   const subscriptions = [
@@ -39,32 +39,32 @@ const BillingPage = () => {
       price: 15,
       credits: 25,
       icon: Zap,
-      features: ['25 credits/month', 'Better pricing (2.5× markup)', 'Rollover up to 50 credits', 'Email support']
+      features: ['25 credits/month', 'Save up to 25 workflows', 'Better pricing (2.5× markup)', 'Rollover up to 50 credits', 'Email support']
     },
     {
       id: 'pro',
       name: 'Pro',
       price: 45,
-      credits: 100,
+      credits: 75,
       icon: Crown,
       popular: true,
-      features: ['100 credits/month', 'Best pricing (2.2× markup)', 'Unlimited rollover', 'Priority queue', 'Priority support']
+      features: ['75 credits/month', 'Save unlimited workflows', 'Best pricing (2.2× markup)', 'Unlimited rollover', 'Version history (30 days)', 'Priority queue', 'Priority support']
     },
     {
       id: 'team',
       name: 'Team',
       price: 149,
-      credits: 500,
+      credits: 250,
       icon: Users,
-      features: ['500 credits/month', 'Volume pricing (2.0× markup)', 'Shared workspace', 'API access', '24/7 support']
+      features: ['250 credits/month (shared)', 'Unlimited workflow storage', 'Volume pricing (2.0× markup)', 'Unlimited rollover', 'Version history (90 days)', 'Team workspaces', 'API access', '24/7 support']
     }
   ];
 
   const creditPacks = [
-    { credits: 10, price: 6, costPer: 0.60 },
-    { credits: 50, price: 25, costPer: 0.50, popular: true },
-    { credits: 100, price: 45, costPer: 0.45 },
-    { credits: 250, price: 100, costPer: 0.40 }
+    { credits: 10, price: 5, costPer: 0.50 },
+    { credits: 25, price: 12, costPer: 0.48, popular: true },
+    { credits: 60, price: 27, costPer: 0.45 },
+    { credits: 150, price: 60, costPer: 0.40 }
   ];
 
   return (
@@ -252,6 +252,72 @@ const BillingPage = () => {
           </div>
         )}
 
+        {/* Feature Pricing Guide */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold mb-2">Feature Pricing</h2>
+            <p className="text-sm text-zinc-400">How credits are used across different features</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Generate Features */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between p-3 bg-zinc-900 rounded-lg border border-zinc-800">
+                <div>
+                  <p className="font-medium text-sm mb-1">Generate Workflow</p>
+                  <p className="text-xs text-zinc-500">Basic CI/CD generation</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-orange-500">2</p>
+                  <p className="text-xs text-zinc-500">credits</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start justify-between p-3 bg-zinc-900 rounded-lg border border-zinc-800">
+                <div>
+                  <p className="font-medium text-sm mb-1">Generate with AI Context</p>
+                  <p className="text-xs text-zinc-500">Project-aware generation</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-orange-500">4</p>
+                  <p className="text-xs text-zinc-500">credits</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Debug Features */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between p-3 bg-zinc-900 rounded-lg border border-zinc-800">
+                <div>
+                  <p className="font-medium text-sm mb-1">Debug Workflow</p>
+                  <p className="text-xs text-zinc-500">Basic error analysis</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-orange-500">1</p>
+                  <p className="text-xs text-zinc-500">credit</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start justify-between p-3 bg-zinc-900 rounded-lg border border-zinc-800">
+                <div>
+                  <p className="font-medium text-sm mb-1">Debug with AI Context</p>
+                  <p className="text-xs text-zinc-500">Context-aware debugging</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-orange-500">2</p>
+                  <p className="text-xs text-zinc-500">credits</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-zinc-800">
+            <p className="text-xs text-zinc-400">
+              💡 <span className="font-semibold">Pro Tip:</span> 1 credit = $0.50 • Credits never expire • Use AI context for better, project-specific workflows
+            </p>
+          </div>
+        </div>
+
         {/* Recent Activity */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Recent Activity</h2>
@@ -259,10 +325,10 @@ const BillingPage = () => {
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg divide-y divide-zinc-800">
             {/* Mock transactions */}
             {[
-              { type: 'spend', amount: -0.25, desc: 'Generated workflow for Next.js project', time: '2 hours ago' },
-              { type: 'spend', amount: -0.18, desc: 'Debug pipeline analysis', time: '5 hours ago' },
-              { type: 'credit', amount: +25, desc: 'Monthly subscription refill', time: '1 day ago' },
-              { type: 'spend', amount: -0.32, desc: 'Generated complex monorepo workflow', time: '2 days ago' }
+              { type: 'spend', amount: -2, desc: 'Generated workflow for Next.js project', time: '2 hours ago' },
+              { type: 'spend', amount: -1, desc: 'Debug pipeline analysis', time: '5 hours ago' },
+              { type: 'credit', amount: +25, desc: 'Monthly subscription refill (Indie)', time: '1 day ago' },
+              { type: 'spend', amount: -4, desc: 'Generated workflow with AI context', time: '2 days ago' }
             ].map((tx, idx) => (
               <div key={idx} className="flex items-center justify-between p-4">
                 <div className="flex items-start gap-3">
