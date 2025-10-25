@@ -24,7 +24,7 @@ const Use = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-12 border-t border-zinc-800">
+    <div className="max-w-[1400px] mx-auto px-8 py-12 border-t border-zinc-800">
       <h2 className="text-4xl font-black mb-16 text-center">Three steps. That&apos;s it.</h2>
       <div className="grid md:grid-cols-3 gap-8">
         {steps.map((step) => (

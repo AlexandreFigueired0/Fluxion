@@ -32,7 +32,7 @@ jobs:
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-12 border-t border-zinc-800/50">
+    <section className="max-w-[1400px] mx-auto px-6 py-12 border-t border-zinc-800/50">
       {/* Header */}
       <div className="text-center mb-7">
         <h2 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">

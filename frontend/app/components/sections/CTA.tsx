@@ -6,7 +6,7 @@ import Button from '../ui/Button';
 
 const CTA = () => {
   return (
-    <div className="max-w-7xl mx-auto px-8 py-12 border-t border-zinc-800">
+    <div className="max-w-[1400px] mx-auto px-8 py-12 border-t border-zinc-800">
       <div className="relative">
         
         <div className="relative bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 border border-zinc-800 p-12 md:p-16 backdrop-blur-sm overflow-hidden">

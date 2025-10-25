@@ -6,9 +6,9 @@ import  Button from '../ui/Button'
 
 const Hero = () => {
   return (
-    <div className="max-w-7xl mx-auto px-8 pt-16 pb-24 relative">
+    <div className="max-w-[1400px] mx-auto px-8 pt-16 pb-24 relative">
       
-      <div className="max-w-4xl mx-auto text-center relative z-10">
+      <div className="max-w-[1400px] mx-auto text-center relative z-10">
         {/* Main headline */}
         <h1 className="text-6xl md:text-7xl font-black mb-6 leading-tight">
           <span className="bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent">

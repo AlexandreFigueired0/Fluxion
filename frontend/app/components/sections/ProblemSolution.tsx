@@ -16,7 +16,7 @@ const ProblemSolution = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-12 border-t border-zinc-800">
+    <div className="max-w-[1400px] mx-auto px-8 py-12 border-t border-zinc-800">
       <div className="grid md:grid-cols-2 gap-12">
         <div className="space-y-6">
           <h3 className="text-sm font-bold text-orange-500 uppercase tracking-wider">The Problem</h3>
