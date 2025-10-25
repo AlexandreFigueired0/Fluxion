@@ -332,7 +332,7 @@ const BillingPage = () => {
 
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <p className="text-xs text-zinc-400">
-              💡 <span className="font-semibold">Pro Tip:</span> 1 credit = $0.50 • Credits never expire • Use AI context for better, project-specific workflows
+              💡 <span className="font-semibold">Pro Tip:</span> Purchased credits never expire • Use AI context for better, project-specific workflows
             </p>
           </div>
         </div>

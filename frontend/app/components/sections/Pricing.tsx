@@ -75,7 +75,7 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-12 border-t border-zinc-800">
+    <div className="w-full mx-auto px-8 py-12 border-t border-zinc-800">
       {/* Header */}
       <div className="text-center mb-16 max-w-3xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -84,7 +84,7 @@ const Pricing = () => {
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         {subscriptions.map((plan) => {
           const Icon = plan.icon;
           return (
@@ -164,26 +164,24 @@ const Pricing = () => {
       </div>
 
       {/* Additional info */}
-      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-8 md:p-12">
-        <div className="max-w-3xl mx-auto">
-          <h3 className="text-2xl font-bold mb-6 text-center">How Credits Work</h3>
-          <div className="grid md:grid-cols-2 gap-6 text-sm text-zinc-400">
-            <div>
-              <p className="mb-2">💡 <strong className="text-white">1 credit = $0.50</strong></p>
-              <p>Use credits for AI-powered workflow generation and debugging</p>
-            </div>
-            <div>
-              <p className="mb-2">♻️ <strong className="text-white">Subscription credits reset monthly</strong></p>
-              <p>Use them or lose them - encourages consistent usage</p>
-            </div>
-            <div>
-              <p className="mb-2">💳 <strong className="text-white">Buy extra credits anytime</strong></p>
-              <p>One-time credit packs available starting at $5</p>
-            </div>
-            <div>
-              <p className="mb-2">⏰ <strong className="text-white">Purchased credits never expire</strong></p>
-              <p>Top-up credits are yours forever</p>
-            </div>
+      <div className="max-w-7xl mx-auto bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-8 md:p-12">
+        <h3 className="text-2xl font-bold mb-6 text-center">How Credits Work</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-sm text-zinc-400">
+          <div>
+            <p className="mb-2">💡 <strong className="text-white">Simple credit-based pricing</strong></p>
+            <p>Use credits for AI-powered workflow generation and debugging</p>
+          </div>
+          <div>
+            <p className="mb-2">♻️ <strong className="text-white">Subscription credits reset monthly</strong></p>
+            <p>Use them or lose them - encourages consistent usage</p>
+          </div>
+          <div>
+            <p className="mb-2">💳 <strong className="text-white">Buy extra credits anytime</strong></p>
+            <p>One-time credit packs available starting at $5</p>
+          </div>
+          <div>
+            <p className="mb-2">⏰ <strong className="text-white">Purchased credits never expire</strong></p>
+            <p>Top-up credits are yours forever</p>
           </div>
         </div>
       </div>
