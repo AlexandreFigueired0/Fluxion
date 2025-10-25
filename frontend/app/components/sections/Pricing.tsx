@@ -7,6 +7,22 @@ import Link from 'next/link';
 const Pricing = () => {
   const subscriptions = [
     {
+      id: 'free',
+      name: 'Free',
+      price: 0,
+      credits: 5,
+      description: 'Try it out',
+      popular: false,
+      features: [
+        '5 credits to start',
+        'Buy credits as you go',
+        'No workflow saving',
+      ],
+      icon: Zap,
+      gradient: 'from-zinc-500 to-zinc-600',
+      isFree: true
+    },
+    {
       id: 'indie',
       name: 'Indie',
       price: 15,
@@ -68,7 +84,7 @@ const Pricing = () => {
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-12">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {subscriptions.map((plan) => {
           const Icon = plan.icon;
           return (
@@ -103,13 +119,19 @@ const Pricing = () => {
 
                 {/* Price */}
                 <div className="mb-6">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-black">${plan.price}</span>
-                    <span className="text-zinc-400 text-sm">/month</span>
-                  </div>
+                  {plan.isFree ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-black">Free</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-black">${plan.price}</span>
+                      <span className="text-zinc-400 text-sm">/month</span>
+                    </div>
+                  )}
                   <div className="mt-2 flex items-center gap-2">
                     <span className="text-orange-500 font-semibold">{plan.credits} credits</span>
-                    <span className="text-zinc-600 text-sm">per month</span>
+                    <span className="text-zinc-600 text-sm">{plan.isFree ? 'to start' : 'per month'}</span>
                   </div>
                 </div>
 
