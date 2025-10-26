@@ -31,6 +31,7 @@ const Pricing = () => {
       popular: false,
       features: [
         '25 credits/month ',
+        'Everything in Free',
         'Save up to 10 workflows',
         '~12 workflow generations',
         'Email support'

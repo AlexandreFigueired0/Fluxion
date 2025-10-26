@@ -142,7 +142,7 @@ const BillingPage = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold mb-2">Monthly Subscriptions</h2>
-              <p className="text-sm text-zinc-400">Get credits every month + better pricing on all requests</p>
+              <p className="text-sm text-zinc-400">Get credits every month + extra features</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-4">
