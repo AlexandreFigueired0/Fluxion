@@ -23,8 +23,10 @@ import (
 const GENERATE_CREDIT_COST = 2
 
 const (
-	freePlanMultiplier = 2.0
-	paidPlanMultiplier = 1.5
+	freePlanMultiplier      = 2.0
+	paidPlanMultiplier      = 1.5
+	creditTransactionReason = "generate_pipeline_config"
+	creditTransactionSource = "system"
 )
 
 type GenerateHandler struct {
@@ -67,12 +69,6 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if err := deductUserCredits(user.ID, h); err != nil {
-		log.Printf("Failed to update credits for user %s: %v", userID, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
-		return
-	}
-
 	// Parse the generated YAML to Pipeline JSON
 	if result.PipelineConfig != "" {
 		pipelineJSON, err := utils.ParseYAMLToPipelineJSON(result.PipelineConfig)
@@ -83,8 +79,22 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 			result.PipelineJSON = pipelineJSON
 		}
 	}
-
 	log.Printf("Successfully generated pipeline config for prompt=%q", req.Prompt)
+
+	if err := deductUserCredits(user.ID, h); err != nil {
+		log.Printf("Failed to update credits for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
+		return
+	}
+	log.Printf("Deducted %d credits from user %s", GENERATE_CREDIT_COST, userID)
+
+	if err := db.AddCreditTransaction(userID, -GENERATE_CREDIT_COST, creditTransactionReason, creditTransactionSource, h.DB); err != nil {
+		log.Printf("Failed to create credit transaction: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create credit transaction"})
+		return
+	}
+	log.Printf("Created credit transaction for user %s: -%d credits", userID, GENERATE_CREDIT_COST)
+
 	c.JSON(200, result)
 }
 
