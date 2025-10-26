@@ -8,7 +8,7 @@ type User struct {
 	CreatedAt             time.Time `json:"created_at"`
 	PasswordHash          string    `json:"password_hash"`
 	PermanentCredits      int       `json:"permanent_credits"`
-	SubscritpionCredits   int       `json:"subscription_credits"`
+	SubscriptionCredits   int       `json:"subscription_credits"`
 	StripeCustomerID      string    `json:"stripe_customer_id"`
 	SubscriptionPlanID    string    `json:"subscription_plan_id"`
 	SubscriptionPeriodEnd time.Time `json:"subscription_period_end"`

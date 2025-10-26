@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"fluxion-be/internal/dto"
 	models "fluxion-be/internal/models"
 
 	supa "github.com/supabase-community/supabase-go"
@@ -82,18 +83,28 @@ func GetUserByID(id string, db *supa.Client) (*models.User, error) {
 	return &users[0], nil
 }
 
-// UpdateUserCredits sets a user's credit balance to the provided value.
-func UpdateUserCredits(id string, credits int, db *supa.Client) (*models.User, error) {
-	updatedFields := map[string]interface{}{
-		"credits":    credits,
-		"updated_at": time.Now(),
+// UpdateUserSubscriptionCredits updates a user's subscription credits
+func UpdateUserSubscriptionCredits(id string, newSubscriptionCredits int, db *supa.Client) (*dto.UserDTO, error) {
+	updates := map[string]interface{}{
+		"subscription_credits": newSubscriptionCredits,
+		"updated_at":           time.Now(),
 	}
 
-	var user models.User
-	_, err := db.From("users").Update(updatedFields, "", "").Eq("id", id).Single().ExecuteTo(&user)
-	if err != nil {
-		return nil, err
+	var updatedUser dto.UserDTO
+
+	_, err := db.From("users").Update(updates, "", "").Eq("id", id).ExecuteTo(&updatedUser)
+	return &updatedUser, err
+}
+
+// UpdateUserPermanentCredits updates a user's permanent credits
+func UpdateUserPermanentCredits(id string, newPermanentCredits int, db *supa.Client) (*dto.UserDTO, error) {
+	updates := map[string]interface{}{
+		"permanent_credits": newPermanentCredits,
+		"updated_at":        time.Now(),
 	}
 
-	return &user, nil
+	var updatedUser dto.UserDTO
+
+	_, err := db.From("users").Update(updates, "", "").Eq("id", id).ExecuteTo(&updatedUser)
+	return &updatedUser, err
 }

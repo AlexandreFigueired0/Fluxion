@@ -47,7 +47,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if user.Credits < GENERATE_CREDIT_COST {
+	if user.SubscriptionCredits < GENERATE_CREDIT_COST || user.PermanentCredits < GENERATE_CREDIT_COST {
 		log.Printf("User %s attempted generate without credits", userID)
 		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
 		return
@@ -67,7 +67,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if _, err := db.UpdateUserCredits(user.ID, user.Credits-GENERATE_CREDIT_COST, h.DB); err != nil {
+	if err := deductUserCredits(user.ID, h); err != nil {
 		log.Printf("Failed to update credits for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
 		return
@@ -86,6 +86,27 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 
 	log.Printf("Successfully generated pipeline config for prompt=%q", req.Prompt)
 	c.JSON(200, result)
+}
+
+func deductUserCredits(userID string, h *GenerateHandler) error {
+	user, err := db.GetUserByID(userID, h.DB)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if user.SubscriptionCredits >= GENERATE_CREDIT_COST {
+		_, err = db.UpdateUserSubscriptionCredits(userID, user.SubscriptionCredits-GENERATE_CREDIT_COST, h.DB)
+	} else if user.PermanentCredits >= GENERATE_CREDIT_COST {
+		_, err = db.UpdateUserPermanentCredits(userID, user.PermanentCredits-GENERATE_CREDIT_COST, h.DB)
+	} else {
+		return fmt.Errorf("insufficient credits")
+	}
+	if err != nil {
+		return fmt.Errorf("failed to update user credits: %w", err)
+	}
+
+	return nil
+
 }
 
 func sendGenerateRequest(prompt string, projectContext types.ProjectContext) (types.GenerateResult, error) {
