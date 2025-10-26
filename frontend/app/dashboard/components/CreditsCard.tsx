@@ -2,11 +2,23 @@ import { CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 interface CreditsCardProps {
-  credits: number;
+  subscriptionCredits: number;
+  permanentCredits: number;
+  maxSubscriptionCredits?: number; // Max credits for subscription tier
 }
 
-export default function CreditsCard({ credits }: CreditsCardProps) {
-  const isLowCredits = credits < 5;
+export default function CreditsCard({ 
+  subscriptionCredits, 
+  permanentCredits,
+  maxSubscriptionCredits = 25 // Default to Indie tier
+}: CreditsCardProps) {
+  const totalCredits = subscriptionCredits + permanentCredits;
+  const isLowCredits = totalCredits < 5;
+  
+  // Calculate percentage of subscription credits used
+  const usagePercent = maxSubscriptionCredits > 0 
+    ? ((maxSubscriptionCredits - subscriptionCredits) / maxSubscriptionCredits) * 100 
+    : 0;
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
@@ -22,20 +34,41 @@ export default function CreditsCard({ credits }: CreditsCardProps) {
         </Link>
       </div>
       
-      <div className="flex flex-col items-center justify-center flex-1">
-        <div className="flex items-baseline gap-2 ">
-          <div className="text-5xl font-black">{credits}</div>
+      <div className="flex flex-col items-center justify-center flex-1 space-y-4">
+        {/* Total Credits */}
+        <div className="flex items-baseline gap-2">
+          <div className="text-5xl font-black">{totalCredits}</div>
           <div className="text-zinc-400 text-base font-medium">credits</div>
         </div>
 
-        {isLowCredits && credits > 0 && (
+        {/* Subscription Credits with Progress Bar */}
+        <div className="w-full space-y-1.5">
+          <div className="flex justify-between items-center text-xs text-zinc-400">
+            <span>Subscription</span>
+            <span className="font-medium text-zinc-300">{subscriptionCredits} / {maxSubscriptionCredits}</span>
+          </div>
+          <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500"
+              style={{ width: `${100 - usagePercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Permanent Credits */}
+        <div className="w-full flex justify-between items-center text-sm">
+          <span className="text-zinc-400">Permanent</span>
+          <span className="font-bold text-zinc-200">{permanentCredits}</span>
+        </div>
+
+        {isLowCredits && totalCredits > 0 && (
           <div className="text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1">
             Running low
           </div>
         )}
 
-        {credits <= 0 && (
-          <div className="mt-3 text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded px-2 py-1">
+        {totalCredits <= 0 && (
+          <div className="text-xs text-red-500 bg-red-500/10 border border-red-500/20 rounded px-2 py-1">
             No credits remaining
           </div>
         )}

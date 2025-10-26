@@ -3,15 +3,19 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 interface UserData {
-  credits: number;
+  subscription_credits: number;
+  permanent_credits: number;
   name: string;
   email: string;
+  subscription_plan_id: string;
+  subscription_period_end: string;
 }
 
 export function useDashboardData() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [credits, setCredits] = useState(0);
+  const [subscriptionCredits, setSubscriptionCredits] = useState(0);
+  const [permanentCredits, setPermanentCredits] = useState(0);
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,8 @@ export function useDashboardData() {
       if (!response.ok) throw new Error('Failed to fetch user data');
       
       const data: UserData = await response.json();
-      setCredits(data.credits);
+      setSubscriptionCredits(data.subscription_credits);
+      setPermanentCredits(data.permanent_credits);
       setUserName(data.name);
       setEmail(data.email);
       setUserId(userId);
@@ -54,7 +59,8 @@ export function useDashboardData() {
   return {
     userId,
     email,
-    credits,
+    subscriptionCredits,
+    permanentCredits,
     userName,
     loading,
     isAuthenticated: status === 'authenticated',

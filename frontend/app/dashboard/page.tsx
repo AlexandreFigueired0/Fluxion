@@ -12,7 +12,7 @@ import { Workflow, Zap, ArrowRight, Sparkles, Bug } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const { credits, userName, loading, isLoading, } = useDashboardData();
+  const { subscriptionCredits, permanentCredits, userName, loading, isLoading, } = useDashboardData();
 
   if (loading || isLoading) {
     return <LoadingState />;
@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <CreditsCard credits={credits} />
+          <CreditsCard subscriptionCredits={subscriptionCredits} permanentCredits={permanentCredits} />
           <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-lg p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
