@@ -11,7 +11,7 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-const freeCredits = 3
+const freeCredits = 5
 
 // Get user by email
 func GetUserByEmail(email string, db *supa.Client) (*models.User, error) {
@@ -29,13 +29,15 @@ func GetUserByEmail(email string, db *supa.Client) (*models.User, error) {
 // CreateUser creates a new user in the database
 func CreateUser(name, email, passwordHash string, db *supa.Client) (*models.User, error) {
 	newUser := map[string]interface{}{
-		"email":         email,
-		"created_at":    time.Now(),
-		"password_hash": passwordHash,
-		"credits":       freeCredits,
-		"name":          name,
-		"updated_at":    time.Now(),
-		"provider":      "credentials",
+		"email":                email,
+		"created_at":           time.Now(),
+		"password_hash":        passwordHash,
+		"permanent_credits":    freeCredits,
+		"name":                 name,
+		"updated_at":           time.Now(),
+		"provider":             "credentials",
+		"subscription_credits": 0,
+		"subscription_plan_id": "Free",
 	}
 
 	var user models.User
@@ -48,13 +50,15 @@ func CreateUser(name, email, passwordHash string, db *supa.Client) (*models.User
 
 func CreateOAuthUser(name, email, provider, providerID string, db *supa.Client) (*models.User, error) {
 	newUser := map[string]interface{}{
-		"email":       email,
-		"created_at":  time.Now(),
-		"credits":     3,
-		"name":        name,
-		"updated_at":  time.Now(),
-		"provider":    provider,
-		"provider_id": providerID,
+		"email":                email,
+		"created_at":           time.Now(),
+		"permanent_credits":    freeCredits,
+		"subscription_credits": 0,
+		"name":                 name,
+		"updated_at":           time.Now(),
+		"provider":             provider,
+		"provider_id":          providerID,
+		"subscription_plan_id": "Free",
 	}
 
 	var user models.User

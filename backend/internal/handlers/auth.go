@@ -82,7 +82,7 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 		return
 	}
 
-	log.Printf("✅ User created: %s (ID: %s) with %d credits", user.Email, user.ID, user.Credits)
+	log.Printf("✅ User created: %s (ID: %s) with %d credits", user.Email, user.ID, user.PermanentCredits)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User created successfully",
@@ -90,7 +90,7 @@ func (h *AuthHandler) HandleSignup(c *gin.Context) {
 			"id":      user.ID,
 			"name":    user.Name,
 			"email":   user.Email,
-			"credits": user.Credits,
+			"credits": user.PermanentCredits,
 		},
 	})
 }
@@ -135,7 +135,7 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 		"id":      user.ID,
 		"name":    user.Name,
 		"email":   user.Email,
-		"credits": user.Credits,
+		"credits": user.PermanentCredits,
 	})
 }
 
@@ -167,7 +167,7 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 		}
 
 		log.Printf("✅ Created new %s user: %s (ID: %s) with %d credits",
-			req.Provider, user.Email, user.ID, user.Credits)
+			req.Provider, user.Email, user.ID, user.PermanentCredits)
 	default:
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
@@ -178,6 +178,6 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 		"id":      user.ID,
 		"name":    user.Name,
 		"email":   user.Email,
-		"credits": user.Credits,
+		"credits": user.PermanentCredits,
 	})
 }
