@@ -49,7 +49,7 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if user.SubscriptionCredits < GENERATE_CREDIT_COST || user.PermanentCredits < GENERATE_CREDIT_COST {
+	if user.SubscriptionCredits+user.PermanentCredits < GENERATE_CREDIT_COST {
 		log.Printf("User %s attempted generate without credits", userID)
 		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
 		return
@@ -104,17 +104,31 @@ func deductUserCredits(userID string, h *GenerateHandler) error {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	if user.SubscriptionCredits >= GENERATE_CREDIT_COST {
-		_, err = db.UpdateUserSubscriptionCredits(userID, user.SubscriptionCredits-GENERATE_CREDIT_COST, h.DB)
-	} else if user.PermanentCredits >= GENERATE_CREDIT_COST {
-		_, err = db.UpdateUserPermanentCredits(userID, user.PermanentCredits-GENERATE_CREDIT_COST, h.DB)
-	} else {
-		return fmt.Errorf("insufficient credits")
-	}
-	if err != nil {
-		return fmt.Errorf("failed to update user credits: %w", err)
+	var creditsToDeduct int = GENERATE_CREDIT_COST
+
+	if user.SubscriptionCredits >= creditsToDeduct {
+		newSubscriptionCredits := user.SubscriptionCredits - creditsToDeduct
+
+		_, err = db.UpdateUserSubscriptionCredits(user.ID, newSubscriptionCredits, h.DB)
+		if err != nil {
+			return fmt.Errorf("failed to update subscription credits: %w", err)
+		}
+		return nil
 	}
 
+	// Use up all subscription credits and deduct the rest from permanent credits
+	creditsToDeduct -= user.SubscriptionCredits
+
+	_, err = db.UpdateUserSubscriptionCredits(user.ID, 0, h.DB)
+	if err != nil {
+		return fmt.Errorf("failed to update subscription credits: %w", err)
+	}
+
+	newPermanentCredits := user.PermanentCredits - creditsToDeduct
+	_, err = db.UpdateUserPermanentCredits(user.ID, newPermanentCredits, h.DB)
+	if err != nil {
+		return fmt.Errorf("failed to update permanent credits: %w", err)
+	}
 	return nil
 
 }
