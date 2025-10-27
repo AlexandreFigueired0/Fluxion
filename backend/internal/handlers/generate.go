@@ -25,7 +25,8 @@ const GENERATE_CREDIT_COST = 2
 const (
 	freePlanMultiplier      = 2.0
 	paidPlanMultiplier      = 1.5
-	creditTransactionReason = "generate_pipeline_config"
+	creditTransactionReason = "Generated configuration"
+	reasonWithContext       = "Generated configuration with project context"
 	creditTransactionSource = "system"
 )
 
