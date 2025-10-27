@@ -15,6 +15,8 @@ export function useDashboardData() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [subscriptionCredits, setSubscriptionCredits] = useState(0);
+  const [subscriptionPlanId, setSubscriptionPlanId] = useState('');
+  const [subscriptionPeriodEnd, setSubscriptionPeriodEnd] = useState('');
   const [permanentCredits, setPermanentCredits] = useState(0);
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,6 +47,8 @@ export function useDashboardData() {
       
       const data: UserData = await response.json();
       setSubscriptionCredits(data.subscription_credits);
+      setSubscriptionPlanId(data.subscription_plan_id);
+      setSubscriptionPeriodEnd(data.subscription_period_end);
       setPermanentCredits(data.permanent_credits);
       setUserName(data.name);
       setEmail(data.email);
@@ -61,6 +65,8 @@ export function useDashboardData() {
     email,
     subscriptionCredits,
     permanentCredits,
+    subscriptionPlanId,
+    subscriptionPeriodEnd,
     userName,
     loading,
     isAuthenticated: status === 'authenticated',

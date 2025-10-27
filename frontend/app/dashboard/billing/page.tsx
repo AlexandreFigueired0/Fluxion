@@ -5,11 +5,15 @@ import { Wallet, CreditCard, Clock, Zap, Crown, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
+import {useDashboardData} from '../hooks/useDashboardData';
+import { LoadingState } from '../components'
 
 const BillingPage = () => {
   const { status } = useSession();
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
+  const { subscriptionCredits, permanentCredits, subscriptionPlanId ,loading, isLoading } = useDashboardData();
+
 
   // Redirect if not authenticated
   if (status === 'unauthenticated') {
@@ -29,8 +33,8 @@ const BillingPage = () => {
   }
 
   // Mock data - replace with real data later
-  const currentCredits = 127.5;
-  const currentPlan = 'free'; // 'free', 'indie', 'pro', 'team'
+  const currentCredits = permanentCredits
+  const currentPlan = subscriptionPlanId;
 
   const subscriptions = [
     {
@@ -108,7 +112,6 @@ const BillingPage = () => {
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
                 <span className="capitalize">{currentPlan} Plan</span>
               </div>
-              <p className="text-xs text-zinc-500">~170 generations left</p>
             </div>
           </div>
         </div>

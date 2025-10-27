@@ -35,11 +35,13 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 		return
 	}
 	userResponse := dto.UserDTO{
-		ID:                  user.ID,
-		Name:                user.Name,
-		Email:               user.Email,
-		SubscriptionCredits: user.SubscriptionCredits,
-		PermanentCredits:    user.PermanentCredits,
+		ID:                    user.ID,
+		Name:                  user.Name,
+		Email:                 user.Email,
+		SubscriptionCredits:   user.SubscriptionCredits,
+		PermanentCredits:      user.PermanentCredits,
+		SubscriptionPlanID:    user.SubscriptionPlanID,
+		SubscriptionPeriodEnd: user.SubscriptionPeriodEnd,
 	}
 	c.JSON(http.StatusOK, userResponse)
 }
