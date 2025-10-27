@@ -33,6 +33,7 @@ const BillingPage = () => {
 
   // Mock data - replace with real data later
   const currentPlan = subscriptionPlanId;
+  console.log('Current Plan:', currentPlan);
 
   const subscriptions = [
     {
@@ -122,7 +123,7 @@ const BillingPage = () => {
                 <span>Subscription Credits Available</span>
               </div>
               <div className="text-3xl font-bold text-white">
-                {subscriptionCredits} / {subscriptions.find(plan => plan.id === currentPlan)?.credits || 0}
+                {subscriptionCredits} / {subscriptions.find(plan => plan.id.toLowerCase() === currentPlan?.toLowerCase())?.credits || 0}
               </div>
               <p className="text-xs text-zinc-500">Resets monthly</p>
             </div>
@@ -176,7 +177,7 @@ const BillingPage = () => {
             <div className="grid md:grid-cols-3 gap-4">
               {subscriptions.map((plan) => {
                 const Icon = plan.icon;
-                const isCurrentPlan = currentPlan === plan.id;
+                const isCurrentPlan = currentPlan?.toLowerCase() === plan.id.toLowerCase();
                 
                 return (
                   <div
