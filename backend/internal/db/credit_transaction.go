@@ -19,7 +19,7 @@ func AddCreditTransaction(userID string, amount int, reason, source string, db *
 
 	var newCreditTransaction models.CreditTransaction
 
-	_, err := db.From("credit_transactions").Insert(newTransaction, false, "", "", "").ExecuteTo(&newCreditTransaction)
+	_, err := db.From("credit_transactions").Insert(newTransaction, false, "", "", "").Single().ExecuteTo(&newCreditTransaction)
 	return err
 }
 

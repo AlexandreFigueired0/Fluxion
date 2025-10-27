@@ -84,7 +84,7 @@ func GetUserByID(id string, db *supa.Client) (*models.User, error) {
 }
 
 // UpdateUserSubscriptionCredits updates a user's subscription credits
-func UpdateUserSubscriptionCredits(id string, newSubscriptionCredits int, db *supa.Client) (*dto.UserDTO, error) {
+func UpdateUserSubscriptionCredits(user_id string, newSubscriptionCredits int, db *supa.Client) (*dto.UserDTO, error) {
 	updates := map[string]interface{}{
 		"subscription_credits": newSubscriptionCredits,
 		"updated_at":           time.Now(),
@@ -92,12 +92,12 @@ func UpdateUserSubscriptionCredits(id string, newSubscriptionCredits int, db *su
 
 	var updatedUser dto.UserDTO
 
-	_, err := db.From("users").Update(updates, "", "").Eq("id", id).ExecuteTo(&updatedUser)
+	_, err := db.From("users").Update(updates, "", "").Eq("id", user_id).Single().ExecuteTo(&updatedUser)
 	return &updatedUser, err
 }
 
 // UpdateUserPermanentCredits updates a user's permanent credits
-func UpdateUserPermanentCredits(id string, newPermanentCredits int, db *supa.Client) (*dto.UserDTO, error) {
+func UpdateUserPermanentCredits(user_id string, newPermanentCredits int, db *supa.Client) (*dto.UserDTO, error) {
 	updates := map[string]interface{}{
 		"permanent_credits": newPermanentCredits,
 		"updated_at":        time.Now(),
@@ -105,6 +105,6 @@ func UpdateUserPermanentCredits(id string, newPermanentCredits int, db *supa.Cli
 
 	var updatedUser dto.UserDTO
 
-	_, err := db.From("users").Update(updates, "", "").Eq("id", id).ExecuteTo(&updatedUser)
+	_, err := db.From("users").Update(updates, "", "").Eq("id", user_id).Single().ExecuteTo(&updatedUser)
 	return &updatedUser, err
 }
