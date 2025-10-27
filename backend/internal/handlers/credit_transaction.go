@@ -16,7 +16,7 @@ type CreditTransactionHandler struct {
 	DB *supa.Client
 }
 
-func (h *CreditTransactionHandler) GetCreditTransactions(c *gin.Context) {
+func (h *CreditTransactionHandler) ListCreditTransactionsByUserID(c *gin.Context) {
 	userID := c.Param("user_id")
 
 	var creditTransactions []models.CreditTransaction

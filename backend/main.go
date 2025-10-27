@@ -61,6 +61,12 @@ func main() {
 	userRoutes.POST("/:id/apikey", apiKeyHandler.CreateAPIKey)
 	userRoutes.DELETE("/:id/apikey", apiKeyHandler.DeleteAPIKey)
 
+	// Credit Transaction routes
+	creditHandler := &handlers.CreditTransactionHandler{DB: db_conn}
+	creditRoutes := protected.Group("/credits")
+	creditRoutes.GET("/user/:user_id", creditHandler.ListCreditTransactionsByUserID)
+	creditRoutes.POST("/user/:user_id", creditHandler.CreateCreditTransaction)
+
 	// Pipeline routes
 	pipelineHandler := &handlers.PipelineHandler{DB: db_conn}
 	pipelineRoutes := protected.Group("/pipelines")
