@@ -22,3 +22,10 @@ func AddCreditTransaction(userID string, amount int, reason, source string, db *
 	_, err := db.From("credit_transactions").Insert(newTransaction, false, "", "", "").ExecuteTo(&newCreditTransaction)
 	return err
 }
+
+// GetCreditTransactionsByUserID retrieves credit transactions for a user
+func GetCreditTransactionsByUserID(userID string, limit int, db *supa.Client) ([]models.CreditTransaction, error) {
+	var transactions []models.CreditTransaction
+	_, err := db.From("credit_transactions").Select("*", "", false).Eq("user_id", userID).Limit(limit, "").ExecuteTo(&transactions)
+	return transactions, err
+}
