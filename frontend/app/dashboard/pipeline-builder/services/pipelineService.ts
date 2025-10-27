@@ -157,4 +157,6 @@ class PipelineService {
   }
 }
 
-export default new PipelineService();
+const pipelineService = new PipelineService();
+
+export default pipelineService;

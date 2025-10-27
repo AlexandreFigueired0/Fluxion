@@ -1,35 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Wallet, CreditCard, Clock, Zap, Crown, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import {useDashboardData} from '../hooks/useDashboardData';
+import type { CreditTransaction } from './services/creditTransaction';
+import creditTransactionService from './services/creditTransaction';
+
+function formatDate(dateString: string): string {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
+  const date = new Date(dateString);
+  return date.toLocaleDateString(undefined, options);
+}
 
 const BillingPage = () => {
-  const { status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
   const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
+  const [ creditTransactions, setCreditTransactions ] = useState<CreditTransaction[]>([]);
 
-
-  // Redirect if not authenticated
-  if (status === 'unauthenticated') {
-    router.push('/login');
-    return null;
-  }
-
-  if (status === 'loading') {
-    return (
-      <DashboardLayout>
-        <div className="animate-pulse space-y-4">
-          <div className="h-12 bg-zinc-800 rounded-lg w-1/3" />
-          <div className="h-40 bg-zinc-800 rounded-lg" />
-        </div>
-      </DashboardLayout>
-    );
-  }
+  useEffect(() => {
+    creditTransactionService.listCreditTransactionsByUserID(session?.accessToken || '', session?.user?.id || '')
+      .then(data => setCreditTransactions(data))
+      .catch(err => console.error('Failed to load credit transactions:', err));
+  }, [session]);
 
   // Mock data - replace with real data later
   const currentPlan = subscriptionPlanId;
@@ -371,32 +374,19 @@ const BillingPage = () => {
           <h2 className="text-xl font-bold">Recent Activity</h2>
           
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg divide-y divide-zinc-800">
-            {/* Mock transactions */}
-            {[
-              { type: 'spend', amount: -2, desc: 'Generated workflow for Next.js project', time: '2 hours ago' },
-              { type: 'spend', amount: -1, desc: 'Debug pipeline analysis', time: '5 hours ago' },
-              { type: 'credit', amount: +25, desc: 'Monthly subscription refill (Indie)', time: '1 day ago' },
-              { type: 'spend', amount: -4, desc: 'Generated workflow with AI context', time: '2 days ago' }
-            ].map((tx, idx) => (
+            {creditTransactions.map((data, idx) => (
               <div key={idx} className="flex items-center justify-between p-4">
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${tx.type === 'credit' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                    {tx.type === 'credit' ? (
-                      <Wallet size={16} className="text-green-500" />
-                    ) : (
-                      <Zap size={16} className="text-red-500" />
-                    )}
-                  </div>
                   <div>
-                    <p className="font-medium text-sm">{tx.desc}</p>
+                    <p className="font-medium text-sm">{data.reason}</p>
                     <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
                       <Clock size={12} />
-                      {tx.time}
+                      {formatDate(data.created_at)}
                     </p>
                   </div>
                 </div>
-                <div className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                  {tx.amount > 0 ? '+' : ''}{tx.amount}
+                <div className={`font-bold ${data.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {data.amount > 0 ? '+' : ''}{data.amount}
                 </div>
               </div>
             ))}

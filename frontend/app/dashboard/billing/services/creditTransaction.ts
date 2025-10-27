@@ -20,7 +20,7 @@ class CreditTransactionService {
         userToken: string,
         userID: string
     ): Promise<CreditTransaction[]> {
-        const response = await fetch(`${API_BASE_URL}/api/credits/${userID}`, {
+        const response = await fetch(`${API_BASE_URL}/api/credits/user/${userID}`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${userToken}`,
@@ -50,7 +50,7 @@ class CreditTransactionService {
         reason: string,
         source: string
     ): Promise<CreditTransaction> {
-        const response = await fetch(`${API_BASE_URL}/api/credits/${userID}`, {
+        const response = await fetch(`${API_BASE_URL}/api/credits/user/${userID}`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${userToken}`,
@@ -71,4 +71,6 @@ class CreditTransactionService {
     }
 }
 
-export const creditTransactionService = new CreditTransactionService();
+const creditTransactionService = new CreditTransactionService();
+export default creditTransactionService;
+export type { CreditTransaction };
