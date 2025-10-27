@@ -6,13 +6,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import {useDashboardData} from '../hooks/useDashboardData';
-import { LoadingState } from '../components'
 
 const BillingPage = () => {
   const { status } = useSession();
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
-  const { subscriptionCredits, permanentCredits, subscriptionPlanId ,loading, isLoading } = useDashboardData();
+  const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
 
 
   // Redirect if not authenticated
@@ -33,12 +32,11 @@ const BillingPage = () => {
   }
 
   // Mock data - replace with real data later
-  const currentCredits = permanentCredits
   const currentPlan = subscriptionPlanId;
 
   const subscriptions = [
     {
-      id: 'indie',
+      id: 'Indie',
       name: 'Indie',
       price: 15,
       credits: 25,
@@ -50,7 +48,7 @@ const BillingPage = () => {
       ]
     },
     {
-      id: 'pro',
+      id: 'Pro',
       name: 'Pro',
       price: 45,
       credits: 75,
@@ -64,7 +62,7 @@ const BillingPage = () => {
       ]
     },
     {
-      id: 'ultra',
+      id: 'Ultra',
       name: 'Ultra',
       price: 149,
       credits: 250,
@@ -96,22 +94,49 @@ const BillingPage = () => {
 
         {/* Current Balance */}
         <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20 rounded-xl p-6">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between mb-6">
             <div>
               <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
                 <Wallet size={16} />
                 <span>Available Balance</span>
               </div>
               <div className="text-5xl font-bold text-orange-500 mb-1">
-                {currentCredits.toFixed(1)}
+                {(subscriptionCredits + permanentCredits).toFixed(1)}
               </div>
-              <p className="text-sm text-zinc-400">credits ready to use</p>
+              <p className="text-sm text-zinc-400">total credits ready to use</p>
             </div>
             <div className="text-right">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-900 rounded-full text-sm mb-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
                 <span className="capitalize">{currentPlan} Plan</span>
               </div>
+            </div>
+          </div>
+          
+          {/* Credit Breakdown */}
+          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-orange-500/20">
+            {/* Subscription Credits */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                <Clock size={14} />
+                <span>Subscription Credits Available</span>
+              </div>
+              <div className="text-3xl font-bold text-white">
+                {subscriptionCredits} / {subscriptions.find(plan => plan.id === currentPlan)?.credits || 0}
+              </div>
+              <p className="text-xs text-zinc-500">Resets monthly</p>
+            </div>
+            
+            {/* Permanent Credits */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                <CreditCard size={14} />
+                <span>Permanent Credits Available</span>
+              </div>
+              <div className="text-3xl font-bold text-white">
+                {permanentCredits}
+              </div>
+              <p className="text-xs text-zinc-500">Never expire</p>
             </div>
           </div>
         </div>
