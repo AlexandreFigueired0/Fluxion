@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { Wallet, CreditCard, Clock, Zap, Crown, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import {useDashboardData} from '../hooks/useDashboardData';
 import type { CreditTransaction } from './services/creditTransaction';
@@ -23,7 +22,6 @@ function formatDate(dateString: string): string {
 
 const BillingPage = () => {
   const { data: session } = useSession();
-  const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
   const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
   const [ creditTransactions, setCreditTransactions ] = useState<CreditTransaction[]>([]);
