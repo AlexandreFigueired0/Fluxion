@@ -85,7 +85,7 @@ const BillingPage = () => {
     {
       id: 'Indie',
       name: 'Indie',
-      price: 15,
+      price: 9.99,
       credits: 25,
       icon: Zap,
       features: [
@@ -97,7 +97,7 @@ const BillingPage = () => {
     {
       id: 'Pro',
       name: 'Pro',
-      price: 45,
+      price: 29.99,
       credits: 75,
       icon: Crown,
       popular: true,
@@ -111,7 +111,7 @@ const BillingPage = () => {
     {
       id: 'Ultra',
       name: 'Ultra',
-      price: 149,
+      price: 99.99,
       credits: 250,
       icon: Users,
       features: [
