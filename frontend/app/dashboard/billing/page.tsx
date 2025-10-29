@@ -125,7 +125,7 @@ const BillingPage = () => {
 
   const creditPacks = [
     { credits: 10, price: 5.99 },
-    { credits: 25, price: 14.99, popular: true },
+    { credits: 25, price: 14.49, popular: true },
     { credits: 60, price: 32.99 },
     { credits: 150, price: 74.99 }
   ];
