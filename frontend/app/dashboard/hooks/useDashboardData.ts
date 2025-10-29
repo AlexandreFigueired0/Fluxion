@@ -43,8 +43,11 @@ export function useDashboardData() {
           'Authorization': `Bearer ${session?.accessToken}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch user data');
-      
+      // If fail redirect to login page with error message
+      if (!response.ok) {
+        router.push('/login?error=failed_to_fetch_user_data');
+        return;
+      }
       const data: UserData = await response.json();
       setSubscriptionCredits(data.subscription_credits);
       setSubscriptionPlanId(data.subscription_plan_id);
