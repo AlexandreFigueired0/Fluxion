@@ -4,6 +4,7 @@ import (
 	"fluxion-be/internal/db"
 	"fluxion-be/internal/handlers"
 	"fluxion-be/internal/middleware"
+	stripeClient "fluxion-be/internal/stripe"
 	"log"
 	"os"
 	"time"
@@ -17,6 +18,11 @@ const address = "0.0.0.0:8080"
 func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	// Initialize Stripe
+	if err := stripeClient.InitStripe(); err != nil {
+		log.Fatalf("Failed to initialize Stripe: %v", err)
+	}
 
 	r := gin.Default()
 
