@@ -124,10 +124,10 @@ const BillingPage = () => {
   ];
 
   const creditPacks = [
-    { credits: 10, price: 5, costPer: 0.50 },
-    { credits: 25, price: 12, costPer: 0.48, popular: true },
-    { credits: 60, price: 27, costPer: 0.45 },
-    { credits: 150, price: 60, costPer: 0.40 }
+    { credits: 10, price: 5.99 },
+    { credits: 25, price: 14.99, popular: true },
+    { credits: 60, price: 32.99 },
+    { credits: 150, price: 74.99 }
   ];
 
   return (
@@ -330,7 +330,6 @@ const BillingPage = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold">${pack.price}</div>
-                      <p className="text-xs text-zinc-500">${pack.costPer}/credit</p>
                     </div>
                   </div>
 
