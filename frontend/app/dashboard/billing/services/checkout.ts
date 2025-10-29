@@ -2,7 +2,7 @@ import { loadStripe } from "@stripe/stripe-js";
 
 export interface CheckoutSessionRequest {
   type: "subscription" | "credits";
-  planId: string;
+  resourceID: string;
 }
 
 export interface CheckoutSessionResponse {
@@ -69,4 +69,6 @@ class CheckoutService {
   }
 }
 
-export default new CheckoutService();
+
+const checkoutService = new CheckoutService();
+export default checkoutService;

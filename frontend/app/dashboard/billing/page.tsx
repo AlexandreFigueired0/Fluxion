@@ -35,7 +35,7 @@ const BillingPage = () => {
       .catch(err => console.error('Failed to load credit transactions:', err));
   }, [session]);
 
-  const handleSubscribeClick = async (planId: string) => {
+  const handleSubscribeClick = async (resourceID: string) => {
     if (!session?.accessToken) {
       setCheckoutError('Please log in to subscribe');
       return;
@@ -43,9 +43,9 @@ const BillingPage = () => {
 
     try {
       setCheckoutError(null);
-      setIsCheckingOut(planId);
+      setIsCheckingOut(resourceID);
       await checkoutService.handleCheckout(
-        { type: 'subscription', planId },
+        { type: 'subscription', resourceID },
         session.accessToken
       );
     } catch (error) {
@@ -67,7 +67,7 @@ const BillingPage = () => {
       setCheckoutError(null);
       setIsCheckingOut(`credits-${credits}`);
       await checkoutService.handleCheckout(
-        { type: 'credits', planId: `${credits}` },
+        { type: 'credits', resourceID: `${credits}` },
         session.accessToken
       );
     } catch (error) {
@@ -80,8 +80,6 @@ const BillingPage = () => {
   };
 
   // Mock data - replace with real data later
-  const currentPlan = subscriptionPlanId;
-  console.log('Current Plan:', currentPlan);
 
   const subscriptions = [
     {
@@ -168,7 +166,7 @@ const BillingPage = () => {
             <div className="text-right">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-900 rounded-full text-sm mb-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <span className="capitalize">{currentPlan} Plan</span>
+                <span className="capitalize">{subscriptionPlanId} Plan</span>
               </div>
             </div>
           </div>
@@ -182,7 +180,7 @@ const BillingPage = () => {
                 <span>Subscription Credits Available</span>
               </div>
               <div className="text-3xl font-bold text-white">
-                {subscriptionCredits} / {subscriptions.find(plan => plan.id.toLowerCase() === currentPlan?.toLowerCase())?.credits || 0}
+                {subscriptionCredits} / {subscriptions.find(plan => plan.id.toLowerCase() === subscriptionPlanId?.toLowerCase())?.credits || 0}
               </div>
               <p className="text-xs text-zinc-500">Resets monthly</p>
             </div>
@@ -236,7 +234,7 @@ const BillingPage = () => {
             <div className="grid md:grid-cols-3 gap-4">
               {subscriptions.map((plan) => {
                 const Icon = plan.icon;
-                const isCurrentPlan = currentPlan?.toLowerCase() === plan.id.toLowerCase();
+                const isCurrentPlan = subscriptionPlanId?.toLowerCase() === plan.id.toLowerCase();
                 
                 return (
                   <div
