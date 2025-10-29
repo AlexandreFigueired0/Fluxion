@@ -7,6 +7,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import {useDashboardData} from '../hooks/useDashboardData';
 import type { CreditTransaction } from './services/creditTransaction';
 import creditTransactionService from './services/creditTransaction';
+import checkoutService from './services/checkout';
 
 function formatDate(dateString: string): string {
   const options: Intl.DateTimeFormatOptions = {
@@ -25,12 +26,58 @@ const BillingPage = () => {
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
   const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
   const [ creditTransactions, setCreditTransactions ] = useState<CreditTransaction[]>([]);
+  const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     creditTransactionService.listCreditTransactionsByUserID(session?.accessToken || '', session?.user?.id || '')
       .then(data => setCreditTransactions(data))
       .catch(err => console.error('Failed to load credit transactions:', err));
   }, [session]);
+
+  const handleSubscribeClick = async (planId: string) => {
+    if (!session?.accessToken) {
+      setCheckoutError('Please log in to subscribe');
+      return;
+    }
+
+    try {
+      setCheckoutError(null);
+      setIsCheckingOut(planId);
+      await checkoutService.handleCheckout(
+        { type: 'subscription', planId },
+        session.accessToken
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Checkout failed';
+      setCheckoutError(errorMessage);
+      console.error('Subscribe error:', error);
+    } finally {
+      setIsCheckingOut(null);
+    }
+  };
+
+  const handleBuyCreditsClick = async (credits: number) => {
+    if (!session?.accessToken) {
+      setCheckoutError('Please log in to buy credits');
+      return;
+    }
+
+    try {
+      setCheckoutError(null);
+      setIsCheckingOut(`credits-${credits}`);
+      await checkoutService.handleCheckout(
+        { type: 'credits', planId: `${credits}` },
+        session.accessToken
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Checkout failed';
+      setCheckoutError(errorMessage);
+      console.error('Buy credits error:', error);
+    } finally {
+      setIsCheckingOut(null);
+    }
+  };
 
   // Mock data - replace with real data later
   const currentPlan = subscriptionPlanId;
@@ -93,6 +140,17 @@ const BillingPage = () => {
           <h1 className="text-3xl font-bold mb-2">Billing & Credits</h1>
           <p className="text-zinc-400">Manage your subscription and credit balance</p>
         </div>
+
+        {/* Error Message */}
+        {checkoutError && (
+          <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
+            <div className="text-red-500 mt-0.5">⚠️</div>
+            <div>
+              <h3 className="font-medium text-red-500">Checkout Error</h3>
+              <p className="text-sm text-red-400 mt-1">{checkoutError}</p>
+            </div>
+          </div>
+        )}
 
         {/* Current Balance */}
         <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20 rounded-xl p-6">
@@ -222,16 +280,17 @@ const BillingPage = () => {
                     </ul>
 
                     <button
-                      disabled={isCurrentPlan}
+                      onClick={() => handleSubscribeClick(plan.id.toLowerCase())}
+                      disabled={isCurrentPlan || isCheckingOut !== null}
                       className={`w-full py-2 rounded-lg font-medium transition ${
                         isCurrentPlan
                           ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                           : plan.popular
-                          ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                          : 'bg-zinc-800 hover:bg-zinc-700 text-white'
+                          ? 'bg-orange-500 hover:bg-orange-600 text-white disabled:bg-orange-500/50 disabled:cursor-not-allowed'
+                          : 'bg-zinc-800 hover:bg-zinc-700 text-white disabled:bg-zinc-800/50 disabled:cursor-not-allowed'
                       }`}
                     >
-                      {isCurrentPlan ? 'Current Plan' : 'Subscribe'}
+                      {isCheckingOut === plan.id.toLowerCase() ? 'Loading...' : isCurrentPlan ? 'Current Plan' : 'Subscribe'}
                     </button>
                   </div>
                 );
@@ -277,8 +336,12 @@ const BillingPage = () => {
                     </div>
                   </div>
 
-                  <button className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition">
-                    Buy {pack.credits} Credits
+                  <button 
+                    onClick={() => handleBuyCreditsClick(pack.credits)}
+                    disabled={isCheckingOut !== null}
+                    className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition disabled:bg-zinc-800/50 disabled:cursor-not-allowed"
+                  >
+                    {isCheckingOut === `credits-${pack.credits}` ? 'Loading...' : `Buy ${pack.credits} Credits`}
                   </button>
                 </div>
               ))}
