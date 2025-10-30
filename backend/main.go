@@ -46,9 +46,15 @@ func main() {
 	auth.POST("/login", authHandler.HandleLogin)   // Email/password login
 	auth.POST("/oauth", authHandler.HandleOAuth)   // Google/GitHub OAuth
 
+	// Checkout routes (protected)
+	checkoutHandler := &handlers.CheckoutHandler{}
+
 	// Protected routes
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
+
+	checkout := protected.Group("/checkout")
+	checkout.POST("/session", checkoutHandler.CreateCheckoutSession)
 
 	commands := protected.Group("/commands")
 	generateHandler := &handlers.GenerateHandler{DB: db_conn}
