@@ -6,7 +6,7 @@ export interface CheckoutSessionRequest {
 }
 
 export interface CheckoutSessionResponse {
-  sessionId: string;
+  sessionID: string;
 }
 
 class CheckoutService {
@@ -57,11 +57,11 @@ class CheckoutService {
     accessToken: string
   ): Promise<void> {
     try {
-      const { sessionId } = await this.createCheckoutSession(
+      const { sessionID } = await this.createCheckoutSession(
         request,
         accessToken
       );
-      await this.redirectToCheckout(sessionId);
+      await this.redirectToCheckout(sessionID);
     } catch (error) {
       console.error("Checkout error:", error);
       throw error;
