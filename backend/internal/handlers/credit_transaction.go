@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	supa "github.com/supabase-community/supabase-go"
 )
 
@@ -18,6 +19,16 @@ type CreditTransactionHandler struct {
 
 func (h *CreditTransactionHandler) ListCreditTransactionsByUserID(c *gin.Context) {
 	userID := c.Param("user_id")
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userClaims := claims.(jwt.MapClaims)
+	if userID != userClaims["id"] {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
 
 	var creditTransactions []models.CreditTransaction
 	creditTransactions, err := db.GetCreditTransactionsByUserID(userID, DEFAULT_SIZE_LIMIT, h.DB)
