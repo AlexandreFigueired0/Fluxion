@@ -15,5 +15,11 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 RUN apt-get install -y git bash
 
+# Install stripe
+RUN wget https://github.com/stripe/stripe-cli/releases/download/v1.32.0/stripe_1.32.0_linux_x86_64.tar.gz && \
+    tar -xvf stripe_1.32.0_linux_x86_64.tar.gz && \
+    sudo mv stripe /usr/local/bin/ && \
+    rm stripe_1.32.0_linux_x86_64.tar.gz
+
 
 USER $USERNAME
