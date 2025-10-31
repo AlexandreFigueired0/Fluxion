@@ -34,7 +34,7 @@ func (h *WebhookHandler) HandleStripeWebhook(c *gin.Context) {
 
 	// Parse the event first
 	if err := json.Unmarshal(payload, &event); err != nil {
-		log.Printf("⚠️  Webhook error while parsing basic request: %v\n", err.Error())
+		log.Printf("Webhook error while parsing basic request: %v\n", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": "error parsing webhook JSON"})
 		return
 	}
@@ -45,7 +45,7 @@ func (h *WebhookHandler) HandleStripeWebhook(c *gin.Context) {
 
 	event, err = webhook.ConstructEvent(payload, signatureHeader, webhookSecret)
 	if err != nil {
-		log.Printf("⚠️  Webhook signature verification failed. %v\n", err)
+		log.Printf("Webhook signature verification failed. %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "webhook signature verification failed"})
 		return
 	}
@@ -132,7 +132,7 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 		return
 	}
 
-	log.Printf("✅ Added %d credits to user %s (checkout session %s)\n", credits, userID, session.ID)
+	log.Printf("Added %d credits to user %s (checkout session %s)\n", credits, userID, session.ID)
 }
 
 // handleInvoicePaymentSucceeded handles subscription renewals (monthly recurring)
@@ -208,5 +208,5 @@ func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
 		return
 	}
 
-	log.Printf("✅ Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
+	log.Printf("Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
 }
