@@ -54,6 +54,8 @@ func (h *WebhookHandler) HandleStripeWebhook(c *gin.Context) {
 	switch event.Type {
 	case "checkout.session.completed":
 		h.handleCheckoutSessionCompleted(event)
+	case "invoice.payment_succeeded":
+		h.handleInvoicePaymentSucceeded(event)
 	default:
 		log.Printf("Unhandled event type: %s\n", event.Type)
 	}
@@ -131,4 +133,80 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 	}
 
 	log.Printf("✅ Added %d credits to user %s (checkout session %s)\n", credits, userID, session.ID)
+}
+
+// handleInvoicePaymentSucceeded handles subscription renewals (monthly recurring)
+func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
+	var invoice stripesdk.Invoice
+	err := json.Unmarshal(event.Data.Raw, &invoice)
+	if err != nil {
+		log.Printf("Error parsing invoice.payment_succeeded: %v\n", err)
+		return
+	}
+
+	// Only process subscription invoices
+	if invoice.Subscription == nil {
+		log.Printf("Skipping invoice %s - not a subscription invoice\n", invoice.ID)
+		return
+	}
+
+	// Get the subscription to access metadata
+	subscriptionID := invoice.Subscription.ID
+
+	// For renewal, we need to get the subscription details
+	// The metadata is stored in the subscription object
+	// We'll use the subscription ID to look up the user and plan info
+
+	// Since we don't have direct access to subscription metadata from the invoice,
+	// we need to query the subscription from Stripe
+	// For now, we'll store this info in the database
+
+	// Get user from database using subscription ID (if we track it)
+	// For MVP, let's use a simpler approach: get user_id from invoice customer metadata
+
+	userID := invoice.Customer.Metadata["user_id"]
+	if userID == "" {
+		log.Printf("Error: no user_id in customer metadata for invoice %s\n", invoice.ID)
+		return
+	}
+
+	// Get user to find their current subscription plan
+	user, err := db.GetUserByID(userID, h.DB)
+	if err != nil {
+		log.Printf("Error: user %s not found for invoice %s\n", userID, invoice.ID)
+		return
+	}
+
+	// Get the subscription plan from user's current subscription
+	planID := user.SubscriptionPlanID
+	if planID == "" {
+		log.Printf("Warning: user %s has no subscription plan set\n", userID)
+		return
+	}
+
+	// Get credits for renewal
+	credits := stripe.GetCreditsForPlan("subscription", planID)
+	if credits == 0 {
+		log.Printf("Error: could not determine credits for subscription planID=%s\n", planID)
+		return
+	}
+
+	// Add the recurring credits
+	_, err = db.UpdateUserSubscriptionCredits(userID, credits, h.DB)
+	if err != nil {
+		log.Printf("Error renewing subscription credits for user %s: %v\n", userID, err)
+		return
+	}
+
+	// Add credit transaction for renewal
+	reason := "Monthly subscription renewal"
+	source := "stripe"
+
+	err = db.AddCreditTransaction(userID, credits, reason, source, h.DB)
+	if err != nil {
+		log.Printf("Error adding credit transaction for renewal for user %s: %v\n", userID, err)
+		return
+	}
+
+	log.Printf("✅ Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
 }
