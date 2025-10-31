@@ -121,3 +121,29 @@ func UpdateUserSubscriptionPlanID(user_id string, newPlanID string, db *supa.Cli
 	_, err := db.From("users").Update(updates, "", "").Eq("id", user_id).Single().ExecuteTo(&updatedUser)
 	return &updatedUser, err
 }
+
+// UpdateUserStripeCustomerID stores the Stripe customer ID for future webhook lookups
+func UpdateUserStripeCustomerID(userID string, customerID string, db *supa.Client) (*dto.UserDTO, error) {
+	updates := map[string]interface{}{
+		"stripe_customer_id": customerID,
+		"updated_at":         time.Now(),
+	}
+
+	var updatedUser dto.UserDTO
+
+	_, err := db.From("users").Update(updates, "", "").Eq("id", userID).Single().ExecuteTo(&updatedUser)
+	return &updatedUser, err
+}
+
+// GetUserByStripeCustomerID retrieves a user by their Stripe customer identifier
+func GetUserByStripeCustomerID(customerID string, db *supa.Client) (*models.User, error) {
+	var users []models.User
+	_, err := db.From("users").Select("*", "", false).Eq("stripe_customer_id", customerID).Limit(1, "").ExecuteTo(&users)
+	if err != nil {
+		return nil, err
+	}
+	if len(users) == 0 {
+		return nil, ErrUserNotFound
+	}
+	return &users[0], nil
+}

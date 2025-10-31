@@ -7,10 +7,12 @@ import (
 	"net/http"
 
 	"fluxion-be/internal/db"
+	"fluxion-be/internal/models"
 	"fluxion-be/internal/stripe"
 
 	"github.com/gin-gonic/gin"
 	stripesdk "github.com/stripe/stripe-go/v81"
+	subscriptionsdk "github.com/stripe/stripe-go/v81/subscription"
 	"github.com/stripe/stripe-go/v81/webhook"
 	supa "github.com/supabase-community/supabase-go"
 )
@@ -89,6 +91,13 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 		return
 	}
 
+	// Persist Stripe customer ID for renewal lookups
+	if session.Customer != nil && session.Customer.ID != "" && user.StripeCustomerID != session.Customer.ID {
+		if _, err := db.UpdateUserStripeCustomerID(userID, session.Customer.ID, h.DB); err != nil {
+			log.Printf("Warning: failed to update Stripe customer ID for user %s: %v\n", userID, err)
+		}
+	}
+
 	// Get credits to add
 	credits := stripe.GetCreditsForPlan(resourceType, planID)
 	if credits == 0 {
@@ -138,75 +147,92 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 // handleInvoicePaymentSucceeded handles subscription renewals (monthly recurring)
 func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
 	var invoice stripesdk.Invoice
-	err := json.Unmarshal(event.Data.Raw, &invoice)
-	if err != nil {
+	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
 		log.Printf("Error parsing invoice.payment_succeeded: %v\n", err)
 		return
 	}
 
-	// Only process subscription invoices
-	if invoice.Subscription == nil {
-		log.Printf("Skipping invoice %s - not a subscription invoice\n", invoice.ID)
+	if invoice.Subscription == nil || invoice.Subscription.ID == "" {
+		log.Printf("Skipping invoice %s - subscription details missing\n", invoice.ID)
 		return
 	}
 
-	// Get the subscription to access metadata
 	subscriptionID := invoice.Subscription.ID
-
-	// For renewal, we need to get the subscription details
-	// The metadata is stored in the subscription object
-	// We'll use the subscription ID to look up the user and plan info
-
-	// Since we don't have direct access to subscription metadata from the invoice,
-	// we need to query the subscription from Stripe
-	// For now, we'll store this info in the database
-
-	// Get user from database using subscription ID (if we track it)
-	// For MVP, let's use a simpler approach: get user_id from invoice customer metadata
-
-	userID := invoice.Customer.Metadata["user_id"]
-	if userID == "" {
-		log.Printf("Error: no user_id in customer metadata for invoice %s\n", invoice.ID)
-		return
-	}
-
-	// Get user to find their current subscription plan
-	user, err := db.GetUserByID(userID, h.DB)
+	sub, err := subscriptionsdk.Get(subscriptionID, nil)
 	if err != nil {
-		log.Printf("Error: user %s not found for invoice %s\n", userID, invoice.ID)
+		log.Printf("Error retrieving subscription %s: %v\n", subscriptionID, err)
 		return
 	}
 
-	// Get the subscription plan from user's current subscription
-	planID := user.SubscriptionPlanID
+	userID := sub.Metadata["user_id"]
+	planID := sub.Metadata["resourceID"]
+	customerID := ""
+
+	if sub.Customer != nil && sub.Customer.ID != "" {
+		customerID = sub.Customer.ID
+	} else if invoice.Customer != nil && invoice.Customer.ID != "" {
+		customerID = invoice.Customer.ID
+	}
+
+	var user *models.User
+	if userID != "" {
+		if u, err := db.GetUserByID(userID, h.DB); err == nil {
+			user = u
+		} else {
+			log.Printf("Warning: could not fetch user %s for subscription %s: %v\n", userID, subscriptionID, err)
+		}
+	}
+
+	if user == nil && customerID != "" {
+		if u, err := db.GetUserByStripeCustomerID(customerID, h.DB); err == nil {
+			user = u
+			userID = u.ID
+		} else {
+			log.Printf("Warning: no user found for Stripe customer %s: %v\n", customerID, err)
+		}
+	}
+
+	if user == nil {
+		log.Printf("Error: unable to resolve user for subscription %s (invoice %s)\n", subscriptionID, invoice.ID)
+		return
+	}
+
+	if planID == "" {
+		planID = user.SubscriptionPlanID
+	}
+
 	if planID == "" {
 		log.Printf("Warning: user %s has no subscription plan set\n", userID)
 		return
 	}
 
-	// Get credits for renewal
 	credits := stripe.GetCreditsForPlan("subscription", planID)
 	if credits == 0 {
 		log.Printf("Error: could not determine credits for subscription planID=%s\n", planID)
 		return
 	}
 
-	// Add the recurring credits
-	_, err = db.UpdateUserSubscriptionCredits(userID, credits, h.DB)
-	if err != nil {
+	if _, err := db.UpdateUserSubscriptionCredits(userID, credits, h.DB); err != nil {
 		log.Printf("Error renewing subscription credits for user %s: %v\n", userID, err)
 		return
 	}
 
-	// Add credit transaction for renewal
+	if _, err := db.UpdateUserSubscriptionPlanID(userID, planID, h.DB); err != nil {
+		log.Printf("Warning: unable to refresh subscription plan for user %s: %v\n", userID, err)
+	}
+
+	if customerID != "" && user.StripeCustomerID != customerID {
+		if _, err := db.UpdateUserStripeCustomerID(userID, customerID, h.DB); err != nil {
+			log.Printf("Warning: failed to persist Stripe customer ID for user %s: %v\n", userID, err)
+		}
+	}
+
 	reason := "Monthly subscription renewal"
 	source := "stripe"
-
-	err = db.AddCreditTransaction(userID, credits, reason, source, h.DB)
-	if err != nil {
+	if err := db.AddCreditTransaction(userID, credits, reason, source, h.DB); err != nil {
 		log.Printf("Error adding credit transaction for renewal for user %s: %v\n", userID, err)
 		return
 	}
 
-	log.Printf("Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
+	log.Printf("✅ Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
 }

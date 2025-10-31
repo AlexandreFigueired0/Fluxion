@@ -79,9 +79,16 @@ func (h *CheckoutHandler) CreateCheckoutSession(c *gin.Context) {
 		},
 	}
 
-	// For subscriptions, set mode to subscription
+	// For subscriptions, set mode to subscription and attach metadata so renewals can be mapped
 	if req.Type == "subscription" {
 		params.Mode = stripesdk.String(string(stripesdk.CheckoutSessionModeSubscription))
+		params.SubscriptionData = &stripesdk.CheckoutSessionSubscriptionDataParams{
+			Metadata: map[string]string{
+				"user_id":    userID,
+				"type":       req.Type,
+				"resourceID": req.ResourceID,
+			},
+		}
 	}
 
 	sess, err := session.New(params)
