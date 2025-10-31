@@ -72,7 +72,7 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 
 	// Get metadata
 	userID := session.Metadata["user_id"]
-	planType := session.Metadata["type"]
+	resourceType := session.Metadata["type"]
 	planID := session.Metadata["resourceID"]
 
 	if userID == "" {
@@ -80,15 +80,48 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 		return
 	}
 
-	// Get credits to add
-	credits := stripe.GetCreditsForPlan(planType, planID)
-	if credits == 0 {
-		log.Printf("Error: could not determine credits for type=%s, planID=%s\n", planType, planID)
+	// Verify user exists
+	user, err := db.GetUserByID(userID, h.DB)
+	if err != nil {
+		log.Printf("Error: user %s not found for session %s\n", userID, session.ID)
 		return
 	}
 
+	// Get credits to add
+	credits := stripe.GetCreditsForPlan(resourceType, planID)
+	if credits == 0 {
+		log.Printf("Error: could not determine credits for type=%s, planID=%s\n", resourceType, planID)
+		return
+	}
+
+	// if is subscription, increase user's subscription credits
+	if resourceType == "subscription" {
+		_, err = db.UpdateUserSubscriptionCredits(userID, credits, h.DB)
+		if err != nil {
+			log.Printf("Error increasing subscription credits for user %s: %v\n", userID, err)
+			return
+		}
+		_, err = db.UpdateUserSubscriptionPlanID(userID, planID, h.DB)
+		if err != nil {
+			log.Printf("Error updating subscription plan ID for user %s: %v\n", userID, err)
+			return
+		}
+	} else {
+		// Increase user credits
+		_, err = db.UpdateUserPermanentCredits(userID, user.PermanentCredits+credits, h.DB)
+		if err != nil {
+			log.Printf("Error increasing credits for user %s: %v\n", userID, err)
+			return
+		}
+	}
+
 	// Add credit transaction
-	reason := "Payment processed"
+	var reason string
+	if resourceType == "subscription" {
+		reason = "Subscription payment processed"
+	} else {
+		reason = "One-time credit purchase"
+	}
 	source := "stripe"
 
 	err = db.AddCreditTransaction(userID, credits, reason, source, h.DB)
