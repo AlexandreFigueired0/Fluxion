@@ -43,3 +43,38 @@ func GetPriceID(priceType string, planID string) string {
 	}
 	return ""
 }
+
+// GetCreditsForPlan returns the number of credits to add based on plan type and ID
+func GetCreditsForPlan(resourceType string, planID string) int {
+	switch resourceType {
+	case "subscription":
+		switch planID {
+		case "indie":
+			return 25
+		case "pro":
+			return 75
+		case "ultra":
+			return 250
+		}
+	case "credits":
+		// For credit packs, planID is the number of credits
+		if planID == "10" {
+			return 10
+		}
+		if planID == "25" {
+			return 25
+		}
+		if planID == "60" {
+			return 60
+		}
+		if planID == "150" {
+			return 150
+		}
+	}
+	return 0
+}
+
+// GetWebhookSecret returns the Stripe webhook signing secret
+func GetWebhookSecret() string {
+	return os.Getenv("STRIPE_WEBHOOK_SECRET")
+}
