@@ -108,3 +108,16 @@ func UpdateUserPermanentCredits(user_id string, newPermanentCredits int, db *sup
 	_, err := db.From("users").Update(updates, "", "").Eq("id", user_id).Single().ExecuteTo(&updatedUser)
 	return &updatedUser, err
 }
+
+// UpdateUserSubscriptionPlanID updates a user's subscription plan ID
+func UpdateUserSubscriptionPlanID(user_id string, newPlanID string, db *supa.Client) (*dto.UserDTO, error) {
+	updates := map[string]interface{}{
+		"subscription_plan_id": newPlanID,
+		"updated_at":           time.Now(),
+	}
+
+	var updatedUser dto.UserDTO
+
+	_, err := db.From("users").Update(updates, "", "").Eq("id", user_id).Single().ExecuteTo(&updatedUser)
+	return &updatedUser, err
+}
