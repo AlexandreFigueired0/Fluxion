@@ -5,6 +5,7 @@ import (
 	"fluxion-be/internal/handlers"
 	"fluxion-be/internal/middleware"
 	stripeClient "fluxion-be/internal/stripe"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -16,7 +17,14 @@ import (
 const address = "0.0.0.0:8080"
 
 func main() {
-	log.SetOutput(os.Stdout)
+	// Set up logging to stdout and log file
+	logFile, err := os.OpenFile("backend.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer logFile.Close()
+
+	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	// Initialize Stripe

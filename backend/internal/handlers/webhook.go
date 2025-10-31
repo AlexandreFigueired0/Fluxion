@@ -234,5 +234,5 @@ func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
 		return
 	}
 
-	log.Printf("✅ Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
+	log.Printf("Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
 }
