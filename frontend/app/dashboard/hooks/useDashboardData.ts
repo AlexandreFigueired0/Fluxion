@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -22,25 +22,15 @@ export function useDashboardData() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
+  const lastFetchKeyRef = useRef<string>('');
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-      return;
-    }
-
-    if (status === 'authenticated' && session?.user?.id) {
-      setUserId(session.user.id);
-      fetchUserData(session.user.id);
-    }
-  }, [status, session, router]);
-
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = useCallback(async (id: string, token: string) => {
+    setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${id}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.accessToken}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
       // If fail redirect to login page with error message
@@ -55,13 +45,37 @@ export function useDashboardData() {
       setPermanentCredits(data.permanent_credits);
       setUserName(data.name);
       setEmail(data.email);
-      setUserId(userId);
     } catch (error) {
       console.error('Error fetching user data:', error);
+      lastFetchKeyRef.current = '';
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+      return;
+    }
+
+    const token = session?.accessToken;
+    const currentUserId = session?.user?.id;
+
+    if (status !== 'authenticated' || !token || !currentUserId) {
+      return;
+    }
+
+    setUserId(currentUserId);
+
+    const fetchKey = `${currentUserId}:${token}`;
+    if (lastFetchKeyRef.current === fetchKey) {
+      return;
+    }
+    lastFetchKeyRef.current = fetchKey;
+
+    fetchUserData(currentUserId, token);
+  }, [router, status, session?.accessToken, session?.user?.id, fetchUserData]);
 
   return {
     userId,
