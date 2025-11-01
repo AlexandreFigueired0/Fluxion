@@ -8,6 +8,7 @@ import {useDashboardData} from '../hooks/useDashboardData';
 import type { CreditTransaction } from './services/creditTransaction';
 import creditTransactionService from './services/creditTransaction';
 import checkoutService from './services/checkout';
+import { LoadingState } from '../components';
 
 function formatDate(dateString: string): string {
   const options: Intl.DateTimeFormatOptions = {
@@ -25,7 +26,7 @@ const BillingPage = () => {
   const { data: session } = useSession();
 
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
-  const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
+  const { subscriptionCredits, permanentCredits, subscriptionPlanId, loading, isLoading } = useDashboardData();
   const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -43,6 +44,11 @@ const BillingPage = () => {
       .then(data => setCreditTransactions(data))
       .catch(err => console.error('Failed to load credit transactions:', err));
   }, [session?.accessToken, session?.user?.id]);
+
+
+  if (loading || isLoading) {
+    return <LoadingState />;
+  }
 
 
   const handleSubscribeClick = async (resourceID: string) => {
