@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Wallet, CreditCard, Clock, Zap, Crown, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import {useDashboardData} from '../hooks/useDashboardData';
 import type { CreditTransaction } from './services/creditTransaction';
@@ -23,9 +24,13 @@ function formatDate(dateString: string): string {
 
 const BillingPage = () => {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const success = searchParams.get('success');
+  const cancelled = searchParams.get('cancelled');
+
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
   const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
-  const [ creditTransactions, setCreditTransactions ] = useState<CreditTransaction[]>([]);
+  const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -34,6 +39,14 @@ const BillingPage = () => {
       .then(data => setCreditTransactions(data))
       .catch(err => console.error('Failed to load credit transactions:', err));
   }, [session]);
+
+  useEffect(() => {
+    if (success) {
+      alert('Checkout successful!');
+    } else if (cancelled) {
+      alert('Checkout was cancelled.');
+    }
+  }, [success, cancelled]);
 
   const handleSubscribeClick = async (resourceID: string) => {
     if (!session?.accessToken) {
