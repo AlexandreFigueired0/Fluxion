@@ -20,6 +20,13 @@ class CreditTransactionService {
         userToken: string,
         userID: string
     ): Promise<CreditTransaction[]> {
+        if (!userID) {
+            throw new Error("User ID is required");
+        }
+        if (!userToken) {
+            throw new Error("User token is required");
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/credits/user/${userID}`, {
             method: "GET",
             headers: {

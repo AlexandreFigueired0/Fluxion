@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { Wallet, CreditCard, Clock, Zap, Crown, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import {useDashboardData} from '../hooks/useDashboardData';
 import type { CreditTransaction } from './services/creditTransaction';
@@ -24,9 +23,6 @@ function formatDate(dateString: string): string {
 
 const BillingPage = () => {
   const { data: session } = useSession();
-  const searchParams = useSearchParams();
-  const success = searchParams.get('success');
-  const cancelled = searchParams.get('cancelled');
 
   const [selectedTab, setSelectedTab] = useState<'subscription' | 'credits'>('subscription');
   const { subscriptionCredits, permanentCredits, subscriptionPlanId } = useDashboardData();
@@ -35,18 +31,19 @@ const BillingPage = () => {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
-    creditTransactionService.listCreditTransactionsByUserID(session?.accessToken || '', session?.user?.id || '')
+    const token = session?.accessToken;
+    const userId = session?.user?.id;
+
+    if (!token || !userId) {
+      return;
+    }
+
+    creditTransactionService
+      .listCreditTransactionsByUserID(token, userId)
       .then(data => setCreditTransactions(data))
       .catch(err => console.error('Failed to load credit transactions:', err));
-  }, [session]);
+  }, [session?.accessToken, session?.user?.id]);
 
-  useEffect(() => {
-    if (success) {
-      alert('Checkout successful!');
-    } else if (cancelled) {
-      alert('Checkout was cancelled.');
-    }
-  }, [success, cancelled]);
 
   const handleSubscribeClick = async (resourceID: string) => {
     if (!session?.accessToken) {
