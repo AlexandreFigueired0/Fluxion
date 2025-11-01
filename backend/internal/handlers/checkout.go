@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	stripesdk "github.com/stripe/stripe-go/v81"
-	"github.com/stripe/stripe-go/v81/checkout/session"
+	stripesdk "github.com/stripe/stripe-go/v83"
+	"github.com/stripe/stripe-go/v83/checkout/session"
 )
 
 type CheckoutHandler struct{}

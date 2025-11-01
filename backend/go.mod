@@ -8,7 +8,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/openai/openai-go v1.12.0
-	github.com/stripe/stripe-go/v81 v81.4.0
+	github.com/stripe/stripe-go/v83 v83.1.0
 	github.com/supabase-community/supabase-go v0.0.4
 	golang.org/x/crypto v0.40.0
 )

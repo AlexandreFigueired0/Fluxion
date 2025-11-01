@@ -11,9 +11,9 @@ import (
 	"fluxion-be/internal/stripe"
 
 	"github.com/gin-gonic/gin"
-	stripesdk "github.com/stripe/stripe-go/v81"
-	subscriptionsdk "github.com/stripe/stripe-go/v81/subscription"
-	"github.com/stripe/stripe-go/v81/webhook"
+	stripesdk "github.com/stripe/stripe-go/v83"
+	subscriptionsdk "github.com/stripe/stripe-go/v83/subscription"
+	"github.com/stripe/stripe-go/v83/webhook"
 	supa "github.com/supabase-community/supabase-go"
 )
 
@@ -146,18 +146,18 @@ func (h *WebhookHandler) handleCheckoutSessionCompleted(event stripesdk.Event) {
 
 // handleInvoicePaymentSucceeded handles subscription renewals (monthly recurring)
 func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
-	var invoice stripesdk.Invoice
-	if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+	var invoiceData map[string]interface{}
+	if err := json.Unmarshal(event.Data.Raw, &invoiceData); err != nil {
 		log.Printf("Error parsing invoice.payment_succeeded: %v\n", err)
 		return
 	}
 
-	if invoice.Subscription == nil || invoice.Subscription.ID == "" {
-		log.Printf("Skipping invoice %s - subscription details missing\n", invoice.ID)
+	subscriptionID, ok := invoiceData["subscription"].(string)
+	if !ok || subscriptionID == "" {
+		log.Printf("Skipping invoice %s - subscription details missing\n", invoiceData["id"])
 		return
 	}
 
-	subscriptionID := invoice.Subscription.ID
 	sub, err := subscriptionsdk.Get(subscriptionID, nil)
 	if err != nil {
 		log.Printf("Error retrieving subscription %s: %v\n", subscriptionID, err)
@@ -170,8 +170,8 @@ func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
 
 	if sub.Customer != nil && sub.Customer.ID != "" {
 		customerID = sub.Customer.ID
-	} else if invoice.Customer != nil && invoice.Customer.ID != "" {
-		customerID = invoice.Customer.ID
+	} else if customerIDVal, ok := invoiceData["customer"].(string); ok && customerIDVal != "" {
+		customerID = customerIDVal
 	}
 
 	var user *models.User
@@ -193,7 +193,8 @@ func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
 	}
 
 	if user == nil {
-		log.Printf("Error: unable to resolve user for subscription %s (invoice %s)\n", subscriptionID, invoice.ID)
+		invoiceID, _ := invoiceData["id"].(string)
+		log.Printf("Error: unable to resolve user for subscription %s (invoice %s)\n", subscriptionID, invoiceID)
 		return
 	}
 
@@ -234,5 +235,6 @@ func (h *WebhookHandler) handleInvoicePaymentSucceeded(event stripesdk.Event) {
 		return
 	}
 
-	log.Printf("Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoice.ID, subscriptionID)
+	invoiceID, _ := invoiceData["id"].(string)
+	log.Printf("Renewed %d credits for user %s (invoice %s, subscription %s)\n", credits, userID, invoiceID, subscriptionID)
 }

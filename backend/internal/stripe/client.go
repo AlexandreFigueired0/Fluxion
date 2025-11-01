@@ -3,7 +3,7 @@ package stripe
 import (
 	"os"
 
-	"github.com/stripe/stripe-go/v81"
+	"github.com/stripe/stripe-go/v83"
 )
 
 // InitStripe initializes the Stripe client with the secret key
