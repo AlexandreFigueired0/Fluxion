@@ -23,9 +23,9 @@ func AddCreditTransaction(userID string, amount int, reason, source string, db *
 	return err
 }
 
-// GetCreditTransactionsByUserID retrieves credit transactions for a user
+// GetCreditTransactionsByUserID retrieves limit recent credit transactions for a user
 func GetCreditTransactionsByUserID(userID string, limit int, db *supa.Client) ([]models.CreditTransaction, error) {
 	var transactions []models.CreditTransaction
-	_, err := db.From("credit_transactions").Select("*", "", false).Eq("user_id", userID).Limit(limit, "").ExecuteTo(&transactions)
+	_, err := db.From("credit_transactions").Select("*", "", false).Eq("user_id", userID).Order("created_at", nil).Limit(limit, "").ExecuteTo(&transactions)
 	return transactions, err
 }
