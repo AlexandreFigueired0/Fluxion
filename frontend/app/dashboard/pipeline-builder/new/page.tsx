@@ -25,6 +25,7 @@ export default function NewPipelinePage() {
       try {
         initialConfig = workflowFromJson(decoded);
       } catch (jsonError) {
+        console.error('Failed to parse JSON:', jsonError);
         initialConfig = workflowFromString(decoded);
       }
     } catch (e) {
