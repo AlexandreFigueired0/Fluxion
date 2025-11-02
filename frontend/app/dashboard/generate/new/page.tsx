@@ -10,44 +10,34 @@ import {
 import { Sparkles, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { GenerateResponse, generateService } from '../services/generate';
 
 export default function GenerateNewPage() {
-  const { loading, isLoading, userId, apiKeyName, apiKeyPrefix } = useDashboardData();
+  const { loading, isLoading, } = useDashboardData();
   const [description, setDescription] = useState('');
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<GenerateResponse>({} as GenerateResponse);
+  const [error, setError] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   const handleGenerate = async () => {
     setSubmitting(true);
-    setError(null);
-    setResult(null);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/api/commands/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.accessToken}`,
-        },
-        body: JSON.stringify({
-          prompt: description,
-          project_context: {}, // TODO: fill with real context if available
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to generate workflow');
-      }
-      const data = await res.json();
-      setResult(data);
-    } catch (e: unknown) {
-      setError((e as Error).message);
-    } finally {
+
+    const result = await generateService.generateWorkflow(
+      session?.accessToken || '',
+      description,
+    ).catch((err) => {
+      setError(err.message || 'An error occurred while generating the workflow.');
+    }).finally(() => {
       setSubmitting(false);
+    });
+
+    if (result) {
+      setResult(result);
+      setError("");
     }
-  };
+  }
 
   const handleCopyConfig = async () => {
     const configText = result.pipeline_config || JSON.stringify(result, null, 2);
