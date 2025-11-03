@@ -6,6 +6,7 @@ import (
 
 	"fluxion-be/internal/dto"
 	models "fluxion-be/internal/models"
+	"fluxion-be/internal/utils"
 
 	supa "github.com/supabase-community/supabase-go"
 )
@@ -146,4 +147,57 @@ func GetUserByStripeCustomerID(customerID string, db *supa.Client) (*models.User
 		return nil, ErrUserNotFound
 	}
 	return &users[0], nil
+}
+
+// UpdateGitHubToken stores the encrypted GitHub access token and username
+func UpdateGitHubToken(userID string, accessToken string, username string, db *supa.Client) error {
+	// Encrypt the token before storing
+	encryptedToken, err := utils.EncryptToken(accessToken)
+	if err != nil {
+		return err
+	}
+
+	updates := map[string]interface{}{
+		"github_access_token": encryptedToken,
+		"github_username":     username,
+		"updated_at":          time.Now(),
+	}
+
+	var updatedUser dto.UserDTO
+	_, err = db.From("users").Update(updates, "", "").Eq("id", userID).Single().ExecuteTo(&updatedUser)
+	return err
+}
+
+// GetGitHubToken retrieves and decrypts the GitHub access token for a user
+func GetGitHubToken(userID string, db *supa.Client) (string, error) {
+	user, err := GetUserByID(userID, db)
+	if err != nil {
+		return "", err
+	}
+
+	if user.GitHubAccessToken == "" {
+		return "", errors.New("user has no GitHub token stored")
+	}
+
+	// Decrypt the token before returning
+	decryptedToken, err := utils.DecryptToken(user.GitHubAccessToken)
+	if err != nil {
+		return "", err
+	}
+
+	return decryptedToken, nil
+}
+
+// GetUserGitHubInfo retrieves GitHub username and returns it (username is stored unencrypted)
+func GetUserGitHubInfo(userID string, db *supa.Client) (username string, err error) {
+	user, err := GetUserByID(userID, db)
+	if err != nil {
+		return "", err
+	}
+
+	if user.GitHubUsername == "" {
+		return "", errors.New("user has no GitHub account linked")
+	}
+
+	return user.GitHubUsername, nil
 }
