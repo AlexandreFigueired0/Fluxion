@@ -46,24 +46,33 @@ const handler = NextAuth({
     }),
     GitHubProvider({
       clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!
-    })
+      clientSecret: process.env.GITHUB_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    } as any),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // For OAuth providers (Google/GitHub), create user in your backend
       if (account?.provider === "google" || account?.provider === "github") {
         console.log("Provider account:", account)
         try {
+          const oauthPayload: any = {
+            email: user.email,
+            name: user.name,
+            provider: account.provider,
+            providerId: account.providerAccountId
+          }
+
+          // Include GitHub token and username if available
+          if (account.provider === "github" && account.access_token) {
+            oauthPayload.accessToken = account.access_token
+            oauthPayload.githubUsername = user.login || user.name
+          }
+
           const res = await fetch(`${process.env.BACKEND_URL}/api/auth/oauth`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name,
-              provider: account.provider,
-              providerId: account.providerAccountId
-            })
+            body: JSON.stringify(oauthPayload)
           })
           const dbUser = await res.json()
           if (!res.ok || !dbUser?.id) {
@@ -78,7 +87,7 @@ const handler = NextAuth({
       }
       return true
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
       }

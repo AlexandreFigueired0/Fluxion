@@ -31,10 +31,12 @@ type LoginRequest struct {
 }
 
 type OAuthRequest struct {
-	Email      string `json:"email" binding:"required"`
-	Name       string `json:"name" binding:"required"`
-	Provider   string `json:"provider" binding:"required"`
-	ProviderID string `json:"providerId" binding:"required"`
+	Email          string `json:"email" binding:"required"`
+	Name           string `json:"name" binding:"required"`
+	Provider       string `json:"provider" binding:"required"`
+	ProviderID     string `json:"providerId" binding:"required"`
+	AccessToken    string `json:"accessToken"`    // GitHub OAuth token (optional)
+	GitHubUsername string `json:"githubUsername"` // GitHub username (optional)
 }
 
 // HandleSignup - POST /api/auth/signup
@@ -156,6 +158,18 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 	switch {
 	case err == nil:
 		log.Printf("✅ Existing user logged in: %s (ID: %s)", user.Email, user.ID)
+
+		// Update GitHub token if provided
+		if req.Provider == "github" && req.AccessToken != "" {
+			err := db.UpdateGitHubToken(user.ID, req.AccessToken, req.GitHubUsername, h.DB)
+			if err != nil {
+				log.Printf("⚠️  Failed to update GitHub token: %v", err)
+				// Don't fail the entire login, just log the warning
+			} else {
+				log.Printf("✅ Updated GitHub token for user: %s", user.Email)
+			}
+		}
+
 	case errors.Is(err, db.ErrUserNotFound):
 		log.Printf("📝 Creating new %s user: %s", req.Provider, req.Email)
 
@@ -168,6 +182,18 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 
 		log.Printf("✅ Created new %s user: %s (ID: %s) with %d credits",
 			req.Provider, user.Email, user.ID, user.PermanentCredits)
+
+		// Save GitHub token if provided
+		if req.Provider == "github" && req.AccessToken != "" {
+			err := db.UpdateGitHubToken(user.ID, req.AccessToken, req.GitHubUsername, h.DB)
+			if err != nil {
+				log.Printf("⚠️  Failed to store GitHub token: %v", err)
+				// Don't fail the entire login, just log the warning
+			} else {
+				log.Printf("✅ Stored GitHub token for user: %s", user.Email)
+			}
+		}
+
 	default:
 		log.Println("❌ Database error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
