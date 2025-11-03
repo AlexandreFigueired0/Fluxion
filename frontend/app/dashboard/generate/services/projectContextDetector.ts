@@ -51,7 +51,7 @@ class ProjectContextDetectorService {
             body: JSON.stringify({
                 owner,
                 repo,
-                token, // Optional - for users providing their own token
+                token,
             }),
         });
 
