@@ -87,9 +87,13 @@ const handler = NextAuth({
       }
       return true
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
+      }
+      // Store GitHub token in JWT if available
+      if (account?.provider === "github" && account.access_token) {
+        token.githubToken = account.access_token
       }
       return token
     },
@@ -110,6 +114,7 @@ const handler = NextAuth({
       session.user.email = token.email as string;
       session.user.name = token.name as string;
       session.accessToken = backendToken;
+      session.githubToken = token.githubToken as string | undefined;
       
       return session;
     }

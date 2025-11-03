@@ -91,7 +91,11 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
     onLoading(true);
 
     try {
-      const context = await projectContextDetectorService.detectProject(userToken, owner, repo);
+      const context = await projectContextDetectorService.detectProject(
+        userToken,
+        owner,
+        repo
+      );
       onDetected(context);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to detect project';
