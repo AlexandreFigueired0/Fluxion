@@ -16,4 +16,6 @@ type User struct {
 	UpdatedAt             time.Time `json:"updated_at"`
 	Provider              string    `json:"provider"`    // "credentials", "google", "github"
 	ProviderID            string    `json:"provider_id"` // e.g. Google or GitHub user ID
+	GitHubAccessToken     string    `json:"github_access_token"`
+	GitHubUsername        string    `json:"github_username"`
 }
