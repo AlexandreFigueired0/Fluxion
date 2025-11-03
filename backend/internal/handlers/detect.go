@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
-	db "fluxion-be/internal/db"
 	"fluxion-be/internal/context"
+	db "fluxion-be/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -112,20 +114,51 @@ func (h *DetectHandler) ListUserRepositories(c *gin.Context) {
 	})
 }
 
-// Repository represents a GitHub repository
-type Repository struct {
+// GitHubRepo is the raw response from GitHub API
+type GitHubRepo struct {
 	Name        string `json:"name"`
-	Owner       string `json:"owner"`
 	FullName    string `json:"full_name"`
 	Description string `json:"description"`
-	URL         string `json:"html_url"`
+	HtmlURL     string `json:"html_url"`
 	Private     bool   `json:"private"`
+	Owner       struct {
+		Login string `json:"login"`
+	} `json:"owner"`
 }
 
 // fetchUserRepositories fetches user's repositories from GitHub API
-func fetchUserRepositories(githubToken string) ([]Repository, error) {
-	// For now, return empty list - this can be enhanced to fetch from GitHub API
-	// This would require making authenticated requests to https://api.github.com/user/repos
-	// For MVP, users can just paste owner/repo manually
-	return []Repository{}, nil
+func fetchUserRepositories(githubToken string) ([]GitHubRepo, error) {
+	url := "https://api.github.com/user/repos?per_page=100&sort=updated&direction=desc"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set GitHub API headers
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", githubToken))
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "Fluxion")
+
+	// Make request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch repositories: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check status
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API returned status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Parse response
+	var ghRepos []GitHubRepo
+	if err := json.NewDecoder(resp.Body).Decode(&ghRepos); err != nil {
+		return nil, fmt.Errorf("failed to parse GitHub response: %w", err)
+	}
+
+	return ghRepos, nil
 }
