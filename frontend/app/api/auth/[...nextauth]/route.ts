@@ -48,7 +48,7 @@ const handler = NextAuth({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
       allowDangerousEmailAccountLinking: true,
-    } as any),
+    }),
   ],
   callbacks: {
     async signIn({ user, account }) {
@@ -56,7 +56,7 @@ const handler = NextAuth({
       if (account?.provider === "google" || account?.provider === "github") {
         console.log("Provider account:", account)
         try {
-          const oauthPayload: any = {
+          const oauthPayload: Record<string, unknown> = {
             email: user.email,
             name: user.name,
             provider: account.provider,
@@ -66,7 +66,7 @@ const handler = NextAuth({
           // Include GitHub token and username if available
           if (account.provider === "github" && account.access_token) {
             oauthPayload.accessToken = account.access_token
-            oauthPayload.githubUsername = user.login || user.name
+            oauthPayload.githubUsername = user.name
           }
 
           const res = await fetch(`${process.env.BACKEND_URL}/api/auth/oauth`, {
