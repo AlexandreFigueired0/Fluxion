@@ -90,7 +90,7 @@ export default function GenerateNewPage() {
             </Link> */}
           </div>
           <p className="text-zinc-400 mt-4">For better results, consider adding project context. <Link href="/docs/cli" className="text-orange-500 underline">See how</Link></p>
-          {result && (
+          {result.pipeline_config && (
             <div className="mt-8 flex flex-col gap-6">
               {/* Config Box */}
               <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-lg">
