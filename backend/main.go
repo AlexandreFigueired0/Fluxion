@@ -72,8 +72,11 @@ func main() {
 	commands := protected.Group("/commands")
 	generateHandler := &handlers.GenerateHandler{DB: db_conn}
 	debugHandler := &handlers.DebugHandler{DB: db_conn}
+	detectHandler := &handlers.DetectHandler{DB: db_conn}
 	commands.POST("/generate", generateHandler.GeneratePipelineConfig)
 	commands.POST("/debug", debugHandler.DebugPipelineConfig)
+	commands.POST("/detect", detectHandler.DetectProject)
+	commands.GET("/repos", detectHandler.ListUserRepositories)
 
 	// User routes
 	userHandler := &handlers.UserHandler{DB: db_conn}
