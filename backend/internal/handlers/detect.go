@@ -22,12 +22,12 @@ type DetectHandler struct {
 
 // DetectProjectRequest is the request body for project detection
 type DetectProjectRequest struct {
-	Owner string `json:"owner" binding:"required"`
-	Repo  string `json:"repo" binding:"required"`
-	Token string `json:"token"` // Optional - for non-authenticated users providing their own token
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
+	Token string `json:"token"`
 }
 
-// DetectProject - POST /api/detect/project
+// DetectProject - POST /api/detect
 // Analyzes a GitHub repository and returns detected project context
 func (h *DetectHandler) DetectProject(c *gin.Context) {
 	claims, exists := c.Get("user")
@@ -108,9 +108,22 @@ func (h *DetectHandler) ListUserRepositories(c *gin.Context) {
 
 	log.Printf("Found %d repositories for user %s", len(repos), userID)
 
+	// Transform GitHubRepo to RepositoryResponse to ensure owner is a string
+	responseRepos := make([]RepositoryResponse, len(repos))
+	for i, repo := range repos {
+		responseRepos[i] = RepositoryResponse{
+			Name:        repo.Name,
+			Owner:       repo.Owner.Login,
+			FullName:    repo.FullName,
+			Description: repo.Description,
+			HtmlURL:     repo.HtmlURL,
+			Private:     repo.Private,
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"repositories": repos,
-		"count":        len(repos),
+		"repositories": responseRepos,
+		"count":        len(responseRepos),
 	})
 }
 
@@ -124,6 +137,16 @@ type GitHubRepo struct {
 	Owner       struct {
 		Login string `json:"login"`
 	} `json:"owner"`
+}
+
+// RepositoryResponse is the transformed response for the frontend
+type RepositoryResponse struct {
+	Name        string `json:"name"`
+	Owner       string `json:"owner"`
+	FullName    string `json:"full_name"`
+	Description string `json:"description"`
+	HtmlURL     string `json:"html_url"`
+	Private     bool   `json:"private"`
 }
 
 // fetchUserRepositories fetches user's repositories from GitHub API

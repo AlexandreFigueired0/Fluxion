@@ -49,9 +49,9 @@ class ProjectContextDetectorService {
                 'Authorization': `Bearer ${userToken}`,
             },
             body: JSON.stringify({
-                owner,
-                repo,
-                token,
+                owner: owner,
+                repo: repo,
+                token: token || '',
             }),
         });
 

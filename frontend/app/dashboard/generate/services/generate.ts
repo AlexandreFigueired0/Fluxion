@@ -14,12 +14,12 @@ class GenerateService {
      * Send a generate request to the backend
      * @param userToken - Auth token
      * @param prompt - User prompt for generation
-     * @param projectContext - Context of the project
+     * @param project_context - Context of the project
      */
     async generateWorkflow(
         userToken: string,
         prompt: string,
-        projectContext?: object
+        project_context?: object
     ): Promise<GenerateResponse> {
         const response = await fetch(`${API_BASE_URL}/api/commands/generate`, {
             method: 'POST',
@@ -29,7 +29,7 @@ class GenerateService {
             },
             body: JSON.stringify({
                 prompt,
-                project_context: projectContext || {},
+                project_context: project_context || {},
             }),
         });
 
