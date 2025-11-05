@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search, GitBranch, Lock, Globe, Loader } from 'lucide-react';
 import { projectContextDetectorService, Repository, DetectResponse } from '../services/projectContextDetector';
 
@@ -17,37 +17,39 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [manualUrl, setManualUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'repos' | 'manual'>('repos');
   const [detecting, setDetecting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  const loadRepositories = useCallback(async () => {
-    setLoading(true);
-    try {
-      const repos = await projectContextDetectorService.getUserRepositories(userToken);
-      setRepositories(repos);
-      setFilteredRepos(repos);
-      
-      // If no repos, switch to manual tab
-      if (repos.length === 0) {
-        setActiveTab('manual');
-      }
-    } catch (error) {
-      console.error('Failed to load repositories:', error);
-      // Silently fail - user can still use manual entry
-      setActiveTab('manual');
-    } finally {
-      setLoading(false);
-    }
-  }, [userToken]);
-
-  // Load user's repositories on mount
+  // Load user's repositories on mount only
   useEffect(() => {
-    if (userToken) {
+    if (userToken && !hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      
+      const loadRepositories = async () => {
+        setLoading(true);
+        try {
+          const repos = await projectContextDetectorService.getUserRepositories(userToken);
+          setRepositories(repos);
+          setFilteredRepos(repos);
+          
+          // If no repos, switch to manual tab
+          if (repos.length === 0) {
+            setActiveTab('manual');
+          }
+        } catch (error) {
+          console.error('Failed to load repositories:', error);
+          // Silently fail - user can still use manual entry
+          setActiveTab('manual');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
       loadRepositories();
     }
-  }, [userToken, loadRepositories]);
+  }, [userToken]);
 
   useEffect(() => {
     if (!showDropdown) {
@@ -86,22 +88,6 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
   const handleSelectRepository = async (repo: Repository) => {
     setShowDropdown(false);
     await detectRepository(repo.owner, repo.name);
-  };
-
-  const handleManualSubmit = async () => {
-    if (!manualUrl.trim()) {
-      onError('Please enter a GitHub URL or owner/repo');
-      return;
-    }
-
-    const parsed = projectContextDetectorService.parseRepositoryUrl(manualUrl);
-    if (!parsed) {
-      onError('Invalid GitHub URL. Use format: owner/repo or https://github.com/owner/repo');
-      return;
-    }
-
-    setManualUrl('');
-    await detectRepository(parsed.owner, parsed.repo);
   };
 
   const detectRepository = async (owner: string, repo: string) => {
@@ -144,19 +130,6 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
               {repositories.length > 0 && (
                 <span className="ml-1 text-xs bg-zinc-700 px-2 py-1 rounded">{repositories.length}</span>
               )}
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('manual')}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-              activeTab === 'manual'
-                ? 'bg-zinc-800 text-orange-500 border-b-2 border-orange-500'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <Search size={16} />
-              Enter Manually
             </div>
           </button>
         </div>
@@ -228,50 +201,6 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
           </div>
         )}
 
-        {/* Manual Entry Tab */}
-        {activeTab === 'manual' && (
-          <div className="p-4 space-y-3">
-            <div className="space-y-2">
-              <label className="block text-sm text-zinc-400">
-                Enter GitHub repository URL or owner/repo
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., torvalds/linux or https://github.com/torvalds/linux"
-                value={manualUrl}
-                onChange={(e) => setManualUrl(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !detecting) {
-                    handleManualSubmit();
-                  }
-                }}
-                className="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded text-zinc-100 placeholder-zinc-500 focus:border-orange-500 focus:outline-none"
-              />
-            </div>
-
-            <button
-              onClick={handleManualSubmit}
-              disabled={detecting || !manualUrl.trim()}
-              className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed rounded text-white font-medium transition flex items-center justify-center gap-2"
-            >
-              {detecting ? (
-                <>
-                  <Loader className="animate-spin" size={16} />
-                  Detecting...
-                </>
-              ) : (
-                <>
-                  <Search size={16} />
-                  Detect Project
-                </>
-              )}
-            </button>
-
-            <p className="text-xs text-zinc-500">
-              Supports: owner/repo, github.com/owner/repo, or https://github.com/owner/repo
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Loading State for Detection */}
