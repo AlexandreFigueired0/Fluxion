@@ -42,6 +42,8 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 		PermanentCredits:      user.PermanentCredits,
 		SubscriptionPlanID:    user.SubscriptionPlanID,
 		SubscriptionPeriodEnd: user.SubscriptionPeriodEnd,
+		GitHubUsername:        user.GitHubUsername,
+		GitHubConnected:       user.GitHubAccessToken != "",
 	}
 	c.JSON(http.StatusOK, userResponse)
 }

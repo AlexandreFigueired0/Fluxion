@@ -2,9 +2,10 @@ package context
 
 import (
 	"fmt"
+	"strings"
 
-	types "fluxion-shared/types"
 	"fluxion-be/internal/context/detectors"
+	types "fluxion-shared/types"
 )
 
 // ProjectDetector orchestrates language detection for a GitHub repository
@@ -79,9 +80,10 @@ func (pd *ProjectDetector) Detect() (*types.ProjectContext, error) {
 
 // detectLanguagesInDir checks a directory for language indicators
 func (pd *ProjectDetector) detectLanguagesInDir(files []detectors.GitHubFileContent, ctx *types.ProjectContext) {
+	filesWithContent := pd.attachFileContents(files)
 	// Run all detectors
 	for _, detector := range pd.detectors {
-		langCtx := detector.Detect(files)
+		langCtx := detector.Detect(filesWithContent)
 		if langCtx != nil {
 			ctx.Languages = append(ctx.Languages, langCtx.Language)
 
@@ -97,7 +99,7 @@ func (pd *ProjectDetector) detectLanguagesInDir(files []detectors.GitHubFileCont
 				// Merge additional language info
 				ctx.HasTests = ctx.HasTests || langCtx.HasTests
 			}
-			
+
 			// Stop after first detection
 			break
 		}
@@ -118,6 +120,41 @@ func (pd *ProjectDetector) detectDockerFiles(files []detectors.GitHubFileContent
 	}
 }
 
+// attachFileContents fetches raw content for files used in language detection
+func (pd *ProjectDetector) attachFileContents(files []detectors.GitHubFileContent) []detectors.GitHubFileContent {
+	if len(files) == 0 {
+		return files
+	}
+
+	enriched := make([]detectors.GitHubFileContent, len(files))
+	copy(enriched, files)
+
+	for i, file := range enriched {
+		if file.Type != "file" {
+			continue
+		}
+
+		if !needsFileContent(file.Name) {
+			continue
+		}
+
+		path := file.Path
+		if path == "" {
+			path = file.Name
+		}
+
+		content, err := pd.client.FetchFileContent(path)
+		if err != nil {
+			continue
+		}
+
+		enriched[i].Content = content
+		enriched[i].Encoding = "raw"
+	}
+
+	return enriched
+}
+
 // Helper functions
 func contains(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
@@ -130,4 +167,14 @@ func contains(s, substr string) bool {
 
 func endsWith(s, suffix string) bool {
 	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
+}
+
+func needsFileContent(name string) bool {
+	needle := strings.ToLower(name)
+	switch needle {
+	case "package.json", "requirements.txt", "pyproject.toml", "pipfile", "setup.py", "poetry.lock":
+		return true
+	default:
+		return false
+	}
 }

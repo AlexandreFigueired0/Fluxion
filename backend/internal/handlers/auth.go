@@ -1,13 +1,21 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
 
 	db "fluxion-be/internal/db"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	supa "github.com/supabase-community/supabase-go"
 
 	"golang.org/x/crypto/bcrypt"
@@ -206,4 +214,247 @@ func (h *AuthHandler) HandleOAuth(c *gin.Context) {
 		"email":   user.Email,
 		"credits": user.PermanentCredits,
 	})
+}
+
+// StartGitHubLink - GET /api/auth/github/link (protected)
+// Generates the GitHub authorization URL for the currently authenticated user
+func (h *AuthHandler) StartGitHubLink(c *gin.Context) {
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	userClaims := claims.(jwt.MapClaims)
+	userID := fmt.Sprintf("%v", userClaims["id"])
+
+	clientID := os.Getenv("GITHUB_CLIENT_ID")
+	clientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
+	if clientID == "" || clientSecret == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "GitHub OAuth not configured"})
+		return
+	}
+
+	redirectURI := os.Getenv("GITHUB_OAUTH_REDIRECT_URI")
+	if redirectURI == "" {
+		backendURL := strings.TrimSuffix(os.Getenv("BACKEND_URL"), "/")
+		if backendURL == "" {
+			backendURL = "http://localhost:8080"
+		}
+		redirectURI = backendURL + "/api/auth/github/callback"
+	}
+
+	state, err := generateGitHubLinkState(userID)
+	if err != nil {
+		log.Printf("❌ Failed to generate GitHub link state: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initiate GitHub link"})
+		return
+	}
+
+	authURL, err := url.Parse("https://github.com/login/oauth/authorize")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build GitHub URL"})
+		return
+	}
+
+	query := authURL.Query()
+	query.Set("client_id", clientID)
+	query.Set("redirect_uri", redirectURI)
+	query.Set("scope", "repo read:user")
+	query.Set("state", state)
+	authURL.RawQuery = query.Encode()
+
+	c.JSON(http.StatusOK, gin.H{"url": authURL.String()})
+}
+
+// HandleGitHubLinkCallback - GET /api/auth/github/callback
+// Exchanges the GitHub OAuth code for a token and stores it for the user from the state payload
+func (h *AuthHandler) HandleGitHubLinkCallback(c *gin.Context) {
+	code := c.Query("code")
+	state := c.Query("state")
+	if code == "" || state == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing code or state"})
+		return
+	}
+
+	userID, err := parseGitHubLinkState(state)
+	if err != nil {
+		log.Printf("❌ Invalid GitHub link state: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid state"})
+		return
+	}
+
+	redirectURI := os.Getenv("GITHUB_OAUTH_REDIRECT_URI")
+	if redirectURI == "" {
+		backendURL := strings.TrimSuffix(os.Getenv("BACKEND_URL"), "/")
+		if backendURL == "" {
+			backendURL = "http://localhost:8080"
+		}
+		redirectURI = backendURL + "/api/auth/github/callback"
+	}
+
+	accessToken, err := exchangeGitHubCodeForToken(code, redirectURI)
+	if err != nil {
+		log.Printf("❌ Failed to exchange GitHub code: %v", err)
+		h.redirectWithGitHubStatus(c, "error", "exchange_failed")
+		return
+	}
+
+	githubUsername, err := fetchGitHubUsername(accessToken)
+	if err != nil {
+		log.Printf("⚠️  Failed to fetch GitHub username: %v", err)
+		githubUsername = ""
+	}
+
+	if err := db.UpdateGitHubToken(userID, accessToken, githubUsername, h.DB); err != nil {
+		log.Printf("❌ Failed to store GitHub token: %v", err)
+		h.redirectWithGitHubStatus(c, "error", "store_failed")
+		return
+	}
+
+	log.Printf("✅ Linked GitHub account for user %s", userID)
+	h.redirectWithGitHubStatus(c, "connected", "")
+}
+
+func (h *AuthHandler) redirectWithGitHubStatus(c *gin.Context, status string, reason string) {
+	frontendURL := strings.TrimSuffix(os.Getenv("FRONTEND_URL"), "/")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+
+	params := url.Values{}
+	params.Set("github", status)
+	if reason != "" {
+		params.Set("reason", reason)
+	}
+
+	redirectTarget := frontendURL + "/dashboard/generate/new"
+	if encoded := params.Encode(); encoded != "" {
+		redirectTarget += "?" + encoded
+	}
+
+	c.Redirect(http.StatusFound, redirectTarget)
+}
+
+func generateGitHubLinkState(userID string) (string, error) {
+	secret := os.Getenv("NEXTAUTH_SECRET")
+	if secret == "" {
+		return "", errors.New("NEXTAUTH_SECRET not set")
+	}
+
+	claims := jwt.MapClaims{
+		"uid": userID,
+		"exp": time.Now().Add(10 * time.Minute).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+func parseGitHubLinkState(state string) (string, error) {
+	secret := os.Getenv("NEXTAUTH_SECRET")
+	if secret == "" {
+		return "", errors.New("NEXTAUTH_SECRET not set")
+	}
+
+	parsed, err := jwt.Parse(state, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(secret), nil
+	})
+	if err != nil || !parsed.Valid {
+		return "", errors.New("invalid state token")
+	}
+
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid state claims")
+	}
+
+	uid, ok := claims["uid"].(string)
+	if ok {
+		return uid, nil
+	}
+
+	return "", errors.New("state missing uid")
+}
+
+func exchangeGitHubCodeForToken(code string, redirectURI string) (string, error) {
+	clientID := os.Getenv("GITHUB_CLIENT_ID")
+	clientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
+	if clientID == "" || clientSecret == "" {
+		return "", errors.New("GitHub OAuth not configured")
+	}
+
+	data := url.Values{}
+	data.Set("client_id", clientID)
+	data.Set("client_secret", clientSecret)
+	data.Set("code", code)
+	data.Set("redirect_uri", redirectURI)
+
+	req, err := http.NewRequest(http.MethodPost, "https://github.com/login/oauth/access_token", strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("GitHub token exchange failed: %s", string(body))
+	}
+
+	var payload struct {
+		AccessToken string `json:"access_token"`
+		Scope       string `json:"scope"`
+		TokenType   string `json:"token_type"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return "", err
+	}
+
+	if payload.AccessToken == "" {
+		return "", errors.New("empty access token from GitHub")
+	}
+
+	return payload.AccessToken, nil
+}
+
+func fetchGitHubUsername(accessToken string) (string, error) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/user", nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", "token "+accessToken)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "Fluxion-GitHub-Linker")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GitHub user lookup failed with status %d", resp.StatusCode)
+	}
+
+	var payload struct {
+		Login string `json:"login"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return "", err
+	}
+
+	return payload.Login, nil
 }

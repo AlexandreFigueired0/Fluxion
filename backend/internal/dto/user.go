@@ -10,4 +10,6 @@ type UserDTO struct {
 	PermanentCredits      int       `json:"permanent_credits"`
 	SubscriptionPlanID    string    `json:"subscription_plan_id"`
 	SubscriptionPeriodEnd time.Time `json:"subscription_period_end"`
+	GitHubUsername        string    `json:"github_username,omitempty"`
+	GitHubConnected       bool      `json:"github_connected"`
 }

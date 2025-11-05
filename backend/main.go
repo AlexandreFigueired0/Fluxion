@@ -53,6 +53,7 @@ func main() {
 	auth.POST("/signup", authHandler.HandleSignup) // Email/password signup
 	auth.POST("/login", authHandler.HandleLogin)   // Email/password login
 	auth.POST("/oauth", authHandler.HandleOAuth)   // Google/GitHub OAuth
+	auth.GET("/github/callback", authHandler.HandleGitHubLinkCallback)
 
 	// Webhook routes (unprotected - Stripe sends webhooks)
 	webhookHandler := &handlers.WebhookHandler{DB: db_conn}
@@ -65,6 +66,9 @@ func main() {
 	// Protected routes
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
+
+	protectedAuth := protected.Group("/auth")
+	protectedAuth.GET("/github/link", authHandler.StartGitHubLink)
 
 	checkout := protected.Group("/checkout")
 	checkout.POST("/session", checkoutHandler.CreateCheckoutSession)

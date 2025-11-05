@@ -37,6 +37,7 @@ func (gc *GitHubClient) FetchDirectoryContents(path string) ([]detectors.GitHubF
 	}
 
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "Fluxion-Context-Detector")
 	if gc.Token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", gc.Token))
 	}
@@ -68,6 +69,7 @@ func (gc *GitHubClient) FetchFileContent(path string) (string, error) {
 	}
 
 	req.Header.Set("Accept", "application/vnd.github.v3.raw")
+	req.Header.Set("User-Agent", "Fluxion-Context-Detector")
 	if gc.Token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", gc.Token))
 	}
