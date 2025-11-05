@@ -9,6 +9,8 @@ interface UserData {
   email: string;
   subscription_plan_id: string;
   subscription_period_end: string;
+  github_connected?: boolean;
+  github_username?: string;
 }
 
 export function useDashboardData() {
@@ -22,6 +24,8 @@ export function useDashboardData() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [githubUsername, setGithubUsername] = useState('');
   const lastFetchKeyRef = useRef<string>('');
   const hasLoadedOnceRef = useRef(false);
 
@@ -48,6 +52,8 @@ export function useDashboardData() {
       setPermanentCredits(data.permanent_credits);
       setUserName(data.name);
       setEmail(data.email);
+  setGithubConnected(Boolean(data.github_connected));
+  setGithubUsername(data.github_username ?? '');
       hasLoadedOnceRef.current = true;
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -94,6 +100,8 @@ export function useDashboardData() {
     subscriptionPlanId,
     subscriptionPeriodEnd,
     userName,
+    githubConnected,
+    githubUsername,
     loading,
     isAuthenticated: status === 'authenticated',
     isLoading: status === 'loading',

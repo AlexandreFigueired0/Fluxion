@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Search, GitBranch, Lock, Globe, Loader } from 'lucide-react';
 import { projectContextDetectorService, Repository, DetectResponse } from '../services/projectContextDetector';
 
@@ -20,6 +20,7 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
   const [manualUrl, setManualUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'repos' | 'manual'>('repos');
   const [detecting, setDetecting] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const loadRepositories = useCallback(async () => {
     setLoading(true);
@@ -47,6 +48,23 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
       loadRepositories();
     }
   }, [userToken, loadRepositories]);
+
+  useEffect(() => {
+    if (!showDropdown) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -108,7 +126,7 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
 
   return (
     <div className="space-y-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg">
         {/* Tabs */}
         <div className="flex border-b border-zinc-800">
           <button
@@ -159,7 +177,7 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
             ) : (
               <>
                 {/* Search Input */}
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
                   <input
                     type="text"
@@ -169,11 +187,10 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
                     onFocus={() => setShowDropdown(true)}
                     className="w-full pl-9 pr-4 py-2 bg-zinc-950 border border-zinc-700 rounded text-zinc-100 placeholder-zinc-500 focus:border-orange-500 focus:outline-none"
                   />
-                </div>
 
-                {/* Dropdown */}
-                {showDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-700 rounded shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {/* Dropdown */}
+                  {showDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-700 rounded shadow-lg z-50 max-h-64 overflow-y-auto">
                     {filteredRepos.length === 0 ? (
                       <div className="p-4 text-center text-zinc-400">
                         {searchQuery ? 'No repositories match your search' : 'No repositories available'}
@@ -204,16 +221,8 @@ export function RepoSelector({ userToken, onDetected, onError, onLoading }: Repo
                       ))
                     )}
                   </div>
-                )}
-
-                {/* Click outside to close */}
-                {showDropdown && (
-                  <div
-                    className="fixed inset-0"
-                    onClick={() => setShowDropdown(false)}
-                    style={{ zIndex: 40 }}
-                  />
-                )}
+                  )}
+                </div>
               </>
             )}
           </div>

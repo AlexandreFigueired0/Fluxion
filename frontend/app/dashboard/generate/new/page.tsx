@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import {
   DashboardLayout,
@@ -9,14 +9,20 @@ import {
 } from '../../components';
 import { Sparkles, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
-import { useSession, signIn } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { githubLinkService } from '../services/githubLink';
 import { GenerateResponse, generateService } from '../services/generate';
 import { RepoSelector } from '../components/RepoSelector';
 import { ContextPreview } from '../components/ContextPreview';
 import { DetectResponse } from '../services/projectContextDetector';
 
 export default function GenerateNewPage() {
-  const { loading, isLoading, } = useDashboardData();
+  const {
+    loading,
+    isLoading,
+    githubConnected,
+  } = useDashboardData();
   const [description, setDescription] = useState('');
   const [result, setResult] = useState<GenerateResponse>({} as GenerateResponse);
   const [error, setError] = useState<string>("");
@@ -26,7 +32,40 @@ export default function GenerateNewPage() {
   const [contextError, setContextError] = useState<string>("");
   const [useProjectContext, setUseProjectContext] = useState(false);
   const [gitHubConnecting, setGitHubConnecting] = useState(false);
+  const [githubStatus, setGithubStatus] = useState<'success' | 'error' | ''>('');
+  const [githubStatusMessage, setGithubStatusMessage] = useState('');
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const status = searchParams.get('github');
+    if (!status) {
+      return;
+    }
+
+    if (status === 'connected') {
+      setGithubStatus('success');
+      setGithubStatusMessage('GitHub account linked. Select a repository below.');
+      setContextError('');
+      setUseProjectContext(true);
+    } else if (status === 'error') {
+      const reason = searchParams.get('reason') || '';
+      const friendly = mapGitHubError(reason);
+      setGithubStatus('error');
+      setGithubStatusMessage(friendly);
+      setContextError(friendly);
+    }
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('github');
+      params.delete('reason');
+      const query = params.toString();
+      const nextPath = `${window.location.pathname}${query ? `?${query}` : ''}`;
+      router.replace(nextPath, { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const handleGenerate = async () => {
     setSubmitting(true);
@@ -69,11 +108,12 @@ export default function GenerateNewPage() {
   const handleConnectGitHub = async () => {
     setGitHubConnecting(true);
     try {
-      // Redirect to GitHub OAuth sign in
-      await signIn("github", { 
-        redirect: false,
-        callbackUrl: window.location.pathname
-      });
+      if (!session?.accessToken) {
+        setContextError('You must be signed in to link GitHub.');
+        return;
+      }
+      const link = await githubLinkService.startLink(session?.accessToken || '');
+      window.location.href = link.url;
     } catch (error) {
       console.error("GitHub connection error:", error);
       setContextError("Failed to connect GitHub. Please try again.");
@@ -147,9 +187,25 @@ export default function GenerateNewPage() {
 
               {/* GitHub Connection Options */}
               <div className="space-y-3">
+                {githubStatus && (
+                  <div
+                    className={`rounded-lg px-4 py-3 text-xs font-medium border ${
+                      githubStatus === 'success'
+                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                        : 'bg-red-500/10 border-red-500/40 text-red-300'
+                    }`}
+                  >
+                    {githubStatusMessage}
+                  </div>
+                )}
                 {/* Option 1: GitHub Connected (via OAuth) */}
-                {session?.githubToken && session?.accessToken && (
+                {(session?.githubToken || githubConnected) && session?.accessToken && (
                   <div>
+                    {githubConnected && !session?.githubToken && (
+                      <p className="text-xs text-zinc-400 mb-3">
+                        GitHub linked. Select a repository below.
+                      </p>
+                    )}
                     <RepoSelector
                       userToken={session.accessToken}
                       onDetected={handleContextDetected}
@@ -165,7 +221,7 @@ export default function GenerateNewPage() {
                 )}
 
                 {/* Option 2: GitHub OAuth for non-GitHub users */}
-                {!session?.githubToken && (
+                {!(session?.githubToken || githubConnected) && (
                   <div className="rounded-lg bg-zinc-800 p-4 border border-zinc-700 space-y-3">
                     <div>
                       <p className="text-xs text-zinc-300 mb-3">
@@ -313,4 +369,15 @@ export default function GenerateNewPage() {
       </div>
     </DashboardLayout>
   );
+}
+
+function mapGitHubError(reason: string): string {
+  switch (reason) {
+    case 'exchange_failed':
+      return 'We could not complete GitHub authorization. Please try again.';
+    case 'store_failed':
+      return 'Linked with GitHub, but saving the token failed. Please retry.';
+    default:
+      return 'Failed to link your GitHub account. Please try again.';
+  }
 }
