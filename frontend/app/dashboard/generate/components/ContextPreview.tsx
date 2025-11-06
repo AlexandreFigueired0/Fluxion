@@ -7,10 +7,9 @@ import { DetectResponse } from '../services/projectContextDetector';
 interface ContextPreviewProps {
   context: DetectResponse;
   onContextChange?: (updatedContext: DetectResponse) => void;
-  onUseContext: () => void;
 }
 
-export function ContextPreview({ context, onContextChange, onUseContext }: ContextPreviewProps) {
+export function ContextPreview({ context, onContextChange }: ContextPreviewProps) {
   const [editMode, setEditMode] = useState(false);
   const [editedContext, setEditedContext] = useState<DetectResponse>(context);
   const [newDependency, setNewDependency] = useState('');
@@ -260,15 +259,7 @@ export function ContextPreview({ context, onContextChange, onUseContext }: Conte
               Cancel
             </button>
           </>
-        ) : (
-          <button
-            onClick={onUseContext}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 ml-auto"
-          >
-            <Check className="h-4 w-4" />
-            Use This Context
-          </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -95,10 +95,6 @@ export default function GenerateNewPage() {
     setContextError(error);
   };
 
-  const handleUseContext = () => {
-    setUseProjectContext(true);
-  };
-
   const handleRemoveContext = () => {
     setProjectContext(null);
     setUseProjectContext(false);
@@ -265,7 +261,6 @@ export default function GenerateNewPage() {
               <ContextPreview
                 context={projectContext}
                 onContextChange={setProjectContext}
-                onUseContext={handleUseContext}
               />
             </div>
           )}
