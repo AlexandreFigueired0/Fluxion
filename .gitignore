@@ -6,6 +6,7 @@ test.go
 *generated_pipeline.yml
 err.log
 *.log
+*node_modules/
 
 
 # Binaries for programs and plugins
