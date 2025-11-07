@@ -20,14 +20,12 @@ import (
 	supa "github.com/supabase-community/supabase-go"
 )
 
-const GENERATE_CREDIT_COST = 2
-
 const (
-	freePlanMultiplier      = 2.0
-	paidPlanMultiplier      = 1.5
-	creditTransactionReason = "Generated configuration"
-	reasonWithContext       = "Generated configuration with project context"
-	creditTransactionSource = "system"
+	GENERATE_CREDIT_COST      = 2
+	creditTransactionReason   = "Generated configuration"
+	reasonWithContext         = "Generated configuration with project context"
+	creditTransactionSource   = "system"
+	EXTRA_CONTEXT_CREDIT_COST = 2
 )
 
 type GenerateHandler struct {
@@ -50,18 +48,28 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 		return
 	}
 
-	if user.SubscriptionCredits+user.PermanentCredits < GENERATE_CREDIT_COST {
-		log.Printf("User %s attempted generate without credits", userID)
-		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
-		return
-	}
-
 	var req types.GenerateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("Invalid request payload: %v", err)
 		c.JSON(400, gin.H{"error": "Invalid request payload" + err.Error()})
 		return
 	}
+	var hasContext bool
+	if req.ProjectContext.PrimaryLang != "" {
+		hasContext = true
+	}
+
+	var cost int = GENERATE_CREDIT_COST
+	if hasContext {
+		cost += EXTRA_CONTEXT_CREDIT_COST
+	}
+
+	if user.SubscriptionCredits+user.PermanentCredits < cost {
+		log.Printf("User %s attempted generate without credits", userID)
+		c.JSON(http.StatusPaymentRequired, gin.H{"error": "insufficient credits"})
+		return
+	}
+
 	log.Printf("Received generate request: user_id=%s, prompt=%q, context=%+v", userID, req.Prompt, req.ProjectContext)
 	result, err := sendGenerateRequest(req.Prompt, req.ProjectContext)
 	if err != nil {
@@ -82,30 +90,34 @@ func (h *GenerateHandler) GeneratePipelineConfig(c *gin.Context) {
 	}
 	log.Printf("Successfully generated pipeline config for prompt=%q", req.Prompt)
 
-	if err := deductUserCredits(user.ID, h); err != nil {
+	if err := deductUserCredits(user.ID, cost, h); err != nil {
 		log.Printf("Failed to update credits for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user credits"})
 		return
 	}
-	log.Printf("Deducted %d credits from user %s", GENERATE_CREDIT_COST, userID)
+	log.Printf("Deducted %d credits from user %s", cost, userID)
 
-	if err := db.AddCreditTransaction(userID, -GENERATE_CREDIT_COST, creditTransactionReason, creditTransactionSource, h.DB); err != nil {
+	var reason string
+	if hasContext {
+		reason = reasonWithContext
+	} else {
+		reason = creditTransactionReason
+	}
+	if err := db.AddCreditTransaction(userID, -cost, reason, creditTransactionSource, h.DB); err != nil {
 		log.Printf("Failed to create credit transaction: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create credit transaction"})
 		return
 	}
-	log.Printf("Created credit transaction for user %s: -%d credits", userID, GENERATE_CREDIT_COST)
+	log.Printf("Created credit transaction for user %s: -%d credits", userID, cost)
 
 	c.JSON(200, result)
 }
 
-func deductUserCredits(userID string, h *GenerateHandler) error {
+func deductUserCredits(userID string, creditsToDeduct int, h *GenerateHandler) error {
 	user, err := db.GetUserByID(userID, h.DB)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
-
-	var creditsToDeduct int = GENERATE_CREDIT_COST
 
 	if user.SubscriptionCredits >= creditsToDeduct {
 		newSubscriptionCredits := user.SubscriptionCredits - creditsToDeduct
