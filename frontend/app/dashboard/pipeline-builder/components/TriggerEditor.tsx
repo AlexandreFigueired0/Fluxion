@@ -77,41 +77,54 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
   };
 
   // Toggle an event type on/off
-  const toggleEventType = (key: 'push' | 'pull_request' | 'schedule' | 'workflow_dispatch' | 'release') => {
-    const updated: any = { ...localTrigger };
+  const toggleEventType = (
+    key: 'push' | 'pull_request' | 'schedule' | 'workflow_dispatch' | 'release'
+  ) => {
+    const updated: WorkflowTrigger = { ...localTrigger };
+
     if (updated[key]) {
       delete updated[key];
     } else {
-      // Add default config for this event
-      if (key === 'push' || key === 'pull_request') {
-        updated[key] = { branches: ['main'] };
-      } else if (key === 'schedule') {
-        updated[key] = [{ cron: '0 0 * * 0' }];
-      } else {
-        updated[key] = true;
+      switch (key) {
+        case 'push':
+          updated.push = { branches: ['main'] };
+          break;
+        case 'pull_request':
+          updated.pull_request = { branches: ['main'] };
+          break;
+        case 'schedule':
+          updated.schedule = [{ cron: '0 0 * * 0' }];
+          break;
+        case 'workflow_dispatch':
+          updated.workflow_dispatch = {};
+          break;
+        case 'release':
+          updated.release = {};
+          break;
       }
     }
+
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
   // Update push trigger configuration
   const updatePushConfig = (config: PushTriggerConfig) => {
-    const updated: any = { ...localTrigger, push: config };
+    const updated: WorkflowTrigger = { ...localTrigger, push: config };
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
   // Update pull_request trigger configuration
   const updatePullRequestConfig = (config: PullRequestTriggerConfig) => {
-    const updated: any = { ...localTrigger, pull_request: config };
+    const updated: WorkflowTrigger = { ...localTrigger, pull_request: config };
     setLocalTrigger(updated);
     onUpdate(updated);
   };
 
   // Update schedule trigger configuration
   const updateScheduleConfig = (schedules: ScheduleTrigger[]) => {
-    const updated: any = { ...localTrigger, schedule: schedules };
+    const updated: WorkflowTrigger = { ...localTrigger, schedule: schedules };
     setLocalTrigger(updated);
     onUpdate(updated);
   };
@@ -154,7 +167,7 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
   const removeBranchFromPush = (index: number) => {
     const config = getPushConfig();
     if (config) {
-      const branches = (config.branches || []).filter((_: string, i: number) => i !== index);
+      const branches = (config.branches || []).filter((_, i) => i !== index);
       updatePushConfig({ ...config, branches });
     }
   };
@@ -162,10 +175,28 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
   const updateBranchInPush = (index: number, value: string) => {
     const config = getPushConfig();
     if (config) {
-      const branches = (config.branches || []).map((b: string, i: number) =>
-        i === index ? value : b
+      const branches = (config.branches || []).map((branch, i) =>
+        i === index ? value : branch
       );
       updatePushConfig({ ...config, branches });
+    }
+  };
+
+  const updateBranchInPullRequest = (index: number, value: string) => {
+    const config = getPullRequestConfig();
+    if (config) {
+      const branches = (config.branches || []).map((branch, i) =>
+        i === index ? value : branch
+      );
+      updatePullRequestConfig({ ...config, branches });
+    }
+  };
+
+  const removeBranchFromPullRequest = (index: number) => {
+    const config = getPullRequestConfig();
+    if (config) {
+      const branches = (config.branches || []).filter((_, i) => i !== index);
+      updatePullRequestConfig({ ...config, branches });
     }
   };
 
@@ -182,7 +213,7 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
   const removePathFromPush = (index: number) => {
     const config = getPushConfig();
     if (config) {
-      const paths = (config.paths || []).filter((_: string, i: number) => i !== index);
+      const paths = (config.paths || []).filter((_, i) => i !== index);
       updatePushConfig({ ...config, paths });
     }
   };
@@ -190,8 +221,8 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
   const updatePathInPush = (index: number, value: string) => {
     const config = getPushConfig();
     if (config) {
-      const paths = (config.paths || []).map((p: string, i: number) =>
-        i === index ? value : p
+      const paths = (config.paths || []).map((path, i) =>
+        i === index ? value : path
       );
       updatePushConfig({ ...config, paths });
     }
@@ -205,21 +236,21 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
 
   const removeCronSchedule = (index: number) => {
     const schedules = getScheduleConfig() || [];
-    updateScheduleConfig(schedules.filter((_: ScheduleTrigger, i: number) => i !== index));
+    updateScheduleConfig(schedules.filter((_, i) => i !== index));
   };
 
   const updateCronSchedule = (index: number, value: string) => {
     const schedules = getScheduleConfig() || [];
     updateScheduleConfig(
-      schedules.map((s: ScheduleTrigger, i: number) =>
-        i === index ? { cron: value } : s
+      schedules.map((schedule, i) =>
+        i === index ? { cron: value } : schedule
       )
     );
   };
 
   const getEnabledCount = (): number => {
     if (typeof localTrigger !== 'object') return 0;
-    return Object.keys(localTrigger).length;
+    return Object.entries(localTrigger).filter(([, value]) => value !== undefined).length;
   };
 
   return (
@@ -365,12 +396,12 @@ export function TriggerEditor({ trigger, onUpdate, onExpandChange }: TriggerEdit
                       <input
                         type="text"
                         value={branch}
-                        onChange={(e) => updateBranchInPush(index, e.target.value)}
+                        onChange={(e) => updateBranchInPullRequest(index, e.target.value)}
                         placeholder="e.g., main, develop"
                         className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs"
                       />
                       <button
-                        onClick={() => removeBranchFromPush(index)}
+                        onClick={() => removeBranchFromPullRequest(index)}
                         className="text-zinc-400 hover:text-red-400 transition"
                       >
                         <X size={16} />

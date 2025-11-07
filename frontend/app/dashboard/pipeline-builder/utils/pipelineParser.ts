@@ -74,17 +74,16 @@ export function workflowToJson(workflow: Workflow, space: number = 2): string {
 function normalizeWorkflow(input: unknown): Workflow {
   const candidate = resolveWorkflowCandidate(input) as WorkflowCandidateWithExtras;
 
-  const {
-    jobs: rawJobs,
-    pipeline_json: _ignoredPipelineJSON,
-    config_yaml: _ignoredConfigYaml,
-    config: _ignoredConfig,
-    workflow: _ignoredWorkflow,
-    ...rest
-  } = candidate;
+  const { jobs: rawJobs, ...rest } = candidate;
+  const sanitized = { ...rest } as Record<string, unknown>;
+
+  delete sanitized.pipeline_json;
+  delete sanitized.config_yaml;
+  delete sanitized.config;
+  delete sanitized.workflow;
 
   return {
-    ...rest,
+    ...sanitized,
     jobs: normalizeJobs(rawJobs),
   } as Workflow;
 }
@@ -177,7 +176,8 @@ function normalizeJobs(rawJobs: unknown): Record<string, Omit<Job, 'name'>> {
           ? jobObject.name.trim()
           : `job_${idx + 1}`;
 
-      const { name: _ignored, ...jobData } = jobObject;
+      const jobData = { ...jobObject };
+      delete jobData.name;
       acc[jobName] = normalizeJob(jobData);
       return acc;
     }, {});
@@ -191,8 +191,9 @@ function normalizeJobs(rawJobs: unknown): Record<string, Omit<Job, 'name'>> {
         return acc;
       }
 
-      const { name: _ignored, ...jobData } = jobValue as Record<string, unknown>;
-      acc[jobName] = normalizeJob(jobData);
+      const jobRecord = { ...(jobValue as Record<string, unknown>) };
+      delete jobRecord.name;
+      acc[jobName] = normalizeJob(jobRecord);
       return acc;
     }, {});
   }

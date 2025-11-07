@@ -35,21 +35,22 @@ export interface Workflow {
     };
   };
 
-  [key: string]: any; // Allow additional custom fields
+  [key: string]: unknown; // Allow additional custom fields
 }
 
 // ============================================================================
 // TRIGGERS - What events start the workflow
 // ============================================================================
 
-export type WorkflowTrigger = 
-  | { push?: PushTriggerConfig }
-  | { pull_request?: PullRequestTriggerConfig }
-  | { schedule?: ScheduleTrigger[] }
-  | { workflow_dispatch?: WorkflowDispatchTrigger }
-  | { release?: ReleaseTriggerConfig }
-  | { workflow_call?: WorkflowCallConfig }
-  | { [key: string]: any }; // Allow other trigger types
+export interface WorkflowTrigger {
+  push?: PushTriggerConfig;
+  pull_request?: PullRequestTriggerConfig;
+  schedule?: ScheduleTrigger[];
+  workflow_dispatch?: WorkflowDispatchTrigger;
+  release?: ReleaseTriggerConfig;
+  workflow_call?: WorkflowCallConfig;
+  [key: string]: unknown;
+}
 
 export interface PushTriggerConfig {
   branches?: string[];

@@ -1,4 +1,4 @@
-import { Workflow, WorkflowTrigger, Job, Step } from '../types';
+import { Workflow, WorkflowTrigger, Job, Step, WorkflowDispatchInput } from '../types';
 
 /**
  * Convert a Workflow object to GitHub Actions YAML format
@@ -63,63 +63,68 @@ function generateTriggerYaml(trigger: WorkflowTrigger, indent: number): string {
   const ind = ' '.repeat(indent);
 
   // Handle union type - trigger can have push, pull_request, schedule, etc.
-  if ('push' in trigger && trigger.push) {
-    const config = trigger.push as any;
+  if (trigger.push) {
+    const config = trigger.push;
     lines.push(`${ind}push:`);
     if (typeof config === 'object') {
-      if (config.branches && config.branches.length > 0) {
+      if (Array.isArray(config.branches) && config.branches.length > 0) {
         lines.push(`${ind}  branches:`);
-        config.branches.forEach((branch: string) => {
+        config.branches.forEach((branch) => {
           lines.push(`${ind}    - ${branch}`);
         });
       }
-      if (config.tags && config.tags.length > 0) {
+      if (Array.isArray(config.tags) && config.tags.length > 0) {
         lines.push(`${ind}  tags:`);
-        config.tags.forEach((tag: string) => {
+        config.tags.forEach((tag) => {
           lines.push(`${ind}    - ${tag}`);
         });
       }
-      if (config.paths && config.paths.length > 0) {
+      if (Array.isArray(config.paths) && config.paths.length > 0) {
         lines.push(`${ind}  paths:`);
-        config.paths.forEach((path: string) => {
+        config.paths.forEach((path) => {
           lines.push(`${ind}    - ${path}`);
         });
       }
     }
   }
 
-  if ('pull_request' in trigger && trigger.pull_request) {
-    const config = trigger.pull_request as any;
+  if (trigger.pull_request) {
+    const config = trigger.pull_request;
     lines.push(`${ind}pull_request:`);
     if (typeof config === 'object') {
-      if (config.branches && config.branches.length > 0) {
+      if (Array.isArray(config.branches) && config.branches.length > 0) {
         lines.push(`${ind}  branches:`);
-        config.branches.forEach((branch: string) => {
+        config.branches.forEach((branch) => {
           lines.push(`${ind}    - ${branch}`);
         });
       }
-      if (config.paths && config.paths.length > 0) {
+      if (Array.isArray(config.paths) && config.paths.length > 0) {
         lines.push(`${ind}  paths:`);
-        config.paths.forEach((path: string) => {
+        config.paths.forEach((path) => {
           lines.push(`${ind}    - ${path}`);
         });
       }
     }
   }
 
-  if ('schedule' in trigger && trigger.schedule && Array.isArray(trigger.schedule)) {
+  if (Array.isArray(trigger.schedule)) {
     lines.push(`${ind}schedule:`);
     trigger.schedule.forEach((schedule) => {
       lines.push(`${ind}  - cron: '${schedule.cron}'`);
     });
   }
 
-  if ('workflow_dispatch' in trigger && trigger.workflow_dispatch) {
+  if (trigger.workflow_dispatch) {
     lines.push(`${ind}workflow_dispatch:`);
-    const config = trigger.workflow_dispatch as any;
-    if (typeof config === 'object' && config.inputs && Object.keys(config.inputs).length > 0) {
+    const config = trigger.workflow_dispatch;
+    if (
+      typeof config === 'object' &&
+      config !== null &&
+      config.inputs &&
+      Object.keys(config.inputs).length > 0
+    ) {
       lines.push(`${ind}  inputs:`);
-      Object.entries(config.inputs).forEach(([name, input]: [string, any]) => {
+      Object.entries(config.inputs).forEach(([name, input]: [string, WorkflowDispatchInput]) => {
         lines.push(`${ind}    ${name}:`);
         if (input.description) {
           lines.push(`${ind}      description: '${input.description}'`);
@@ -143,9 +148,16 @@ function generateTriggerYaml(trigger: WorkflowTrigger, indent: number): string {
     }
   }
 
-  if ('release' in trigger && trigger.release) {
+  if (trigger.release) {
     lines.push(`${ind}release:`);
-    lines.push(`${ind}  types: [created, published, edited]`);
+    const config = trigger.release;
+
+    if (typeof config === 'object' && config !== null && Array.isArray(config.types) && config.types.length > 0) {
+      const releaseTypes = config.types.map((typeValue) => formatYamlValue(typeValue));
+      lines.push(`${ind}  types: [${releaseTypes.join(', ')}]`);
+    } else {
+      lines.push(`${ind}  types: [created, published, edited]`);
+    }
   }
 
   return lines.join('\n');

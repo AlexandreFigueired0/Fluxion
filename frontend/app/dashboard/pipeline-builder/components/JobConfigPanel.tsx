@@ -40,7 +40,7 @@ export function JobConfigPanel({ job, onUpdate, onDelete, onClose }: JobConfigPa
     setLocalJob(job);
   }, [job]);
 
-  const handleJobChange = (field: keyof Job, value: any) => {
+  const handleJobChange = <K extends keyof Job>(field: K, value: Job[K]) => {
     const updated = { ...localJob, [field]: value };
     setLocalJob(updated);
     onUpdate(updated);

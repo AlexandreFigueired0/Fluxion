@@ -46,7 +46,7 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
     onUpdate(updated);
   };
 
-  const handleBasicFieldChange = (field: keyof Step, value: any) => {
+  const handleBasicFieldChange = <K extends keyof Step>(field: K, value: Step[K]) => {
     const updated: Step = { ...localStep, [field]: value };
     setLocalStep(updated);
     onUpdate(updated);
@@ -111,18 +111,6 @@ export function StepEditor({ step, onUpdate, onDelete, onClose }: StepEditorProp
       </div>
 
       <div className="space-y-4">
-        {/* Step ID */}
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Step ID</label>
-          <input
-            type="text"
-            value={localStep.id || ''}
-            onChange={(e) => handleBasicFieldChange('id', e.target.value)}
-            placeholder="Unique step identifier"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm"
-          />
-          <p className="text-xs text-zinc-500 mt-1">Optional - used to reference outputs from other steps</p>
-        </div>
 
         {/* Step Name */}
         <div>

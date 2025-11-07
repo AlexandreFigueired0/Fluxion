@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, AlertCircle, Loader, ChevronDown, ChevronUp, Search, Edit } from 'lucide-react';
@@ -29,18 +29,17 @@ export function PipelinesList() {
   const [sortBy, setSortBy] = useState<SortBy>('updated');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-  useEffect(() => {
-    loadPipelines();
-  }, []);
-
-  const loadPipelines = async () => {
-    if (!session?.user?.id) return;
+  const loadPipelines = useCallback(async () => {
+    if (!session?.user?.id || !session?.accessToken) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
       setError(null);
 
-      const userToken = session.accessToken!;
+      const userToken = session.accessToken;
       const userID = session.user.id;
 
       const response = await pipelineService.listPipelines(userToken, userID);
@@ -52,7 +51,11 @@ export function PipelinesList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.user?.id, session?.accessToken]);
+
+  useEffect(() => {
+    void loadPipelines();
+  }, [loadPipelines]);
 
   // Filter and sort pipelines
   const filteredAndSortedPipelines = useMemo(() => {
@@ -90,7 +93,7 @@ export function PipelinesList() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!session?.user?.id) return;
+  if (!session?.user?.id || !session?.accessToken) return;
 
     if (!confirm('Are you sure you want to delete this pipeline?')) {
       return;
@@ -98,8 +101,8 @@ export function PipelinesList() {
 
     try {
       setDeletingId(id);
-      const userToken = session.user.id;
-      await pipelineService.deletePipeline(userToken, id);
+  const userToken = session.accessToken;
+  await pipelineService.deletePipeline(userToken, id);
       setPipelines(pipelines.filter((p) => p.id !== id));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete pipeline';

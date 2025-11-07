@@ -1,16 +1,19 @@
 'use client';
 
-
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, type CSSProperties } from 'react';
 import ReactFlow, {
   Background,
   addEdge,
   Connection,
   Node,
-  useNodesState,
-  useEdgesState,
   ReactFlowProvider,
   BackgroundVariant,
+  applyNodeChanges,
+  applyEdgeChanges,
+  type Edge,
+  type NodeChange,
+  type EdgeChange,
+  type ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -42,14 +45,30 @@ interface PipelineBuilderFlowProps {
   initialWorkflow?: Workflow;
 }
 
+interface PipelineNodeData {
+  job: Job;
+  isSelected: boolean;
+}
+
+type PipelineNode = Node<PipelineNodeData>;
+type PipelineEdge = Edge;
+
 function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlowProps) {
   const { data: session } = useSession();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [pipeline, setPipeline] = useState<Workflow>(initialWorkflow || createDefaultPipeline());
-  const [selectedJobName, setSelectedJobName] = useState<string | null>("");
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [selectedJobName, setSelectedJobName] = useState<string | null>(null);
+  const [nodes, setNodes] = useState<PipelineNode[]>([]);
+  const [edges, setEdges] = useState<PipelineEdge[]>([]);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    setNodes((existingNodes) => applyNodeChanges(changes, existingNodes) as PipelineNode[]);
+  }, []);
+
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((existingEdges) => applyEdgeChanges(changes, existingEdges) as PipelineEdge[]);
+  }, []);
+
   const [showYamlPreview, setShowYamlPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -68,7 +87,9 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
 
   // Load pipeline from backend if pipelineId is provided
   useEffect(() => {
-    if (!pipelineId || !session?.user?.id) {
+    const accessToken = session?.accessToken;
+
+    if (!pipelineId || !session?.user?.id || !accessToken) {
       setIsLoading(false);
       return;
     }
@@ -78,8 +99,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
         setIsLoading(true);
         setLoadError(null);
 
-        const userToken = session.accessToken!;
-        const response = await pipelineService.getPipeline(userToken, pipelineId);
+  const response = await pipelineService.getPipeline(accessToken, pipelineId);
         const loadedPipeline = parsePipelineFromBackend(response);
 
         setPipeline(loadedPipeline);
@@ -96,12 +116,61 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
     };
 
     loadPipeline();
-  }, [pipelineId, session?.user?.id]);
+  }, [pipelineId, session?.user?.id, session?.accessToken]);
+
+  const updateJob = useCallback(
+    (oldJobName: string, updatedJob: Job) => {
+      setPipeline((prev) => {
+        const newJobName = updatedJob.name || oldJobName;
+        const renamed = oldJobName !== newJobName;
+
+        const newJobs: Record<string, Omit<Job, 'name'>> = {};
+
+        Object.entries(prev.jobs).forEach(([jobName, jobData]) => {
+          if (jobName === oldJobName) {
+            const jobDataWithoutName = { ...updatedJob } as Partial<Job>;
+            delete jobDataWithoutName.name;
+            newJobs[newJobName] = jobDataWithoutName as Omit<Job, 'name'>;
+          } else if (renamed) {
+            const needsArray = Array.isArray(jobData.needs)
+              ? jobData.needs
+              : jobData.needs
+              ? [jobData.needs]
+              : [];
+
+            if (needsArray.includes(oldJobName)) {
+              const updatedNeeds = needsArray.map((need: string) =>
+                need === oldJobName ? newJobName : need
+              );
+              newJobs[jobName] = {
+                ...jobData,
+                needs: updatedNeeds.length === 1 ? updatedNeeds[0] : updatedNeeds,
+              };
+            } else {
+              newJobs[jobName] = jobData;
+            }
+          } else {
+            newJobs[jobName] = jobData;
+          }
+        });
+
+        return {
+          ...prev,
+          jobs: newJobs,
+        };
+      });
+
+      if (selectedJobName === oldJobName) {
+        setSelectedJobName(updatedJob.name || oldJobName);
+      }
+    },
+    [selectedJobName]
+  );
 
     // Compute nodes and edges from pipeline (memoized to prevent constant re-renders)
   const { nodes: computedNodes, edges: computedEdges } = useMemo(() => {
     const jobsArray = Object.entries(pipeline.jobs);
-    const newNodes = jobsArray.map(([jobName, jobData], idx) => ({
+    const newNodes = jobsArray.map<PipelineNode>(([jobName, jobData], idx) => ({
       id: getJobKey(jobName),
       type: 'jobNode',
       position: { x: idx * 420, y: 100 }, // Increased spacing for larger cards
@@ -113,7 +182,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
 
     // Create edges from job dependencies
     const newEdges = jobsArray
-      .flatMap(([jobName, jobData]) => {
+      .flatMap<PipelineEdge>(([jobName, jobData]) => {
         const needsArray = Array.isArray(jobData.needs) ? jobData.needs : (jobData.needs ? [jobData.needs] : []);
         return needsArray.map((dependencyName: string) => {
           const dependencyKey = getJobKey(dependencyName);
@@ -165,18 +234,19 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
               ? targetJobData.needs 
               : (targetJobData.needs ? [targetJobData.needs] : []);
             if (!needsArray.includes(sourceJobName)) {
-              const updatedJob = {
+              const updatedJob: Job = {
                 ...targetJobData,
                 needs: [...needsArray, sourceJobName],
+                name: targetJobName,
               };
-              updateJob(targetJobName, updatedJob as Job);
+              updateJob(targetJobName, updatedJob);
             }
           }
         }
       }
       setEdges((eds) => addEdge(connection, eds));
     },
-    [pipeline, getJobKey]
+    [pipeline, getJobKey, setEdges, updateJob]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -184,7 +254,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleJobClick = useCallback((_event: React.MouseEvent, node: Node) => {
+  const handleJobClick = useCallback((_event: React.MouseEvent, node: PipelineNode) => {
     const jobName = Object.keys(pipeline.jobs).find((name) => getJobKey(name) === node.id);
     if (jobName) {
       setSelectedJobName(jobName);
@@ -205,52 +275,6 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       },
     });
     setSelectedJobName(newJobName);
-  };
-
-  const updateJob = (oldJobName: string, updatedJob: Job) => {
-    setPipeline((prev) => {
-      const newJobName = updatedJob.name || oldJobName;
-      const renamed = oldJobName !== newJobName;
-      
-      // Build new jobs object
-      const newJobs: Record<string, Omit<Job, 'name'>> = {};
-      
-      Object.entries(prev.jobs).forEach(([jobName, jobData]) => {
-        if (jobName === oldJobName) {
-          // Replace with updated job (without name field)
-          const { name, ...jobDataWithoutName } = updatedJob;
-          newJobs[newJobName] = jobDataWithoutName;
-        } else if (renamed) {
-          // Update dependencies if job was renamed
-          const needsArray = Array.isArray(jobData.needs) 
-            ? jobData.needs 
-            : (jobData.needs ? [jobData.needs] : []);
-          
-          if (needsArray.includes(oldJobName)) {
-            const updatedNeeds = needsArray.map((need: string) => 
-              need === oldJobName ? newJobName : need
-            ) as string[];
-            newJobs[jobName] = {
-              ...jobData,
-              needs: updatedNeeds.length === 1 ? updatedNeeds[0] : updatedNeeds,
-            };
-          } else {
-            newJobs[jobName] = jobData;
-          }
-        } else {
-          newJobs[jobName] = jobData;
-        }
-      });
-
-      return {
-        ...prev,
-        jobs: newJobs,
-      };
-    });
-
-    if (selectedJobName === oldJobName) {
-      setSelectedJobName(updatedJob.name || oldJobName);
-    }
   };
 
   const deleteJob = (jobName: string) => {
@@ -278,14 +302,14 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
   };
 
   const handleTriggerExpandChange = (isExpanded: boolean) => {
-    // Re-fit the canvas when trigger expands/collapses
+    const delay = isExpanded ? 200 : 150;
     setTimeout(() => {
       handleFitToView();
-    }, 150); // Wait for CSS transition to complete
+    }, delay);
   };
 
   const handleSavePipeline = async () => {
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.accessToken) {
       setSaveError('Authentication required');
       return;
     }
@@ -294,7 +318,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       setIsSaving(true);
       setSaveError(null);
 
-      const userToken = session.accessToken!;
+  const userToken = session.accessToken;
       const userID = session.user.id;
 
       if (pipelineId) {
@@ -315,6 +339,8 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
 
   const selectedJobData = selectedJobName ? pipeline.jobs[selectedJobName] : null;
   const selectedJob: Job | null = selectedJobData ? { name: selectedJobName || '', ...selectedJobData } : null;
+
+  const reactFlowStyle = { '--rf-watermark': 'none' } as CSSProperties;
 
   if (isLoading) {
     return (
@@ -374,7 +400,7 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
       {/* Main Content Area */}
       <div className="flex gap-4 flex-1 min-h-0">
       {/* Canvas */}
-      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper} style={{ '--rf-watermark': 'none' } as any}>
+      <div className="flex-1 bg-zinc-950 rounded-lg border border-zinc-800 relative" ref={reactFlowWrapper} style={reactFlowStyle}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -412,11 +438,11 @@ function PipelineBuilderFlow({ pipelineId, initialWorkflow }: PipelineBuilderFlo
           </button>
         </div>
       </div>        {/* Right Sidebar - Job Config Panel */}
-        {selectedJob && selectedJob.name && (
+        {selectedJob && selectedJobName && (
           <JobConfigPanel
             job={selectedJob}
-            onUpdate={(updatedJob) => updateJob(selectedJob.name!, updatedJob)}
-            onDelete={() => deleteJob(selectedJob.name!)}
+            onUpdate={(updatedJob) => updateJob(selectedJobName, updatedJob)}
+            onDelete={() => deleteJob(selectedJobName)}
             onClose={() => setSelectedJobName(null)}
           />
         )}
