@@ -6,10 +6,11 @@ import {
   DashboardNav,
   LoadingState,
 } from '../components';
-import { Settings as SettingsIcon,  User, CreditCard } from 'lucide-react';
+import { Settings as SettingsIcon,  User, CreditCard, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
-  const { userName, email, credits, loading, isLoading } = useDashboardData();
+  const { userName, email, subscriptionCredits, permanentCredits, loading, isLoading } = useDashboardData();
 
   if (loading || isLoading) {
     return <LoadingState />;
@@ -63,15 +64,38 @@ export default function SettingsPage() {
               <CreditCard className="text-orange-500" size={20} />
               <h2 className="text-xl font-bold">Billing & Credits</h2>
             </div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-zinc-400">Current Balance</p>
-                <p className="text-2xl font-bold">{credits} Credits</p>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Subscription Credits */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                  <Clock size={14} />
+                  <span>Subscription Credits</span>
+                </div>
+                <div className="text-3xl font-bold text-white">
+                  {subscriptionCredits}
+                </div>
+                <p className="text-xs text-zinc-500">Resets monthly</p>
               </div>
-              <button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition text-white font-semibold cursor-pointer">
-                Buy More Credits
-              </button>
+              
+              {/* Permanent Credits */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                  <CreditCard size={14} />
+                  <span>Permanent Credits</span>
+                </div>
+                <div className="text-3xl font-bold text-white">
+                  {permanentCredits}
+                </div>
+                <p className="text-xs text-zinc-500">Never expire</p>
+              </div>
             </div>
+            
+            <Link 
+              href="/dashboard/billing"
+              className="inline-block mt-6 px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition text-white font-semibold cursor-pointer"
+            >
+              Buy More Credits
+            </Link>
           </div>
         </div>
       </div>
