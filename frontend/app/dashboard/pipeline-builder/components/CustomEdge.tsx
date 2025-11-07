@@ -2,7 +2,6 @@
 
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, getBezierPath } from 'reactflow';
 import { X } from 'lucide-react';
-import { useState } from 'react';
 
 export function CustomEdge({
   id,

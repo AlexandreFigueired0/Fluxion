@@ -1,10 +1,7 @@
 import { Terminal } from 'lucide-react';
 
-interface QuickStartProps {
-  apiKey?: string;
-}
 
-export default function QuickStart({ apiKey }: QuickStartProps) {
+export default function QuickStart() {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-12">
       <div className="flex items-center gap-3 mb-4">
