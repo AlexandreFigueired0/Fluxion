@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"os"
 
-	types "fluxion-shared/types"
+	"fluxion-be/internal/types"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

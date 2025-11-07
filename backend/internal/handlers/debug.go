@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fluxion-be/internal"
-	types "fluxion-shared/types"
+	"fluxion-be/internal/types"
 	"fmt"
 	"log"
 	"os"

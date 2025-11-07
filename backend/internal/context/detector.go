@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"fluxion-be/internal/context/detectors"
-	types "fluxion-shared/types"
+	"fluxion-be/internal/types"
 )
 
 // ProjectDetector orchestrates language detection for a GitHub repository
