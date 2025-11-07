@@ -7,7 +7,6 @@ import {
   Home, 
   Workflow, 
   Sparkles, 
-  Bug, 
   Settings,
   CreditCard,
   ChevronDown,
@@ -27,20 +26,10 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
     }
     return false;
   });
-  const [debugExpanded, setDebugExpanded] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('sidebar-debug-expanded');
-      return stored === 'true';
-    }
-    return false;
-  });
 
   useEffect(() => {
     localStorage.setItem('sidebar-generate-expanded', generateExpanded.toString());
   }, [generateExpanded]);
-  useEffect(() => {
-    localStorage.setItem('sidebar-debug-expanded', debugExpanded.toString());
-  }, [debugExpanded]);
 
   const isActive = (path: string) => {
     // Exact match for most routes
@@ -69,10 +58,10 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
     // { name: 'History', href: '/dashboard/generate/history', icon: Workflow },
   ];
 
-  const debugOptions = [
-    { name: 'Debug Session', href: '/dashboard/debug/session', icon: Bug },
-    // { name: 'Debug History', href: '/dashboard/debug/history', icon: FileCode },
-  ];
+  // const debugOptions = [
+  //   { name: 'Debug Session', href: '/dashboard/debug/session', icon: Bug },
+  //   // { name: 'Debug History', href: '/dashboard/debug/history', icon: FileCode },
+  // ];
 
   return (
     <aside
@@ -139,47 +128,6 @@ export default function Sidebar({ isOpen = true }: SidebarProps) {
               {generateExpanded && (
                 <div className="ml-8 mt-1 space-y-1">
                   {generateOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <Link
-                        key={option.href}
-                        href={option.href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-                          isActive(option.href)
-                            ? 'bg-orange-600/20 text-orange-400'
-                            : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
-                        }`}
-                      >
-                        <Icon size={16} />
-                        <span>{option.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Debug Section */}
-            <div>
-              <button
-                onClick={() => setDebugExpanded(!debugExpanded)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <Bug size={20} />
-                  <span className="font-medium">Debug</span>
-                </div>
-                {debugExpanded ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </button>
-
-              {/* Debug Sub-items */}
-              {debugExpanded && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {debugOptions.map((option) => {
                     const Icon = option.icon;
                     return (
                       <Link
