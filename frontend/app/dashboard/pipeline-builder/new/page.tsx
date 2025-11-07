@@ -1,4 +1,3 @@
-'use client';
 import { Suspense } from 'react';
 import { DashboardLayout, DashboardNav } from '../../components';
 import { NewPipelineContent } from './content';
