@@ -1,21 +1,21 @@
 services:
-  fluxion-be:
+  backend:
     build:
       context: ./backend
       dockerfile: ./Dockerfile
-    image: fluxion-be:latest
+    image: backend:latest
     env_file: ./backend/.env
     ports:
-      - "8000:8000"
+      - "8080:8080"
     networks:
       - fluxion-network
     restart: unless-stopped
 
-  fluxion-fe:
+  frontend:
     build:
       context: ./frontend
       dockerfile: ./Dockerfile
-    image: fluxion-fe:latest
+    image: frontend:latest
     env_file: ./frontend/.env
     ports:
       - "3000:3000"
