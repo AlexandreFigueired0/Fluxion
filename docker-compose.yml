@@ -1,8 +1,8 @@
 services:
   fluxion-be:
     build:
-      context: .
-      dockerfile: ./backend/Dockerfile
+      context: ./backend
+      dockerfile: ./Dockerfile
     image: fluxion-be:latest
     env_file: ./backend/.env
     ports:
@@ -13,8 +13,8 @@ services:
 
   fluxion-fe:
     build:
-      context: .
-      dockerfile: ./frontend/Dockerfile
+      context: ./frontend
+      dockerfile: ./Dockerfile
     image: fluxion-fe:latest
     env_file: ./frontend/.env
     ports:
