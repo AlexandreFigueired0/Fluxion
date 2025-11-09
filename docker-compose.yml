@@ -1,12 +1,30 @@
 services:
+  # ============================================
+  # NGINX - The front door
+  # ============================================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile
+    image: nginx:fluxion
+    ports:
+      - "80:80"
+    networks:
+      - fluxion-network
+    restart: unless-stopped
+    # nginx depends on frontend and backend being ready
+    depends_on:
+      - frontend
+      - backend
+
   backend:
     build:
       context: ./backend
       dockerfile: ./Dockerfile
     image: backend:latest
     env_file: ./backend/.env
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "8080:8080"
     networks:
       - fluxion-network
     restart: unless-stopped
@@ -17,10 +35,11 @@ services:
       dockerfile: ./Dockerfile
     image: frontend:latest
     env_file: ./frontend/.env
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"
     networks:
       - fluxion-network
+    restart: unless-stopped
 
 networks:
   fluxion-network:
